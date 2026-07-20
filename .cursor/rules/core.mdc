@@ -1,0 +1,39 @@
+---
+description: Stack, arquitetura, visual e convenções centrais do Connect2Work React
+alwaysApply: true
+---
+
+# Aplicação principal
+
+React 19, TypeScript estrito, Vite e React Router. Esta pasta é autônoma. Nunca
+importar ou redirecionar para `../coworking-site/`.
+
+# Arquitetura
+
+- Páginas em `src/pages/`.
+- Componentes compartilhados em `src/components/`.
+- Tipos de domínio em `src/types/domain.ts`.
+- Regras puras em `src/utils/`.
+- Integrações atrás dos contratos de `src/services/contracts.ts`.
+- Componentes não acessam SDK de backend ou `localStorage` diretamente.
+- Manter `strict: true`; não usar `any`, `@ts-ignore` ou casts para ocultar erro.
+
+# Visual
+
+- Reutilizar tokens em `src/assets/css/base.css`.
+- Reutilizar componentes e padrões de `src/assets/css/components.css`.
+- CSS específico em `src/assets/css/pages/`.
+- Não usar cores hardcoded quando existir token semântico.
+- Preservar foco visível, alvos móveis de 44px e `prefers-reduced-motion`.
+
+# Navegação
+
+- Rotas públicas: login, cadastro e recuperação.
+- Rotas autenticadas sempre dentro de `ProtectedRoute` e usando `AppShell`.
+- Toda tela oferece retorno visível; fluxos contextuais preservam query string.
+
+# Regra de ouro
+
+Antes de criar arquivo, consultar `PROJECT_STRUCTURE.md`. Antes de concluir,
+executar typecheck, testes e build, além de atualizar documentação afetada.
+

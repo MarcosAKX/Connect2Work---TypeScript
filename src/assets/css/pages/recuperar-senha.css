@@ -1,0 +1,30 @@
+/* ============================================
+   C2W — Tela de Recuperar Senha
+   Estende os estilos de login
+   ============================================ */
+
+.recover-card .back-link {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.recover-success {
+  text-align: center;
+}
+
+.recover-success-text {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+}
+
+.recover-success-text strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.recover-success-btn {
+  margin-top: var(--space-2);
+}

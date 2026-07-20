@@ -1,0 +1,62 @@
+---
+description: Decisões não óbvias que não devem ser revertidas acidentalmente
+alwaysApply: true
+---
+
+# Base e rotas
+
+Vite usa base `/app/`. Rotas de contexto são:
+
+- `/app/salas?unidade={id}`
+- `/app/agendamento?sala={id}`
+
+Não usar `/pages/*.html`, extensão `.html` ou fallback para o projeto anterior.
+
+# Backend provisório
+
+`localStorage` é somente mock. Senha em texto puro, disponibilidade e criação de
+reserva não são seguras para produção. Backend real precisa de autenticação,
+regras de acesso e operação transacional para impedir reservas concorrentes.
+
+Login Google deve continuar indisponível com mensagem clara até Firebase ou
+Supabase ser escolhido. Não simular OAuth falso.
+
+# Compatibilidade local
+
+Preservar as chaves `c2w_mock_*` enquanto o mock existir. Alterar formato exige
+migração ou fallback de leitura para não quebrar dados de desenvolvimento.
+
+# Agendamento
+
+- Horários selecionados precisam ser contínuos.
+- Reservas canceladas não bloqueiam disponibilidade.
+- Verificar conflito novamente imediatamente antes de persistir.
+- Datas são armazenadas como `YYYY-MM-DD`; evitar conversão UTC que mude o dia.
+- Cancelamento é permitido quando faltam exatamente 24 horas ou mais para o início.
+- O mock deve confirmar que `booking.userId` pertence ao usuário que pediu o cancelamento.
+- Status de reservas não canceladas deve ser derivado da data/hora atual, sem conversão UTC do dia local.
+- No backend real, usar hora do servidor e repetir propriedade, status e janela de 24 horas em operação atômica.
+
+# Pagamento
+
+- `PaymentPage` exige `CheckoutDraft` do usuário atual; acesso direto sem rascunho redireciona para unidades.
+- Reserva só é criada depois da confirmação do pagamento demonstrativo.
+- Verificar conflito novamente imediatamente antes de criar a reserva.
+- Dados de cartão ficam apenas no estado React e nunca são persistidos.
+- PIX e cartão atuais são demonstração; não afirmar que houve cobrança real.
+- Gateway real deve confirmar pagamento no backend por webhook antes de efetivar reserva.
+- Após o mock aprovar, navegar para `/pagamento-confirmado` com os dados da reserva criada.
+- A tela de confirmação não pode afirmar que enviou e-mail, WhatsApp ou comprovante enquanto não houver integração real.
+- No backend, disparar comunicações somente após webhook válido e de forma idempotente.
+
+# Serviços empresariais
+
+- `/servicos` é a terceira área principal da navegação autenticada.
+- Não publicar preços, documentos exigidos ou condições contratuais sem informação comercial oficial.
+- Enquanto não houver preços definidos, usar “Condições sob consulta”.
+- Contratação online só deve ser apresentada como disponível depois de integrar um canal comercial real.
+
+# Fundo animado
+
+`NetworkBackground` deve cancelar `requestAnimationFrame`, remover listener de
+resize e desenhar apenas um frame quando `prefers-reduced-motion` estiver ativo.

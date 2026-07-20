@@ -1,0 +1,62 @@
+@import './assets/css/base.css';
+@import './assets/css/components.css';
+@import './assets/css/pages/login.css';
+@import './assets/css/pages/cadastro.css';
+@import './assets/css/pages/recuperar-senha.css';
+@import './assets/css/pages/unidades.css';
+@import './assets/css/pages/salas.css';
+@import './assets/css/pages/agendamento.css';
+@import './assets/css/pages/pagamento.css';
+@import './assets/css/pages/pagamento-confirmado.css';
+@import './assets/css/pages/meus-agendamentos.css';
+@import './assets/css/pages/servicos.css';
+
+.migration-form-error,
+.auth-form-error {
+  margin: calc(var(--space-2) * -1) 0 var(--space-4);
+  color: var(--color-error);
+  font-size: 0.8125rem;
+}
+
+.migration-note,
+.migration-handoff {
+  margin-top: var(--space-4);
+  color: var(--color-text-tertiary);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.migration-legacy-links {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  font-size: 0.8125rem;
+}
+
+.migration-inline-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-top: var(--space-3);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.migration-back-button {
+  border: 0;
+  background: transparent;
+}
+
+.migrated-booking {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.booking-submit-error {
+  margin-bottom: var(--space-3);
+  color: var(--color-error);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}

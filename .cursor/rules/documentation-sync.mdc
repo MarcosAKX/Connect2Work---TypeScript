@@ -1,0 +1,22 @@
+---
+description: Manter documentação React sincronizada com código, dados e decisões
+alwaysApply: true
+---
+
+# Antes da tarefa
+
+Ler `PRODUCT.md`, `DESIGN.md`, `FEATURES.md`, `PROJECT_STRUCTURE.md` e
+`MOCK_DATABASE.md`. Ler `MIGRATION.md` para entender limites do backend.
+
+# Ao concluir
+
+- Nova página, componente ou serviço: atualizar `PROJECT_STRUCTURE.md`.
+- Funcionalidade ou status alterado: atualizar `FEATURES.md`.
+- Entidade, campo, chave ou contrato alterado: atualizar `MOCK_DATABASE.md`.
+- Token ou padrão visual alterado: atualizar `DESIGN.md`.
+- Escopo, público ou objetivo alterado: atualizar `PRODUCT.md`.
+- Estado da migração ou backend alterado: atualizar `MIGRATION.md`.
+
+Nunca marcar como implementado algo não testável. Sempre indicar “mock local”
+quando não houver backend real.
+

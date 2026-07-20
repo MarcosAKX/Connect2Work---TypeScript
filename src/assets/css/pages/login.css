@@ -1,0 +1,280 @@
+/* ============================================
+   C2W — Tela de Login
+   ============================================ */
+
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Imagem de fundo com opacidade */
+.login-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("../../img/faxada.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.18;
+  z-index: -3;
+}
+
+/* Camada escura por cima da imagem, para melhorar a leitura */
+.login-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  z-index: -2;
+}
+
+/* Canvas com a rede de conexões animada — o elemento de assinatura da tela.
+   Ver assets/js/components/network-canvas.js */
+.network-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+/* Glow ambiente — dois brilhos dourados que respiram devagar atrás do card.
+   Reforça a rede com um pouco de cor, sem competir com o formulário. */
+.login-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.login-glow--top {
+  width: 420px;
+  height: 420px;
+  top: -140px;
+  left: 50%;
+  transform: translateX(-60%);
+  background: radial-gradient(circle, rgba(251, 190, 36, 0.021) 0%, transparent 70%);
+  animation: breathe-top 7s ease-in-out infinite;
+}
+
+.login-glow--bottom {
+  width: 320px;
+  height: 320px;
+  bottom: -120px;
+  right: 50%;
+  transform: translateX(70%);
+  background: radial-gradient(circle, rgba(5, 4, 0, 0.12) 0%, transparent 70%);
+  animation: breathe-bottom 9s ease-in-out infinite 1.5s;
+}
+
+@keyframes breathe-top {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translateX(-60%) scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateX(-60%) scale(1.15);
+  }
+}
+
+@keyframes breathe-bottom {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translateX(70%) scale(1);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: translateX(70%) scale(1.2);
+  }
+}
+
+.login-brand {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-bottom: var(--space-6);
+  animation: fade-up 0.5s var(--ease-out) both;
+}
+
+.login-logo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+}
+
+.login-logo .mark {
+  position: relative;
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: -0.03em;
+}
+
+/* Pequeno indicador pulsante ao lado do "2" — reforça a ideia de "conexão"
+   sem precisar de um ícone extra. Sutil o bastante pra não distrair. */
+.login-logo .mark::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: -10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6);
+  animation: pulse-dot 2.4s ease-out infinite;
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5);
+  }
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+.login-logo .mark span {
+  color: var(--color-text-primary);
+}
+
+.login-logo .full-name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-body);
+}
+
+.login-tagline {
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 400px;
+  animation: fade-up 0.5s var(--ease-out) 0.08s both;
+}
+
+.login-card.card {
+  background-color: rgba(20, 20, 20, 0.815);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  overflow: hidden;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6),
+              0 0 0 1px rgba(251, 191, 36, 0.06);
+  transition: box-shadow var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out);
+}
+
+.login-card.card:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* Linha em degradê no topo do card — o toque de acabamento */
+.login-card.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-accent) 50%, transparent);
+  opacity: 0.6;
+}
+
+.login-card-header {
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
+.login-card-header h1 {
+  font-size: 1.375rem;
+  margin-bottom: var(--space-1);
+}
+
+.login-card-header p {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.field-meta-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+  margin-bottom: var(--space-4);
+}
+
+.forgot-link {
+  font-size: 0.8125rem;
+}
+
+.login-footer {
+  position: relative;
+  text-align: center;
+  margin-top: var(--space-5);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.8125rem;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.back-link:hover {
+  color: var(--color-text-secondary);
+}
+
+.login-back-link {
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: var(--space-3);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 420px) {
+  .card {
+    padding: var(--space-5);
+  }
+}

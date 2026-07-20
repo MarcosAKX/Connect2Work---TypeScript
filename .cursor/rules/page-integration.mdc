@@ -1,0 +1,38 @@
+---
+description: Integrar páginas React com navegação, contexto e acessibilidade completos
+alwaysApply: true
+---
+
+# Antes de criar página
+
+1. Localizar origem da navegação em `src/pages/` e `src/components/`.
+2. Definir IDs e query strings necessários usando tipos existentes.
+3. Definir destinos reais para salvar, confirmar, cancelar e voltar.
+4. Reutilizar contratos e componentes; não duplicar sessão, logout ou validação.
+
+# Rotas
+
+- Navegação interna usa `Link` ou `navigate` do React Router.
+- IDs enviados são IDs de domínio, nunca índice visual.
+- Destino valida sessão e contexto antes de renderizar.
+- Ausência de ID válido redireciona para rota segura existente.
+- Retorno contextual reconstrói query string quando necessário.
+
+# Telas autenticadas
+
+- Adicionar rota dentro de `ProtectedRoute`.
+- Reutilizar `AppShell` com um único logout.
+- Exibir nome do usuário, retorno e estado de carregamento.
+
+# Checkout
+
+- Agendamento salva rascunho tipado e navega para `/pagamento`.
+- Pagamento preserva resumo completo, oferece retorno contextual e trata rascunho ausente.
+- Nunca persistir número, validade ou CVV do cartão.
+
+# Qualidade
+
+- Controles têm nome acessível, foco visível e estados disabled/loading/error.
+- Usar elementos semânticos; navegação real não deve ser `div` clicável.
+- Validar desktop, 390px e preferência de movimento reduzido.
+- Atualizar documentos e executar `npm run typecheck`, `npm run test` e `npm run build`.

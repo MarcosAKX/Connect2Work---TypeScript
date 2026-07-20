@@ -1,0 +1,59 @@
+/* ============================================
+   C2W — Tela de Cadastro
+   Estende os estilos de login para o formulário
+   de registro (mais campos, card um pouco mais largo)
+   ============================================ */
+
+.cadastro-page {
+  justify-content: flex-start;
+  padding-top: var(--space-5);
+  padding-bottom: var(--space-5);
+}
+
+.cadastro-card {
+  max-width: 440px;
+}
+
+.cadastro-card .field {
+  margin-bottom: var(--space-3);
+}
+
+.cadastro-card .field:last-of-type {
+  margin-bottom: var(--space-4);
+}
+
+.cadastro-card .btn-primary {
+  margin-top: var(--space-1);
+}
+
+.cadastro-card .login-footer {
+  margin-top: var(--space-4);
+}
+
+.cadastro-card .back-link {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .cadastro-page {
+    justify-content: center;
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-6);
+  }
+}
+
+@media (max-width: 420px) {
+  .cadastro-card .field {
+    margin-bottom: var(--space-2);
+  }
+
+  .login-brand {
+    margin-bottom: var(--space-4);
+  }
+
+  .login-logo .mark {
+    font-size: 2.25rem;
+  }
+}
