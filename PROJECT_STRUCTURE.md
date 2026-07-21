@@ -17,7 +17,7 @@
 - `src/pages/PaymentPage.tsx` — `/app/pagamento`, protegida; PIX, cartão demonstrativo e confirmação da reserva.
 - `src/pages/PaymentConfirmationPage.tsx` — `/app/pagamento-confirmado`, protegida; confirmação e resumo da reserva.
 - `src/pages/BookingsPage.tsx` — `/app/meus-agendamentos`, protegida; filtros por usuário e cancelamento inline.
-- `src/pages/ServicesPage.tsx` — `/app/servicos`, protegida; planos de endereço fiscal e comercial.
+- `src/pages/ServicesPage.tsx` — `/app/servicos`, protegida; endereço fiscal, endereço comercial, plano de horas e consulta pelo WhatsApp.
 
 ## Componentes
 

@@ -32,7 +32,7 @@ destaque dourado reservado para marca, foco, seleção e ações principais.
 
 ## Estado atual
 
-- Catálogo inicial de serviços empresariais implementado; preços e contratação digital pendentes.
+- Catálogo inicial de serviços empresariais implementado; consultas comerciais direcionadas ao WhatsApp e contratação digital pendente.
 
 - Frontend React completo.
 - Persistência local provisória.

@@ -21,10 +21,12 @@
 ## Serviços empresariais
 
 - Nova área principal “Serviços”: implementada.
-- Comparação entre Endereço Fiscal, Endereço Comercial e Plano Completo: implementada.
+- Comparação entre Endereço Fiscal, Endereço Comercial e Plano de Horas: implementada.
+- Plano de Horas apresenta as modalidades Flex mensal e Flex semestral/anual.
 - Benefícios e fluxo explicativo de contratação: implementados.
 - Valores exibidos como “sob consulta” até definição comercial oficial.
-- Contratação digital e canal comercial integrado: planejados.
+- Consulta comercial pelo WhatsApp com nome do usuário e serviço preenchidos: implementada.
+- Contratação digital: planejada.
 
 ## Agendamentos
 
