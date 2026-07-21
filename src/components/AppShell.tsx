@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../state/AuthContext';
+import logo from '../assets/img/cwlogo.ico';
 import { UserIcon } from './icons';
 
 export function AppShell() {
@@ -22,7 +23,9 @@ export function AppShell() {
   return (
     <>
       <header className="app-header">
-        <NavLink to="/unidades" className="app-logo" aria-label="C2W Connect2Work">C2W</NavLink>
+        <NavLink to="/unidades" className="app-logo" aria-label="Página inicial da Connect2Work">
+          <img src={logo} alt="" />
+        </NavLink>
         <nav className="app-nav" aria-label="Navegação principal">
           <NavLink to="/unidades" className={({ isActive }) => `app-nav-link${isActive ? ' is-active' : ''}`}>Unidades</NavLink>
           <NavLink to="/meus-agendamentos" className={({ isActive }) => `app-nav-link${isActive ? ' is-active' : ''}`}>Meus Agendamentos</NavLink>

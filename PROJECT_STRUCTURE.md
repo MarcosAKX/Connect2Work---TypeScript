@@ -49,7 +49,7 @@
 - `src/assets/css/pages/pagamento.css` — checkout responsivo e estados de pagamento.
 - `src/assets/css/pages/pagamento-confirmado.css` — confirmação responsiva após pagamento.
 - `src/assets/css/pages/servicos.css` — comparação de serviços e etapas de contratação.
-- `src/assets/img/` — imagens próprias da aplicação.
+- `src/assets/img/` — imagens próprias da aplicação, incluindo a logo compacta `cwlogo.ico`.
 
 ## Testes
 
