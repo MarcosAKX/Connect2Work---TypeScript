@@ -4,20 +4,21 @@
 
 - `src/main.tsx` — inicializa React, Router e autenticação.
 - `src/App.tsx` — rotas públicas e protegidas sob `/app`.
-- `vite.config.ts` — Vite, React, Vitest e base `/app/`.
+- `vite.config.ts` — Vite, React e Vitest.
+- `vercel.json` — fallback das rotas da SPA para `index.html` no Vercel.
 
 ## Páginas
 
-- `src/pages/LoginPage.tsx` — `/app/login`.
-- `src/pages/RegisterPage.tsx` — `/app/cadastro`.
-- `src/pages/RecoverPasswordPage.tsx` — `/app/recuperar-senha`.
-- `src/pages/UnitsPage.tsx` — `/app/unidades`, protegida.
-- `src/pages/RoomsPage.tsx` — `/app/salas?unidade={id}`, protegida.
-- `src/pages/BookingPage.tsx` — `/app/agendamento?sala={id}`, protegida.
-- `src/pages/PaymentPage.tsx` — `/app/pagamento`, protegida; PIX, cartão demonstrativo e confirmação da reserva.
-- `src/pages/PaymentConfirmationPage.tsx` — `/app/pagamento-confirmado`, protegida; confirmação e resumo da reserva.
-- `src/pages/BookingsPage.tsx` — `/app/meus-agendamentos`, protegida; filtros por usuário e cancelamento inline.
-- `src/pages/ServicesPage.tsx` — `/app/servicos`, protegida; endereço fiscal, endereço comercial, plano de horas e consulta pelo WhatsApp.
+- `src/pages/LoginPage.tsx` — `/login`.
+- `src/pages/RegisterPage.tsx` — `/cadastro`.
+- `src/pages/RecoverPasswordPage.tsx` — `/recuperar-senha`.
+- `src/pages/UnitsPage.tsx` — `/unidades`, protegida.
+- `src/pages/RoomsPage.tsx` — `/salas?unidade={id}`, protegida.
+- `src/pages/BookingPage.tsx` — `/agendamento?sala={id}`, protegida.
+- `src/pages/PaymentPage.tsx` — `/pagamento`, protegida; PIX, cartão demonstrativo e confirmação da reserva.
+- `src/pages/PaymentConfirmationPage.tsx` — `/pagamento-confirmado`, protegida; confirmação e resumo da reserva.
+- `src/pages/BookingsPage.tsx` — `/meus-agendamentos`, protegida; filtros por usuário e cancelamento inline.
+- `src/pages/ServicesPage.tsx` — `/servicos`, protegida; endereço fiscal, endereço comercial, plano de horas e consulta pelo WhatsApp.
 
 ## Componentes
 

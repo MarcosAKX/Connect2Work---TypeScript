@@ -13,7 +13,7 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <BrowserRouter basename="/app">
+    <BrowserRouter>
       <AuthProvider>
         <App />
       </AuthProvider>
