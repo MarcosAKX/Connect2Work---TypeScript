@@ -4,8 +4,9 @@ import type { User } from '../types/domain';
 
 interface AuthContextValue {
   user: User | null;
-  login(email: string, password: string): Promise<void>;
-  loginWithGoogle(): Promise<void>;
+  isAdmin: boolean;
+  login(email: string, password: string): Promise<User>;
+  loginWithGoogle(): Promise<User>;
   logout(): Promise<void>;
 }
 
@@ -16,11 +17,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
+    isAdmin: user?.role === 'admin',
     async login(email, password) {
-      setUser(await services.auth.login(email, password));
+      const authenticatedUser = await services.auth.login(email, password);
+      setUser(authenticatedUser);
+      return authenticatedUser;
     },
     async loginWithGoogle() {
-      setUser(await services.auth.loginWithGoogle());
+      const authenticatedUser = await services.auth.loginWithGoogle();
+      setUser(authenticatedUser);
+      return authenticatedUser;
     },
     async logout() {
       await services.auth.logout();

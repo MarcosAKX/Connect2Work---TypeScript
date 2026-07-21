@@ -11,9 +11,35 @@ describe('localStorage services', () => {
     const services = createLocalStorageServices();
     const user = await services.auth.login('teste@connect2work.com', '123456');
     expect(user.name).toBe('Usuário Teste');
+    expect(user.role).toBe('client');
     expect(services.auth.getCurrentUser()?.id).toBe(user.id);
     await services.auth.logout();
     expect(services.auth.getCurrentUser()).toBeNull();
+  });
+
+  it('autentica o administrador seed com o perfil correto', async () => {
+    const services = createLocalStorageServices();
+    const admin = await services.auth.login('admin@connect2work.com', 'admin123');
+    expect(admin).toMatchObject({ name: 'Administrador', role: 'admin' });
+    expect(services.auth.getCurrentUser()?.role).toBe('admin');
+  });
+
+  it('consulta usuário por id sem expor a senha', async () => {
+    const services = createLocalStorageServices();
+    const user = await services.auth.getUserById('seed-usuario-teste');
+    expect(user).toMatchObject({ name: 'Usuário Teste', role: 'client' });
+    expect(user).not.toHaveProperty('password');
+  });
+
+  it('trata sessões antigas sem perfil como cliente', () => {
+    localStorage.setItem('c2w_mock_session', JSON.stringify({
+      id: 'legacy-user',
+      name: 'Usuário Antigo',
+      email: 'antigo@example.com',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    }));
+    const services = createLocalStorageServices();
+    expect(services.auth.getCurrentUser()?.role).toBe('client');
   });
 
   it('mantém catálogo tipado por unidade', async () => {
@@ -23,10 +49,42 @@ describe('localStorage services', () => {
     expect(rooms.every(({ unitId }) => unitId === 'unit-1')).toBe(true);
   });
 
+  it('cria, edita e exclui unidade sem salas vinculadas', async () => {
+    const services = createLocalStorageServices();
+    const created = await services.catalog.createUnit({
+      name: '  Unidade Norte  ',
+      address: '  Rua Principal, 10  ',
+      description: '  Nova unidade  ',
+      imageUrl: 'data:image/png;base64,dGVzdGU=',
+    });
+    expect(created).toMatchObject({
+      name: 'Unidade Norte',
+      address: 'Rua Principal, 10',
+      description: 'Nova unidade',
+      availableRooms: 0,
+    });
+
+    await expect(services.catalog.updateUnit(created.id, {
+      name: 'Unidade Norte Atualizada',
+      address: created.address,
+      description: undefined,
+      imageUrl: null,
+    })).resolves.toMatchObject({ name: 'Unidade Norte Atualizada', imageUrl: null });
+
+    await expect(services.catalog.deleteUnit(created.id)).resolves.toBeUndefined();
+    await expect(services.catalog.getUnitById(created.id)).resolves.toBeNull();
+  });
+
+  it('impede excluir unidade com salas vinculadas', async () => {
+    const services = createLocalStorageServices();
+    await expect(services.catalog.deleteUnit('unit-1')).rejects.toThrow('salas vinculadas');
+  });
+
   it('cadastra usuário e rejeita e-mail duplicado', async () => {
     const services = createLocalStorageServices();
     const input = { name: 'Maria Silva', email: 'maria@example.com', profession: 'Designer', phone: '(11) 98765-4321', password: '123456' };
     await expect(services.auth.register(input)).resolves.toMatchObject({ email: input.email });
+    await expect(services.auth.login(input.email, input.password)).resolves.toMatchObject({ role: 'client' });
     await expect(services.auth.register(input)).rejects.toThrow('já está cadastrado');
   });
 

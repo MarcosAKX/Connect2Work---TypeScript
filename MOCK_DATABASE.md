@@ -6,6 +6,7 @@ Persistência provisória no `localStorage`. Implementação em
 ## Chaves
 
 - `c2w_mock_users` — usuários cadastrados.
+- `c2w_mock_units` — unidades cadastradas e editadas pelo administrador.
 - `c2w_mock_session` — usuário autenticado, sem senha.
 - `c2w_mock_bookings` — agendamentos.
 - `c2w_mock_password_resets` — solicitações simuladas de redefinição.
@@ -15,14 +16,17 @@ Persistência provisória no `localStorage`. Implementação em
 
 ### User
 
-- `id`, `name`, `email`, `createdAt`.
+- `id`, `name`, `email`, `role`, `createdAt`.
+- `role`: `client` ou `admin`; registros antigos sem o campo são tratados como `client`.
 - `profession` e `phone` opcionais.
 - `StoredUser` acrescenta `password` somente no mock.
 
 ### Unit
 
 - `id`, `name`, `address`, `availableRooms`, `imageUrl`, `description?`.
-- Dados estáticos em `src/services/mock-data.ts`.
+- Seed inicial em `src/services/mock-data.ts` e persistência administrativa em `c2w_mock_units`.
+- Imagens do mock são armazenadas como base64 em `imageUrl`.
+- Exclusão é bloqueada enquanto houver registros `Room` vinculados.
 
 ### Room
 
@@ -47,15 +51,20 @@ Persistência provisória no `localStorage`. Implementação em
 - Existe apenas durante a sessão e é removido no logout ou após confirmação.
 - Não armazena dados de cartão.
 
-## Usuário seed
+## Usuários seed
 
-- E-mail: `teste@connect2work.com`.
-- Senha: `123456`.
+- Perfil cliente:
+  - E-mail: `teste@connect2work.com`.
+  - Senha: `123456`.
+
+- Perfil administrador:
+  - E-mail: `admin@connect2work.com`.
+  - Senha: `admin123`.
 
 ## Contratos
 
-- `AuthGateway` — sessão, login, Google, cadastro, reset e logout.
-- `CatalogGateway` — unidades e salas.
+- `AuthGateway` — sessão, consulta segura de usuário por ID, login, Google, cadastro, reset e logout.
+- `CatalogGateway` — leitura de unidades e salas, além de criação, edição e exclusão protegida de unidades.
 - `BookingGateway` — consulta, contagem, criação e cancelamento.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
 

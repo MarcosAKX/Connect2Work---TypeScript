@@ -13,7 +13,7 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  if (user) return <Navigate to="/unidades" replace />;
+  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/unidades'} replace />;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,8 +25,8 @@ export function LoginPage() {
 
     setIsLoading(true);
     try {
-      await login(email, password);
-      navigate('/unidades', { replace: true });
+      const authenticatedUser = await login(email, password);
+      navigate(authenticatedUser.role === 'admin' ? '/admin' : '/unidades', { replace: true });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Não foi possível entrar.');
     } finally {
@@ -38,8 +38,8 @@ export function LoginPage() {
     setIsLoading(true);
     setError('');
     try {
-      await loginWithGoogle();
-      navigate('/unidades', { replace: true });
+      const authenticatedUser = await loginWithGoogle();
+      navigate(authenticatedUser.role === 'admin' ? '/admin' : '/unidades', { replace: true });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Não foi possível entrar com Google.');
     } finally {

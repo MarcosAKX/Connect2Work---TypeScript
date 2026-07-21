@@ -10,6 +10,7 @@ serviços empresariais, como endereço fiscal e comercial.
 - Profissionais autônomos.
 - Pequenas equipes.
 - Pessoas que precisam de salas por hora para reunião ou trabalho concentrado.
+- Administradores responsáveis por acompanhar unidades, salas e agendamentos.
 
 ## Objetivos principais
 
@@ -20,6 +21,7 @@ serviços empresariais, como endereço fiscal e comercial.
 5. Conferir resumo e criar agendamento.
 6. Consultar reservas por status.
 7. Comparar serviços empresariais e consultar condições nas unidades.
+8. Acessar um painel administrativo conforme o perfil autenticado.
 
 ## Plataforma
 
@@ -39,3 +41,4 @@ destaque dourado reservado para marca, foco, seleção e ações principais.
 - Checkout e pagamento demonstrativo implementados; gateway real ainda pendente.
 - Login Google aguarda escolha do backend.
 - Administração de unidades, salas e imagens planejada.
+- Dashboard administrativo e gestão de unidades implementados; gestão de salas e agendamentos pendente.

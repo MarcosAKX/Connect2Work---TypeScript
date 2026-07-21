@@ -3,7 +3,7 @@
 ## Entrada e rotas
 
 - `src/main.tsx` — inicializa React, Router e autenticação.
-- `src/App.tsx` — rotas públicas e protegidas sob `/app`.
+- `src/App.tsx` — rotas públicas, do cliente e administrativas.
 - `vite.config.ts` — Vite, React e Vitest.
 - `vercel.json` — fallback das rotas da SPA para `index.html` no Vercel.
 
@@ -19,11 +19,15 @@
 - `src/pages/PaymentConfirmationPage.tsx` — `/pagamento-confirmado`, protegida; confirmação e resumo da reserva.
 - `src/pages/BookingsPage.tsx` — `/meus-agendamentos`, protegida; filtros por usuário e cancelamento inline.
 - `src/pages/ServicesPage.tsx` — `/servicos`, protegida; endereço fiscal, endereço comercial, plano de horas e consulta pelo WhatsApp.
+- `src/pages/AdminDashboardPage.tsx` — `/admin`, protegida por perfil; resumo administrativo e agenda.
+- `src/pages/AdminUnitsPage.tsx` — `/admin/unidades`, protegida por perfil; CRUD de unidades e upload local.
 
 ## Componentes
 
 - `src/components/AppShell.tsx` — header autenticado e logout.
 - `src/components/ProtectedRoute.tsx` — exige sessão.
+- `src/components/AdminRoute.tsx` — exige sessão com perfil `admin`.
+- `src/components/AdminShell.tsx` — header e navegação da área administrativa.
 - `src/components/BackLink.tsx` — retorno reutilizável.
 - `src/components/NetworkBackground.tsx` — fundo animado das telas públicas.
 - `src/components/icons.tsx` — ícones SVG reutilizáveis.
@@ -37,6 +41,8 @@
 - `CheckoutGateway` — rascunho temporário entre agendamento e pagamento.
 - `src/services/mock-data.ts` — unidades e salas locais.
 - `src/state/AuthContext.tsx` — estado da sessão para React.
+- `src/hooks/useAdminDashboard.ts` — composição dos dados administrativos via gateways.
+- `src/hooks/useAdminUnits.ts` — listagem, contagem de salas e mutações administrativas de unidades.
 - `src/utils/validators.ts` — validações e máscara de telefone.
 - `src/utils/booking.ts` — datas, horários, conflitos, status automático e janela de cancelamento.
 
@@ -49,6 +55,8 @@
 - `src/assets/css/pages/pagamento.css` — checkout responsivo e estados de pagamento.
 - `src/assets/css/pages/pagamento-confirmado.css` — confirmação responsiva após pagamento.
 - `src/assets/css/pages/servicos.css` — comparação de serviços e etapas de contratação.
+- `src/assets/css/pages/admin-dashboard.css` — shell, métricas, agenda e responsividade administrativa.
+- `src/assets/css/pages/admin-units.css` — tabela, modais, upload e responsividade da gestão de unidades.
 - `src/assets/img/` — imagens próprias da aplicação, incluindo a logo compacta `cwlogo.ico`.
 
 ## Testes

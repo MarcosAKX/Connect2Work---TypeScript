@@ -26,6 +26,7 @@
   /* Cores — estado */
   --color-error: #f87171;
   --color-success: #4ade80;
+  --color-info: #60a5fa;
 
   /* Tipografia */
   --font-display: 'Space Grotesk', sans-serif;
@@ -49,6 +50,9 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 150ms;
   --duration-base: 250ms;
+
+  /* Camadas */
+  --z-sticky: 100;
 }
 
 *,

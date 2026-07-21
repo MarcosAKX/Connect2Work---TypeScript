@@ -1,7 +1,10 @@
+export type UserRole = 'client' | 'admin';
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
   createdAt: string;
   profession?: string;
   phone?: string;
@@ -27,6 +30,15 @@ export interface Unit {
   imageUrl: string | null;
   description?: string;
 }
+
+export interface CreateUnitInput {
+  name: string;
+  address: string;
+  description?: string;
+  imageUrl: string | null;
+}
+
+export type UpdateUnitInput = CreateUnitInput;
 
 export interface Room {
   id: string;

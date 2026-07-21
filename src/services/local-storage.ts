@@ -1,10 +1,11 @@
 import type { AppServices } from './contracts';
-import { rooms, units } from './mock-data';
-import type { Booking, BookingStatus, CheckoutDraft, StoredUser, User } from '../types/domain';
+import { rooms, units as seedUnits } from './mock-data';
+import type { Booking, BookingStatus, CheckoutDraft, StoredUser, Unit, User } from '../types/domain';
 import { canCancelBooking, getEffectiveBookingStatus } from '../utils/booking';
 
 const KEYS = {
   users: 'c2w_mock_users',
+  units: 'c2w_mock_units',
   session: 'c2w_mock_session',
   bookings: 'c2w_mock_bookings',
   resets: 'c2w_mock_password_resets',
@@ -16,6 +17,16 @@ const seedUser: StoredUser = {
   name: 'Usuário Teste',
   email: 'teste@connect2work.com',
   password: '123456',
+  role: 'client',
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
+
+const seedAdmin: StoredUser = {
+  id: 'seed-administrador',
+  name: 'Administrador',
+  email: 'admin@connect2work.com',
+  password: 'admin123',
+  role: 'admin',
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
@@ -37,23 +48,38 @@ function readObject<T>(key: string): T | null {
   }
 }
 
-function ensureSeedUser() {
+function ensureSeedUsers() {
   const users = readArray<StoredUser>(KEYS.users);
-  if (!users.some(({ id }) => id === seedUser.id)) {
-    localStorage.setItem(KEYS.users, JSON.stringify([seedUser, ...users]));
+  const seeds = [seedUser, seedAdmin].filter(
+    (seed) => !users.some(({ id }) => id === seed.id),
+  );
+  if (seeds.length > 0) localStorage.setItem(KEYS.users, JSON.stringify([...seeds, ...users]));
+}
+
+function ensureSeedUnits() {
+  if (localStorage.getItem(KEYS.units) === null) {
+    localStorage.setItem(KEYS.units, JSON.stringify(seedUnits));
   }
 }
 
 function sanitizeUser({ password: _password, ...user }: StoredUser): User {
-  return user;
+  return { ...user, role: user.role === 'admin' ? 'admin' : 'client' };
 }
 
 export function createLocalStorageServices(now: () => Date = () => new Date()): AppServices {
-  ensureSeedUser();
+  ensureSeedUsers();
+  ensureSeedUnits();
 
   return {
     auth: {
-      getCurrentUser: () => readObject<User>(KEYS.session),
+      getCurrentUser() {
+        const session = readObject<User>(KEYS.session);
+        return session ? { ...session, role: session.role === 'admin' ? 'admin' : 'client' } : null;
+      },
+      async getUserById(id) {
+        const user = readArray<StoredUser>(KEYS.users).find((candidate) => candidate.id === id);
+        return user ? sanitizeUser(user) : null;
+      },
       async login(email, password) {
         const normalizedEmail = email.trim().toLowerCase();
         const user = readArray<StoredUser>(KEYS.users).find(
@@ -86,6 +112,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           profession: input.profession.trim(),
           phone: input.phone.trim(),
           password: input.password,
+          role: 'client',
           createdAt: now().toISOString(),
         };
 
@@ -110,10 +137,53 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
     },
     catalog: {
       async getUnits() {
-        return units;
+        return readArray<Unit>(KEYS.units);
       },
       async getUnitById(id) {
-        return units.find((unit) => unit.id === id) ?? null;
+        return readArray<Unit>(KEYS.units).find((unit) => unit.id === id) ?? null;
+      },
+      async createUnit(input) {
+        const existing = readArray<Unit>(KEYS.units);
+        const unit: Unit = {
+          id: `unit-${Date.now()}-${crypto.randomUUID()}`,
+          name: input.name.trim(),
+          address: input.address.trim(),
+          description: input.description?.trim() || undefined,
+          imageUrl: input.imageUrl,
+          availableRooms: 0,
+        };
+        localStorage.setItem(KEYS.units, JSON.stringify([...existing, unit]));
+        return unit;
+      },
+      async updateUnit(id, input) {
+        const existing = readArray<Unit>(KEYS.units);
+        const index = existing.findIndex((unit) => unit.id === id);
+        const current = existing[index];
+        if (!current) throw new Error('Unidade não encontrada.');
+        const updated: Unit = {
+          ...current,
+          name: input.name.trim(),
+          address: input.address.trim(),
+          description: input.description?.trim() || undefined,
+          imageUrl: input.imageUrl,
+        };
+        existing[index] = updated;
+        localStorage.setItem(KEYS.units, JSON.stringify(existing));
+        return updated;
+      },
+      async deleteUnit(id) {
+        const existing = readArray<Unit>(KEYS.units);
+        const unit = existing.find((candidate) => candidate.id === id);
+        if (!unit) throw new Error('Unidade não encontrada.');
+
+        // Regra deliberada: impedir exclusão enquanto houver salas vinculadas.
+        // Se o produto adotar exclusão em cascata, este bloqueio deve ser substituído
+        // pela remoção atômica das salas e pela validação dos agendamentos relacionados.
+        if (rooms.some((room) => room.unitId === id)) {
+          throw new Error(`Não é possível excluir ${unit.name} enquanto houver salas vinculadas.`);
+        }
+
+        localStorage.setItem(KEYS.units, JSON.stringify(existing.filter((candidate) => candidate.id !== id)));
       },
       async getRoomsByUnitId(unitId) {
         return rooms.filter((room) => room.unitId === unitId);

@@ -7,6 +7,7 @@
 - Recuperação de senha com estado de confirmação seguro: implementado (mock local).
 - Sessão persistida e logout: implementados (mock local).
 - Proteção de rotas: implementada com `ProtectedRoute`.
+- Perfis `client` e `admin`, redirecionamento após login e proteção da área administrativa: implementados.
 - Login Google: planejado; aguarda Firebase ou Supabase.
 
 ## Catálogo
@@ -17,6 +18,18 @@
 - Detalhes, capacidade, preço e comodidades: implementados.
 - Galeria preparada para `imageUrl` e `imageUrls`: implementada.
 - CRUD administrativo e upload: planejados.
+
+## Administração
+
+- Usuário administrador seed no mock local: implementado.
+- Dashboard com totais de unidades, salas e agendamentos: implementado via gateways.
+- Agendamentos de hoje e dos próximos sete dias, com identificação do cliente: implementados.
+- Receita total: indisponível até o domínio persistir o valor efetivamente pago.
+- Gestão de unidades com criação, edição, imagem local e exclusão protegida: implementada via `CatalogGateway`.
+- Confirmações de criação, edição e exclusão desaparecem automaticamente após cinco segundos.
+- Unidades com salas vinculadas não podem ser excluídas.
+- A tabela administrativa usa a contagem real de salas vinculadas.
+- Gestão de salas e agendamentos: planejada; links preparados sob `/admin`.
 
 ## Serviços empresariais
 
