@@ -7,6 +7,7 @@ import { AdminRoomsPage } from './pages/AdminRoomsPage';
 import { AdminBookingsPage } from './pages/AdminBookingsPage';
 import { AdminDailyPanelPage } from './pages/AdminDailyPanelPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
+import { AdminTasksPage } from './pages/AdminTasksPage';
 import { BookingsPage } from './pages/BookingsPage';
 import { BookingPage } from './pages/BookingPage';
 import { LoginPage } from './pages/LoginPage';
@@ -43,6 +44,7 @@ export function App() {
       <Route element={<AdminRoute allowedRoles={['admin', 'secretaria']} />}>
         <Route path="/admin/painel-do-dia" element={<AdminDailyPanelPage />} />
         <Route path="/admin/agendamentos" element={<AdminBookingsPage />} />
+        <Route path="/admin/tarefas" element={<AdminTasksPage />} />
       </Route>
       <Route path="/" element={<Navigate to="/unidades" replace />} />
       <Route path="*" element={<Navigate to="/unidades" replace />} />

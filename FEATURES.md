@@ -48,6 +48,8 @@
 - Admin e secretaria podem confirmar pagamentos pendentes diretamente na lista, com confirmação em modal.
 - Admin e secretaria podem realizar check-in rápido em reservas confirmadas; horário e responsável ficam registrados.
 - Admin e secretaria possuem `/admin/painel-do-dia`, com nomes dos clientes, agenda cronológica, próxima chegada, presença atual e pendências de check-in/pagamento. A agenda diária pode ser filtrada por busca, unidade, situação operacional e período do dia. Esta é a tela inicial da secretaria.
+- Admin e secretaria compartilham o quadro `/admin/tarefas`, com três etapas fixas, responsáveis da equipe, prioridades, prazos, filtro pessoal e movimentação por drag-and-drop.
+- Os menus administrativos exibem a contagem de tarefas vencidas ou vencendo hoje.
 - Lista destaca reservas confirmadas de hoje ainda aguardando chegada e mostra a métrica “Check-ins Hoje”.
 - O administrador autenticado não pode remover a própria permissão nem desativar a própria conta.
 - Menu lateral de ferramentas administrativas: implementado no shell admin.

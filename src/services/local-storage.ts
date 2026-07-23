@@ -1,7 +1,8 @@
 import type { AppServices } from './contracts';
 import { rooms as seedRooms, units as seedUnits } from './mock-data';
-import type { Booking, BookingStatus, CheckoutDraft, CreateManagedUserInput, CreateRoomInput, Room, StoredUser, Unit, UpdateManagedUserInput, User, UserRole } from '../types/domain';
+import type { Booking, BookingStatus, CheckoutDraft, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, Room, StoredUser, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateTaskInput, User, UserRole } from '../types/domain';
 import { canCancelBooking, getEffectiveBookingStatus } from '../utils/booking';
+import { TASKS_CHANGED_EVENT } from '../utils/tasks';
 
 const KEYS = {
   users: 'c2w_mock_users',
@@ -11,6 +12,7 @@ const KEYS = {
   bookings: 'c2w_mock_bookings',
   resets: 'c2w_mock_password_resets',
   checkout: 'c2w_checkout_draft',
+  tasks: 'c2w_mock_tasks',
 } as const;
 
 const seedUser: StoredUser = {
@@ -85,6 +87,50 @@ function ensureSeedRooms() {
   }
 }
 
+function dateKeyWithOffset(base: Date, offset: number) {
+  const date = new Date(base);
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + offset);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function ensureSeedTasks(current: Date) {
+  if (localStorage.getItem(KEYS.tasks) !== null) return;
+  const createdAt = current.toISOString();
+  const tasks: Task[] = [
+    { id: 'task-seed-1', title: 'Confirmar fornecedores do café', description: 'Validar entrega e quantidades para a próxima semana.', status: 'todo', assignedTo: seedSecretary.id, priority: 'high', dueDate: dateKeyWithOffset(current, -1), createdBy: seedAdmin.id, createdAt, updatedAt: createdAt },
+    { id: 'task-seed-2', title: 'Revisar agenda de amanhã', status: 'todo', assignedTo: seedSecretary.id, priority: 'medium', dueDate: dateKeyWithOffset(current, 0), createdBy: seedAdmin.id, createdAt, updatedAt: createdAt },
+    { id: 'task-seed-3', title: 'Atualizar sinalização da unidade', description: 'Conferir placas das salas e recepção.', status: 'in_progress', assignedTo: seedAdmin.id, priority: 'medium', dueDate: dateKeyWithOffset(current, 2), createdBy: seedSecretary.id, createdAt, updatedAt: createdAt },
+    { id: 'task-seed-4', title: 'Enviar relatório semanal', status: 'done', priority: 'low', dueDate: dateKeyWithOffset(current, -2), createdBy: seedSecretary.id, createdAt, updatedAt: createdAt },
+  ];
+  localStorage.setItem(KEYS.tasks, JSON.stringify(tasks));
+}
+
+function notifyTasksChanged() {
+  window.dispatchEvent(new Event(TASKS_CHANGED_EVENT));
+}
+
+function assertStaffUser(userId: string | undefined) {
+  if (!userId) return;
+  const user = readArray<StoredUser>(KEYS.users).find((candidate) => candidate.id === userId);
+  if (!user || !user.active || (user.role !== 'admin' && user.role !== 'secretaria')) {
+    throw new Error('Responsável inválido para esta tarefa.');
+  }
+}
+
+function normalizeTaskInput(input: CreateTaskInput | UpdateTaskInput) {
+  const title = input.title.trim().replace(/\s+/g, ' ');
+  if (!title) throw new Error('Informe o título da tarefa.');
+  assertStaffUser(input.assignedTo);
+  return {
+    title,
+    description: input.description?.trim() || undefined,
+    assignedTo: input.assignedTo || undefined,
+    priority: input.priority,
+    dueDate: input.dueDate || undefined,
+  };
+}
+
 function normalizeRoomInput(input: CreateRoomInput) {
   const imageUrls = (input.imageUrls ?? []).filter(Boolean);
   const normalizedImages = imageUrls.length > 0
@@ -134,6 +180,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
   ensureSeedUsers();
   ensureSeedUnits();
   ensureSeedRooms();
+  ensureSeedTasks(now());
 
   return {
     auth: {
@@ -507,6 +554,55 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
       },
       clearDraft() {
         sessionStorage.removeItem(KEYS.checkout);
+      },
+    },
+    tasks: {
+      async listTasks() {
+        return readArray<Task>(KEYS.tasks);
+      },
+      async createTask(input) {
+        assertStaffUser(input.createdBy);
+        const normalized = normalizeTaskInput(input);
+        const timestamp = now().toISOString();
+        const task: Task = {
+          id: `task-${crypto.randomUUID()}`,
+          ...normalized,
+          status: input.status ?? 'todo',
+          createdBy: input.createdBy,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        };
+        localStorage.setItem(KEYS.tasks, JSON.stringify([task, ...readArray<Task>(KEYS.tasks)]));
+        notifyTasksChanged();
+        return task;
+      },
+      async updateTask(id, input) {
+        const tasks = readArray<Task>(KEYS.tasks);
+        const index = tasks.findIndex((task) => task.id === id);
+        const current = tasks[index];
+        if (!current) throw new Error('Tarefa não encontrada.');
+        const updated: Task = { ...current, ...normalizeTaskInput(input), updatedAt: now().toISOString() };
+        tasks[index] = updated;
+        localStorage.setItem(KEYS.tasks, JSON.stringify(tasks));
+        notifyTasksChanged();
+        return updated;
+      },
+      async updateTaskStatus(id, status: TaskStatus) {
+        const tasks = readArray<Task>(KEYS.tasks);
+        const index = tasks.findIndex((task) => task.id === id);
+        const current = tasks[index];
+        if (!current) throw new Error('Tarefa não encontrada.');
+        const updated: Task = { ...current, status, updatedAt: now().toISOString() };
+        tasks[index] = updated;
+        localStorage.setItem(KEYS.tasks, JSON.stringify(tasks));
+        notifyTasksChanged();
+        return updated;
+      },
+      async deleteTask(id) {
+        const tasks = readArray<Task>(KEYS.tasks);
+        if (!tasks.some((task) => task.id === id)) throw new Error('Tarefa não encontrada.');
+        localStorage.setItem(KEYS.tasks, JSON.stringify(tasks.filter((task) => task.id !== id)));
+        notifyTasksChanged();
       },
     },
   };

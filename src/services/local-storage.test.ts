@@ -247,4 +247,38 @@ describe('localStorage services', () => {
     services.checkout.clearDraft();
     expect(services.checkout.getDraft()).toBeNull();
   });
+
+  it('cria, move, edita e exclui tarefa compartilhada', async () => {
+    const now = new Date('2026-07-23T12:00:00.000Z');
+    const services = createLocalStorageServices(() => now);
+    const created = await services.tasks.createTask({
+      title: '  Conferir recepção  ',
+      description: '  Verificar materiais  ',
+      assignedTo: 'seed-secretaria',
+      priority: 'high',
+      dueDate: '2026-07-23',
+      createdBy: 'seed-administrador',
+    });
+    expect(created).toMatchObject({ title: 'Conferir recepção', description: 'Verificar materiais', status: 'todo' });
+    await expect(services.tasks.updateTaskStatus(created.id, 'in_progress')).resolves.toMatchObject({ status: 'in_progress' });
+    await expect(services.tasks.updateTask(created.id, {
+      title: 'Conferir recepção e copa',
+      description: undefined,
+      assignedTo: undefined,
+      priority: 'medium',
+      dueDate: undefined,
+    })).resolves.toMatchObject({ title: 'Conferir recepção e copa', assignedTo: undefined });
+    await expect(services.tasks.deleteTask(created.id)).resolves.toBeUndefined();
+    await expect(services.tasks.listTasks()).resolves.not.toEqual(expect.arrayContaining([expect.objectContaining({ id: created.id })]));
+  });
+
+  it('bloqueia responsável que não pertence à equipe administrativa', async () => {
+    const services = createLocalStorageServices();
+    await expect(services.tasks.createTask({
+      title: 'Tarefa inválida',
+      assignedTo: 'seed-usuario-teste',
+      priority: 'low',
+      createdBy: 'seed-administrador',
+    })).rejects.toThrow('Responsável inválido');
+  });
 });

@@ -2,16 +2,18 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import logo from '../assets/img/cwlogo.ico';
 import { useAuth } from '../state/AuthContext';
-import { BuildingIcon, CalendarIcon, DashboardIcon, DoorIcon, MenuIcon, UserIcon } from './icons';
+import { BuildingIcon, CalendarIcon, DashboardIcon, DoorIcon, MenuIcon, TaskIcon, UserIcon } from './icons';
 import { AdminSidebar } from './AdminSidebar';
 import { ThemeToggle } from './ThemeToggle';
 import type { UserRole } from '../types/domain';
+import { useTaskAttentionCount } from '../hooks/useAdminTasks';
 
 const adminNavigation = [
   { to: '/admin/agendamentos', label: 'Agendamentos', icon: CalendarIcon, end: false, roles: ['admin', 'secretaria'] },
   { to: '/admin', label: 'Dashboard', icon: DashboardIcon, end: true, roles: ['admin'] },
   { to: '/admin/painel-do-dia', label: 'Painel do Dia', icon: DashboardIcon, end: false, roles: ['admin', 'secretaria'] },
   { to: '/admin/salas', label: 'Salas', icon: DoorIcon, end: false, roles: ['admin'] },
+  { to: '/admin/tarefas', label: 'Tarefas', icon: TaskIcon, end: false, roles: ['admin', 'secretaria'] },
   { to: '/admin/unidades', label: 'Unidades', icon: BuildingIcon, end: false, roles: ['admin'] },
 ] satisfies Array<{ to: string; label: string; icon: typeof DashboardIcon; end: boolean; roles: UserRole[] }>;
 
@@ -24,6 +26,7 @@ export function AdminShell() {
   const hoverModeRef = useRef(false);
   const closeTimerRef = useRef<number | null>(null);
   const role = user?.role ?? 'client';
+  const taskAttentionCount = useTaskAttentionCount();
   const visibleNavigation = adminNavigation.filter((item) => (item.roles as UserRole[]).includes(role));
 
   useEffect(() => () => {
@@ -83,7 +86,7 @@ export function AdminShell() {
     <>
       <header className="admin-header">
         <div className="admin-brand">
-          {role === 'admin' && <button type="button" className="admin-menu-button" aria-label="Abrir ferramentas administrativas" aria-controls="admin-sidebar" aria-expanded={isSidebarOpen} onMouseEnter={openSidebarByHover} onMouseLeave={scheduleHoverClose} onClick={openSidebarByClick}>
+          {(role === 'admin' || role === 'secretaria') && <button type="button" className="admin-menu-button" aria-label="Abrir ferramentas administrativas" aria-controls="admin-sidebar" aria-expanded={isSidebarOpen} onMouseEnter={openSidebarByHover} onMouseLeave={scheduleHoverClose} onClick={openSidebarByClick}>
             <MenuIcon width="20" height="20" />
           </button>}
           <NavLink to={role === 'secretaria' ? '/admin/painel-do-dia' : '/admin'} className="admin-brand__logo" aria-label="Área administrativa da Connect2Work">
@@ -97,6 +100,7 @@ export function AdminShell() {
             <NavLink key={to} to={to} end={end} className={({ isActive }) => `admin-nav__link${isActive ? ' is-active' : ''}`}>
               <Icon width="17" height="17" />
               <span>{label}</span>
+              {to === '/admin/tarefas' && taskAttentionCount > 0 && <strong className="admin-task-menu-badge" aria-label={`${taskAttentionCount} tarefas vencidas ou vencendo hoje`}>{taskAttentionCount}</strong>}
             </NavLink>
           ))}
         </nav>
@@ -109,7 +113,7 @@ export function AdminShell() {
           </button>
         </div>
       </header>
-      <AdminSidebar open={isSidebarOpen} hoverMode={isSidebarHoverMode} onMouseEnter={cancelScheduledClose} onMouseLeave={scheduleHoverClose} onClose={closeSidebar} role={role} />
+      <AdminSidebar open={isSidebarOpen} hoverMode={isSidebarHoverMode} onMouseEnter={cancelScheduledClose} onMouseLeave={scheduleHoverClose} onClose={closeSidebar} role={role} taskAttentionCount={taskAttentionCount} />
       <Outlet />
     </>
   );

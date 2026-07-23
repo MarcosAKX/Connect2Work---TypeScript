@@ -45,6 +45,7 @@ Fonte: `src/assets/css/base.css`.
 - A análise mensal usa interação progressiva: controles visíveis para período/unidade, legenda acionável, detalhes no hover/foco e drill-down por clique sem depender exclusivamente do mouse.
 - Os temas escuro e claro compartilham tokens semânticos; login, cliente, admin e secretaria usam o mesmo componente de alternância, com dimensões, ícone, estados, rótulo acessível e tooltip idênticos.
 - Nos cabeçalhos autenticados, identidade, tema e saída são ações visualmente separadas e seguem a mesma composição para cliente, admin e secretaria.
+- O quadro de tarefas usa três colunas operacionais, badges semânticos de prioridade, prazos legíveis e alertas de atraso que não dependem apenas da cor.
 - Em telas pequenas, o controle de tema mantém área de toque mínima de 44 px.
 - O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e dourado de marca próprio; não é uma simples inversão do tema escuro.
 - O login é uma exceção deliberada ao tema claro: mantém fundo e card escuros como assinatura da marca, ajustando apenas textos, campos e contraste.

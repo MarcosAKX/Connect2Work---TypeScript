@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
-import { CloseIcon, UsersIcon } from './icons';
+import { CloseIcon, TaskIcon, UsersIcon } from './icons';
 import '../assets/css/admin-sidebar.css';
 import type { UserRole } from '../types/domain';
 
 const administrativeTools = [
   { to: '/admin/usuarios', label: 'Gerenciar Usuários', icon: UsersIcon, roles: ['admin'] },
+  { to: '/admin/tarefas', label: 'Tarefas', icon: TaskIcon, roles: ['admin', 'secretaria'] },
 ] satisfies Array<{ to: string; label: string; icon: typeof UsersIcon; roles: UserRole[] }>;
 
 interface AdminSidebarProps {
@@ -15,9 +16,10 @@ interface AdminSidebarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   role: UserRole;
+  taskAttentionCount: number;
 }
 
-export function AdminSidebar({ open, hoverMode, onClose, onMouseEnter, onMouseLeave, role }: AdminSidebarProps) {
+export function AdminSidebar({ open, hoverMode, onClose, onMouseEnter, onMouseLeave, role, taskAttentionCount }: AdminSidebarProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export function AdminSidebar({ open, hoverMode, onClose, onMouseEnter, onMouseLe
             <NavLink key={to} to={to} className={({ isActive }) => isActive ? 'is-active' : ''} onClick={onClose} tabIndex={open ? 0 : -1}>
               <Icon width="19" height="19" />
               <span>{label}</span>
+              {to === '/admin/tarefas' && taskAttentionCount > 0 && <strong className="admin-task-menu-badge" aria-label={`${taskAttentionCount} tarefas vencidas ou vencendo hoje`}>{taskAttentionCount}</strong>}
             </NavLink>
           ))}
         </nav>

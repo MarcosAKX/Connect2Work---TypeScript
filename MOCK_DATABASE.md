@@ -12,6 +12,7 @@ Persistência provisória no `localStorage`. Implementação em
 - `c2w_mock_bookings` — agendamentos.
 - `c2w_mock_password_resets` — solicitações simuladas de redefinição.
 - `c2w_checkout_draft` — rascunho do checkout no `sessionStorage`.
+- `c2w_mock_tasks` — quadro compartilhado de tarefas administrativas.
 
 ## Entidades
 
@@ -62,6 +63,15 @@ Persistência provisória no `localStorage`. Implementação em
 - Existe apenas durante a sessão e é removido no logout ou após confirmação.
 - Não armazena dados de cartão.
 
+### Task
+
+- `id`, `title`, `description?`, `status`, `assignedTo?`, `priority`, `dueDate?`, `createdBy`, `createdAt`, `updatedAt`.
+- `status`: `todo`, `in_progress` ou `done`.
+- `priority`: `low`, `medium` ou `high`.
+- `assignedTo` aceita somente usuários ativos com papel `admin` ou `secretaria`.
+- O quadro é compartilhado entre toda a equipe; “Minhas tarefas” é apenas um filtro local pelo usuário autenticado.
+- Os seeds incluem tarefas vencida, vencendo hoje, futura e concluída para validação dos estados visuais.
+
 ## Usuários seed
 
 - Perfil cliente:
@@ -83,6 +93,7 @@ Persistência provisória no `localStorage`. Implementação em
 - `CatalogGateway` — leitura e CRUD de unidades e salas, com exclusões protegidas por vínculos.
 - `BookingGateway` — consulta, contagem, criação, confirmação administrativa e cancelamento de cliente ou administrador.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
+- `TaskGateway` — listagem, criação, edição, movimentação entre etapas e exclusão de tarefas.
 
 Firebase ou Supabase deve implementar esses contratos. Componentes não devem
 acessar SDK, banco ou `localStorage` diretamente.
@@ -92,7 +103,7 @@ acessar SDK, banco ou `localStorage` diretamente.
 - `/admin/usuarios` permanece exclusiva para `admin`.
 - O admin pode cadastrar contas e editar nome, e-mail, profissão, telefone, papel, status e definir uma nova senha.
 - Autoalterações perigosas são bloqueadas na interface e no gateway.
-- `secretaria` acessa somente `/admin/agendamentos`.
+- `secretaria` acessa `/admin/agendamentos`, `/admin/painel-do-dia` e `/admin/tarefas`.
 - Dashboard, unidades, salas e usuários permanecem exclusivos de `admin`.
 - A busca operacional retorna somente `id`, `name` e `email` de clientes ativos.
 

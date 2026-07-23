@@ -1,4 +1,4 @@
-import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateManagedUserInput, CreateRoomInput, CreateUnitInput, RegisterInput, Room, Unit, UpdateManagedUserInput, UpdateRoomInput, UpdateUnitInput, User, UserRole } from '../types/domain';
+import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, RegisterInput, Room, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, User, UserRole } from '../types/domain';
 
 export interface AuthGateway {
   getCurrentUser(): User | null;
@@ -50,10 +50,19 @@ export interface CheckoutGateway {
   clearDraft(): void;
 }
 
+export interface TaskGateway {
+  listTasks(): Promise<Task[]>;
+  createTask(input: CreateTaskInput): Promise<Task>;
+  updateTask(id: string, input: UpdateTaskInput): Promise<Task>;
+  updateTaskStatus(id: string, status: TaskStatus): Promise<Task>;
+  deleteTask(id: string): Promise<void>;
+}
+
 export interface AppServices {
   auth: AuthGateway;
   users: UserManagementGateway;
   catalog: CatalogGateway;
   bookings: BookingGateway;
   checkout: CheckoutGateway;
+  tasks: TaskGateway;
 }
