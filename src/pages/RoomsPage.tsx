@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { BackLink } from '../components/BackLink';
+import { ArrowLeftIcon, ArrowRightIcon } from '../components/icons';
 import { services } from '../services';
 import type { Room, Unit } from '../types/domain';
 import { getRoomImages } from '../utils/room-images';
@@ -21,8 +22,8 @@ function RoomCard({ room }: { room: Room }) {
         <span className="room-card__price">{money.format(room.pricePerHour)}/h</span>
         {images.length > 1 && (
           <>
-            <button className="room-card__arrow room-card__arrow--previous" type="button" aria-label={`Imagem anterior de ${room.name}`} onClick={() => setImageIndex((imageIndex - 1 + images.length) % images.length)}>‹</button>
-            <button className="room-card__arrow room-card__arrow--next" type="button" aria-label={`Próxima imagem de ${room.name}`} onClick={() => setImageIndex((imageIndex + 1) % images.length)}>›</button>
+            <button className="room-card__arrow room-card__arrow--previous" type="button" aria-label={`Imagem anterior de ${room.name}`} onClick={() => setImageIndex((imageIndex - 1 + images.length) % images.length)}><ArrowLeftIcon width="18" height="18" /></button>
+            <button className="room-card__arrow room-card__arrow--next" type="button" aria-label={`Próxima imagem de ${room.name}`} onClick={() => setImageIndex((imageIndex + 1) % images.length)}><ArrowRightIcon width="18" height="18" /></button>
             <div className="room-card__gallery-navigation">
               <span aria-live="polite">{imageIndex + 1}/{images.length}</span>
               <div className="room-card__dots" aria-label={`Navegação das imagens de ${room.name}`}>

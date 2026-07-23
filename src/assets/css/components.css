@@ -361,6 +361,28 @@
   max-width: 160px;
 }
 
+.app-theme-toggle {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              background-color var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+
+.app-theme-toggle:hover,
+.app-theme-toggle:focus-visible {
+  border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  color: var(--color-accent);
+}
+
 .app-logout {
   min-height: 34px;
   padding: 0 10px;
@@ -439,6 +461,12 @@
 
   .app-logout {
     min-height: 44px;
+  }
+
+  .app-theme-toggle {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
   }
 
   .app-nav {

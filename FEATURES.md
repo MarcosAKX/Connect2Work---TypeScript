@@ -25,6 +25,9 @@
 - Dashboard com totais de unidades, salas e agendamentos: implementado via gateways.
 - Dashboard administrativo inclui usuários ativos, ocupação atual, pagamentos pendentes, check-ins, agenda com datas, atalhos contextuais e gráfico de reservas ativas/canceladas dos últimos seis meses. Receita permanece indisponível até integração financeira.
 - O gráfico mensal do dashboard permite alternar entre 6/12 meses, filtrar unidade, ocultar séries, consultar valores em tooltip e abrir Agendamentos com mês/unidade já filtrados.
+- O cabeçalho administrativo permite alternar entre modo escuro e claro; a preferência respeita o sistema na primeira visita e fica persistida localmente.
+- O cabeçalho do cliente também permite alternar entre modo escuro e claro, compartilhando a mesma preferência persistida.
+- A tela de login possui seletor próprio de tema, mas preserva sua composição escura de fachada, rede de conexões e dourado mesmo quando o restante do sistema está claro.
 - Agendamentos de hoje e dos próximos sete dias, com identificação do cliente: implementados.
 - Receita total: indisponível até o domínio persistir o valor efetivamente pago.
 - Gestão de unidades com criação, edição, imagem local e exclusão protegida: implementada via `CatalogGateway`.

@@ -25,6 +25,8 @@
 - `src/pages/AdminBookingsPage.tsx` — `/admin/agendamentos`, protegida por perfil; métricas, filtros e ações operacionais.
 - `src/pages/AdminDailyPanelPage.tsx` — `/admin/painel-do-dia`; visão diária e tela inicial da secretaria.
 - `src/pages/AdminUsersPage.tsx` — `/admin/usuarios`, exclusiva de administradores; cadastro, edição, acessos e permissões.
+- `src/state/ThemeContext.tsx` — preferência global de tema, detecção do sistema e persistência local.
+- `src/assets/css/theme.css` — ajustes ópticos e de contraste específicos do modo claro.
 
 ## Componentes
 

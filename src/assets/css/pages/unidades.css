@@ -166,21 +166,26 @@ body {
 }
 
 .unit-card__action {
-  display: flex;
+  display: grid;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
-  border-radius: 50%;
-  background-color: var(--color-accent);
-  color: var(--color-accent-text);
-  transition: background-color var(--duration-fast) var(--ease-out),
+  border: 1px solid #fbbf24;
+  border-radius: var(--radius-sm);
+  background-color: #fbbf24;
+  color: #1a1400;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              background-color var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
               transform var(--duration-fast) var(--ease-out);
 }
 
 .unit-card:hover .unit-card__action {
-  background-color: var(--color-accent-hover);
+  border-color: #fcd34d;
+  background-color: #fcd34d;
+  color: #1a1400;
   transform: translateX(2px);
 }
 

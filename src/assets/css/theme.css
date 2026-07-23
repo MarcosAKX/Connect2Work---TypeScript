@@ -1,0 +1,162 @@
+/* Ajustes ópticos exclusivos do modo claro. */
+html[data-theme='light'] body {
+  background: var(--color-bg);
+}
+
+html[data-theme='light'] .admin-header,
+html[data-theme='light'] .app-header {
+  border-bottom-color: #c4cad4;
+  background-color: color-mix(in srgb, #ffffff 96%, transparent);
+  box-shadow: 0 2px 6px rgb(17 24 39 / 5%);
+}
+
+html[data-theme='light'] .btn-primary {
+  border-color: transparent;
+  background: #e0a800;
+  color: #1a1400;
+  box-shadow: 0 2px 4px rgb(80 55 0 / 14%);
+}
+
+html[data-theme='light'] .btn-primary:hover:not(:disabled) {
+  background: #c99500;
+  box-shadow: 0 3px 6px rgb(80 55 0 / 18%);
+}
+
+html[data-theme='light'] :is(
+  .admin-stat,
+  .admin-schedule,
+  .admin-quick-actions,
+  .admin-monthly-chart,
+  .admin-bookings-stat,
+  .admin-bookings-list,
+  .admin-day-panel,
+  .admin-users-stat,
+  .admin-users-list,
+  .admin-rooms-card,
+  .admin-units-card
+) {
+  border-color: #c8ced8;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgb(17 24 39 / 5%);
+}
+
+html[data-theme='light'] :is(
+  .admin-bookings-filters,
+  .admin-daily-filters,
+  .admin-users-filters,
+  .admin-chart-range
+) {
+  background: #f0f3f7;
+}
+
+html[data-theme='light'] :is(
+  input,
+  select,
+  textarea
+) {
+  border-color: #bfc7d2;
+  background-color: #ffffff;
+  color: var(--color-text-primary);
+}
+
+html[data-theme='light'] :is(input, textarea)::placeholder {
+  color: #697386;
+  opacity: 1;
+}
+
+html[data-theme='light'] :is(
+  .admin-bookings-table,
+  .admin-users-table,
+  .admin-rooms-table,
+  .admin-units-table
+) th {
+  background: #edf1f5;
+  color: #303846;
+}
+
+html[data-theme='light'] :is(
+  .admin-bookings-table,
+  .admin-users-table,
+  .admin-rooms-table,
+  .admin-units-table
+) tbody tr:hover {
+  background: #f6f8fa;
+}
+
+html[data-theme='light'] :is(
+  .admin-bookings-modal,
+  .admin-users-modal,
+  .admin-room-modal,
+  .admin-unit-modal
+) {
+  border-color: #aeb7c4;
+  background: #ffffff;
+  box-shadow: 0 6px 8px rgb(17 24 39 / 12%);
+}
+
+html[data-theme='light'] :is(
+  .admin-sidebar,
+  .admin-chart-tooltip
+) {
+  border-color: #aeb7c4;
+  background: #ffffff;
+}
+
+html[data-theme='light'] .admin-operational-summary {
+  border-color: #c8ced8;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgb(17 24 39 / 5%);
+}
+
+html[data-theme='light'] .admin-chart-track {
+  background: #e4e8ee;
+}
+
+html[data-theme='light'] .admin-chart-track .is-active {
+  background: #c58a00;
+}
+
+html[data-theme='light'] .admin-theme-toggle {
+  background: #ffffff;
+}
+
+html[data-theme='light'] .admin-brand__badge {
+  border-color: #a36d00;
+  background: #fff8dc;
+  color: #774d00;
+}
+
+/* O login preserva sua assinatura escura mesmo quando o restante do sistema está claro. */
+html[data-theme='light'] .login-page {
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-raised: #1a1a1a;
+  --color-border: #262626;
+  --color-border-hover: #363636;
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a3a3a3;
+  --color-text-tertiary: #7d7d7d;
+  --color-accent: #fbbf24;
+  --color-accent-hover: #fcd34d;
+  --color-accent-text: #1a1400;
+  background-color: var(--color-bg);
+}
+
+html[data-theme='light'] .login-card :is(input, .field-input-wrap, .btn-secondary) {
+  border-color: #2f2f2f;
+  background: #0d0d0d;
+  color: #fafafa;
+}
+
+html[data-theme='light'] .login-card input::placeholder {
+  color: #858585;
+}
+
+html[data-theme='light'] .login-card-header h1 {
+  color: #fafafa;
+}
+
+html[data-theme='light'] .login-card .btn-primary {
+  background: linear-gradient(135deg, #fcd34d, #fbbf24 60%);
+  color: #1a1400;
+}

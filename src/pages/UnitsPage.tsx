@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon } from '../components/icons';
+import { ArrowLeftIcon, ArrowRightIcon } from '../components/icons';
 import { services } from '../services';
 import type { Unit } from '../types/domain';
 
@@ -26,7 +26,7 @@ export function UnitsPage() {
               {unit.imageUrl ? <img className="unit-card__image" src={unit.imageUrl} alt="" /> : <><span className="unit-card__glow" /><span className="unit-card__number">{index + 1}</span></>}
             </div>
             <div className="unit-card__body">
-              <div className="unit-card__header"><h2 className="unit-card__name">{unit.name}</h2><span className="unit-card__action" aria-hidden="true">→</span></div>
+              <div className="unit-card__header"><h2 className="unit-card__name">{unit.name}</h2><span className="unit-card__action" aria-hidden="true"><ArrowRightIcon width="17" height="17" /></span></div>
               <p className="unit-card__meta">⌖ {unit.address}</p>
               <p className="unit-card__rooms">⌂ {unit.availableRooms} salas disponíveis</p>
             </div>
