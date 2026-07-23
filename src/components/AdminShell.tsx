@@ -2,10 +2,10 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import logo from '../assets/img/cwlogo.ico';
 import { useAuth } from '../state/AuthContext';
-import { BuildingIcon, CalendarIcon, DashboardIcon, DoorIcon, MenuIcon, MoonIcon, SunIcon, UserIcon } from './icons';
+import { BuildingIcon, CalendarIcon, DashboardIcon, DoorIcon, MenuIcon, UserIcon } from './icons';
 import { AdminSidebar } from './AdminSidebar';
+import { ThemeToggle } from './ThemeToggle';
 import type { UserRole } from '../types/domain';
-import { useTheme } from '../state/ThemeContext';
 
 const adminNavigation = [
   { to: '/admin/agendamentos', label: 'Agendamentos', icon: CalendarIcon, end: false, roles: ['admin', 'secretaria'] },
@@ -17,7 +17,6 @@ const adminNavigation = [
 
 export function AdminShell() {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isLeaving, setIsLeaving] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -104,9 +103,7 @@ export function AdminShell() {
 
         <div className="admin-account">
           <span className="admin-account__identity"><UserIcon width="16" height="16" />{user?.name ?? 'Administrador'}</span>
-          <button type="button" className="admin-theme-toggle" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'} title={theme === 'dark' ? 'Modo escuro — ativar modo claro' : 'Modo claro — ativar modo escuro'}>
-            {theme === 'dark' ? <MoonIcon width="18" height="18" /> : <SunIcon width="18" height="18" />}
-          </button>
+          <ThemeToggle />
           <button type="button" className="admin-account__logout" onClick={handleLogout} disabled={isLeaving}>
             {isLeaving ? 'Saindo…' : 'Sair'}
           </button>

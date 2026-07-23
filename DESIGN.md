@@ -43,7 +43,8 @@ Fonte: `src/assets/css/base.css`.
 - O menu lateral administrativo abre por hover em dispositivos com mouse e preserva abertura por clique em telas touch; o fechamento por hover possui atraso curto para permitir a travessia do cursor.
 - O dashboard administrativo separa cadastros, situação operacional e tendência mensal. Cards estruturais são navegáveis; o gráfico mensal usa volume de reservas reais, sem estimar receita.
 - A análise mensal usa interação progressiva: controles visíveis para período/unidade, legenda acionável, detalhes no hover/foco e drill-down por clique sem depender exclusivamente do mouse.
-- Os temas escuro e claro compartilham tokens semânticos; os controles nos cabeçalhos administrativo e do cliente informam o modo por ícone, rótulo acessível e tooltip, preservando contraste e preferência persistida.
+- Os temas escuro e claro compartilham tokens semânticos; login, cliente, admin e secretaria usam o mesmo componente de alternância, com dimensões, ícone, estados, rótulo acessível e tooltip idênticos.
+- Nos cabeçalhos autenticados, identidade, tema e saída são ações visualmente separadas e seguem a mesma composição para cliente, admin e secretaria.
 - Em telas pequenas, o controle de tema mantém área de toque mínima de 44 px.
 - O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e dourado de marca próprio; não é uma simples inversão do tema escuro.
 - O login é uma exceção deliberada ao tema claro: mantém fundo e card escuros como assinatura da marca, ajustando apenas textos, campos e contraste.

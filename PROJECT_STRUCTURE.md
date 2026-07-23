@@ -36,6 +36,7 @@
 - `src/components/AdminShell.tsx` — header e navegação da área administrativa.
 - `src/components/AdminSidebar.tsx` — drawer das ferramentas administrativas.
 - `src/components/BackLink.tsx` — retorno reutilizável.
+- `src/components/ThemeToggle.tsx` — controle único de tema usado por login, cliente, admin e secretaria.
 - `src/components/NetworkBackground.tsx` — fundo animado das telas públicas.
 - `src/components/icons.tsx` — ícones SVG reutilizáveis.
 

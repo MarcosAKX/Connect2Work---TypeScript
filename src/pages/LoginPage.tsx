@@ -1,13 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, EyeIcon, GoogleIcon, MoonIcon, SunIcon } from '../components/icons';
+import { ArrowLeftIcon, EyeIcon, GoogleIcon } from '../components/icons';
 import { NetworkBackground } from '../components/NetworkBackground';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { useAuth } from '../state/AuthContext';
-import { useTheme } from '../state/ThemeContext';
 
 export function LoginPage() {
   const { user, login, loginWithGoogle } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,9 +50,7 @@ export function LoginPage() {
 
   return (
     <main className="login-page">
-      <button type="button" className="login-theme-toggle" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'} title={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}>
-        {theme === 'dark' ? <MoonIcon width="19" height="19" /> : <SunIcon width="19" height="19" />}
-      </button>
+      <ThemeToggle className="login-theme-toggle" />
       <NetworkBackground />
       <div className="login-glow login-glow--top" aria-hidden="true" />
       <div className="login-glow login-glow--bottom" aria-hidden="true" />
