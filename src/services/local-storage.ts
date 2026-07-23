@@ -1,6 +1,6 @@
 import type { AppServices } from './contracts';
 import { rooms as seedRooms, units as seedUnits } from './mock-data';
-import type { Booking, BookingStatus, CheckoutDraft, CreateRoomInput, Room, StoredUser, Unit, User, UserRole } from '../types/domain';
+import type { Booking, BookingStatus, CheckoutDraft, CreateManagedUserInput, CreateRoomInput, Room, StoredUser, Unit, UpdateManagedUserInput, User, UserRole } from '../types/domain';
 import { canCancelBooking, getEffectiveBookingStatus } from '../utils/booking';
 
 const KEYS = {
@@ -114,6 +114,22 @@ function sanitizeUser({ password: _password, ...user }: StoredUser): User {
   };
 }
 
+function normalizeManagedUserInput(input: CreateManagedUserInput | UpdateManagedUserInput) {
+  const name = input.name.trim().replace(/\s+/g, ' ');
+  const email = input.email.trim().toLowerCase();
+  if (name.length < 2) throw new Error('Informe um nome válido.');
+  if (!email.includes('@') || email.length > 254) throw new Error('Informe um e-mail válido.');
+  if ('password' in input && input.password && input.password.length < 6) throw new Error('A senha deve ter pelo menos 6 caracteres.');
+  return {
+    name,
+    email,
+    profession: input.profession?.trim() || undefined,
+    phone: input.phone?.trim() || undefined,
+    role: normalizeUserRole(input.role),
+    active: input.active,
+  };
+}
+
 export function createLocalStorageServices(now: () => Date = () => new Date()): AppServices {
   ensureSeedUsers();
   ensureSeedUnits();
@@ -199,6 +215,40 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
     users: {
       async listUsers() {
         return readArray<StoredUser>(KEYS.users).map(sanitizeUser);
+      },
+      async createUser(input) {
+        const users = readArray<StoredUser>(KEYS.users);
+        const normalized = normalizeManagedUserInput(input);
+        if (!input.password) throw new Error('Informe uma senha.');
+        if (users.some((user) => user.email.toLowerCase() === normalized.email)) throw new Error('Este e-mail já está cadastrado.');
+        const created: StoredUser = {
+          id: `user-${crypto.randomUUID()}`,
+          ...normalized,
+          password: input.password,
+          createdAt: now().toISOString(),
+        };
+        localStorage.setItem(KEYS.users, JSON.stringify([...users, created]));
+        return sanitizeUser(created);
+      },
+      async updateUser(id, input) {
+        const users = readArray<StoredUser>(KEYS.users);
+        const index = users.findIndex((user) => user.id === id);
+        const current = users[index];
+        if (!current) throw new Error('Usuário não encontrado.');
+        const normalized = normalizeManagedUserInput(input);
+        if (users.some((user) => user.id !== id && user.email.toLowerCase() === normalized.email)) throw new Error('Este e-mail já está cadastrado.');
+        const session = readObject<User>(KEYS.session);
+        if (session?.id === id && normalized.role !== 'admin') throw new Error('Você não pode remover sua própria permissão de administrador.');
+        if (session?.id === id && !normalized.active) throw new Error('Você não pode desativar sua própria conta.');
+        const updated: StoredUser = {
+          ...current,
+          ...normalized,
+          password: input.password || current.password,
+        };
+        users[index] = updated;
+        localStorage.setItem(KEYS.users, JSON.stringify(users));
+        if (session?.id === id) localStorage.setItem(KEYS.session, JSON.stringify(sanitizeUser(updated)));
+        return sanitizeUser(updated);
       },
       async updateUserRole(id, role) {
         const users = readArray<StoredUser>(KEYS.users);

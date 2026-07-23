@@ -36,7 +36,7 @@
 - Notificações de sucesso da gestão de salas desaparecem após cinco segundos.
 - Gestão de agendamentos: implementada em `/admin/agendamentos`, com visão diária padrão, busca, filtros, métricas, receita, confirmação e cancelamento.
 - Status administrativo usa `pending`, `confirmed` e `cancelled`, mantendo separado o status temporal usado pelo cliente.
-- Gestão de usuários: implementada em `/admin/usuarios`, com busca, filtros, estatísticas, edição de permissão e ativação/desativação.
+- Gestão de usuários: implementada em `/admin/usuarios`, com busca, filtros, estatísticas, cadastro e edição completa de dados, permissão, senha e status.
 - Papéis disponíveis: `client`, `admin` e `secretaria`; secretaria acessa exclusivamente `/admin/agendamentos`.
 - Secretaria possui navegação reduzida e é redirecionada ao tentar acessar dashboard, unidades, salas ou usuários.
 - Cancelamento administrativo exige motivo, persistido e consultável na tabela.

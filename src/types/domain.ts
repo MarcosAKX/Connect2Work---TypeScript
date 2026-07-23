@@ -13,6 +13,20 @@ export interface User {
 
 export type ClientSummary = Pick<User, 'id' | 'name' | 'email'>;
 
+export interface CreateManagedUserInput {
+  name: string;
+  email: string;
+  profession?: string;
+  phone?: string;
+  password: string;
+  role: UserRole;
+  active: boolean;
+}
+
+export interface UpdateManagedUserInput extends Omit<CreateManagedUserInput, 'password'> {
+  password?: string;
+}
+
 export interface StoredUser extends User {
   password: string;
 }

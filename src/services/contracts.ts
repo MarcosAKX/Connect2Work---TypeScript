@@ -1,4 +1,4 @@
-import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateRoomInput, CreateUnitInput, RegisterInput, Room, Unit, UpdateRoomInput, UpdateUnitInput, User, UserRole } from '../types/domain';
+import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateManagedUserInput, CreateRoomInput, CreateUnitInput, RegisterInput, Room, Unit, UpdateManagedUserInput, UpdateRoomInput, UpdateUnitInput, User, UserRole } from '../types/domain';
 
 export interface AuthGateway {
   getCurrentUser(): User | null;
@@ -12,6 +12,8 @@ export interface AuthGateway {
 
 export interface UserManagementGateway {
   listUsers(): Promise<User[]>;
+  createUser(input: CreateManagedUserInput): Promise<User>;
+  updateUser(id: string, input: UpdateManagedUserInput): Promise<User>;
   updateUserRole(id: string, role: UserRole): Promise<User>;
   updateUserStatus(id: string, active: boolean): Promise<User>;
   searchClients(query: string): Promise<ClientSummary[]>;

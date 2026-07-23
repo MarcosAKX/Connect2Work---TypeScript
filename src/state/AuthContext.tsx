@@ -7,6 +7,7 @@ interface AuthContextValue {
   isAdmin: boolean;
   login(email: string, password: string): Promise<User>;
   loginWithGoogle(): Promise<User>;
+  refreshUser(): void;
   logout(): Promise<void>;
 }
 
@@ -27,6 +28,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const authenticatedUser = await services.auth.loginWithGoogle();
       setUser(authenticatedUser);
       return authenticatedUser;
+    },
+    refreshUser() {
+      setUser(services.auth.getCurrentUser());
     },
     async logout() {
       await services.auth.logout();

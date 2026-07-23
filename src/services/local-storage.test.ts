@@ -120,6 +120,29 @@ describe('localStorage services', () => {
     await expect(services.auth.login('teste@connect2work.com', '123456')).rejects.toThrow('conta está inativa');
   });
 
+  it('administrador cadastra e edita todos os dados do usuário', async () => {
+    const services = createLocalStorageServices();
+    const created = await services.users.createUser({
+      name: 'Ana Souza', email: 'ANA@EXAMPLE.COM', profession: 'Arquiteta',
+      phone: '(11) 99999-0000', password: 'senha123', role: 'client', active: true,
+    });
+    expect(created).toMatchObject({ name: 'Ana Souza', email: 'ana@example.com', profession: 'Arquiteta', role: 'client' });
+    expect('password' in created).toBe(false);
+
+    const updated = await services.users.updateUser(created.id, {
+      name: 'Ana Souza Lima', email: 'ana.lima@example.com', profession: 'Gerente',
+      phone: '(11) 98888-0000', password: 'novaSenha', role: 'secretaria', active: true,
+    });
+    expect(updated).toMatchObject({
+      name: 'Ana Souza Lima', email: 'ana.lima@example.com', profession: 'Gerente',
+      phone: '(11) 98888-0000', role: 'secretaria', active: true,
+    });
+    await expect(services.auth.login('ana.lima@example.com', 'novaSenha')).resolves.toMatchObject({ id: created.id });
+    await expect(services.users.createUser({
+      name: 'Duplicada', email: 'ana.lima@example.com', password: '123456', role: 'client', active: true,
+    })).rejects.toThrow('já está cadastrado');
+  });
+
   it('protege o administrador contra perda do próprio acesso', async () => {
     const services = createLocalStorageServices();
     await services.auth.login('admin@connect2work.com', 'admin123');

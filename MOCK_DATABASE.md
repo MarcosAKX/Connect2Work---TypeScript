@@ -79,7 +79,7 @@ Persistência provisória no `localStorage`. Implementação em
 ## Contratos
 
 - `AuthGateway` — sessão, consulta segura de usuário por ID, login, Google, cadastro, reset e logout.
-- `UserManagementGateway` — listagem segura e atualização de papel/status, sem exposição de senha.
+- `UserManagementGateway` — listagem segura, cadastro e edição de dados, papel/status e redefinição opcional de senha, sem exposição da senha armazenada.
 - `CatalogGateway` — leitura e CRUD de unidades e salas, com exclusões protegidas por vínculos.
 - `BookingGateway` — consulta, contagem, criação, confirmação administrativa e cancelamento de cliente ou administrador.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
@@ -90,6 +90,7 @@ acessar SDK, banco ou `localStorage` diretamente.
 ## Permissões administrativas
 
 - `/admin/usuarios` permanece exclusiva para `admin`.
+- O admin pode cadastrar contas e editar nome, e-mail, profissão, telefone, papel, status e definir uma nova senha.
 - Autoalterações perigosas são bloqueadas na interface e no gateway.
 - `secretaria` acessa somente `/admin/agendamentos`.
 - Dashboard, unidades, salas e usuários permanecem exclusivos de `admin`.

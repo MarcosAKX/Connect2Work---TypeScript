@@ -34,7 +34,7 @@ destaque dourado reservado para marca, foco, seleção e ações principais.
 
 ## Estado atual
 
-- Gestão de usuários implementada para administradores, com papéis `client`, `admin` e `secretaria`, controle de acesso ativo/inativo e autoproteção administrativa.
+- Gestão de usuários implementada para administradores, com cadastro, edição de dados pessoais e credenciais, papéis `client`, `admin` e `secretaria`, controle de acesso e autoproteção administrativa.
 - Secretaria entra pelo Painel do Dia e acessa também a gestão de agendamentos. O painel concentra chegadas, presença, pagamentos e ações urgentes para uso contínuo no balcão.
 
 - Catálogo inicial de serviços empresariais implementado; consultas comerciais direcionadas ao WhatsApp e contratação digital pendente.

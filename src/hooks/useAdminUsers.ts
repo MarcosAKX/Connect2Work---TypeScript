@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { services } from '../services';
-import type { User, UserRole } from '../types/domain';
+import type { CreateManagedUserInput, UpdateManagedUserInput, User, UserRole } from '../types/domain';
 
 export type UserStatusFilter = 'all' | 'active' | 'inactive';
 export type UserRoleFilter = 'all' | UserRole;
@@ -84,6 +84,38 @@ export function useAdminUsers() {
     }
   }, []);
 
+  const createUser = useCallback(async (input: CreateManagedUserInput) => {
+    setSavingId('new');
+    setError('');
+    try {
+      const created = await services.users.createUser(input);
+      setUsers((current) => [...current, created]);
+      setNotice('Usuário cadastrado com sucesso.');
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível cadastrar o usuário.');
+      return false;
+    } finally {
+      setSavingId(null);
+    }
+  }, []);
+
+  const updateUser = useCallback(async (id: string, input: UpdateManagedUserInput) => {
+    setSavingId(id);
+    setError('');
+    try {
+      const updated = await services.users.updateUser(id, input);
+      setUsers((current) => current.map((user) => user.id === id ? updated : user));
+      setNotice('Usuário atualizado com sucesso.');
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível atualizar o usuário.');
+      return false;
+    } finally {
+      setSavingId(null);
+    }
+  }, []);
+
   const clearFilters = useCallback(() => {
     setSearch('');
     setRoleFilter('all');
@@ -93,6 +125,6 @@ export function useAdminUsers() {
   return {
     users: filteredUsers, stats, search, setSearch, roleFilter, setRoleFilter,
     statusFilter, setStatusFilter, loading, savingId, error, notice,
-    loadUsers, updateRole, updateStatus, clearFilters,
+    loadUsers, createUser, updateUser, updateRole, updateStatus, clearFilters,
   };
 }
