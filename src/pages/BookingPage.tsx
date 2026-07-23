@@ -5,6 +5,7 @@ import { services } from '../services';
 import { useAuth } from '../state/AuthContext';
 import type { Booking, Room, Unit } from '../types/domain';
 import { addHours, formatStorageDate, hourIsUnavailable, HOURS, isPastDate, isSameDate } from '../utils/booking';
+import { getRoomImages } from '../utils/room-images';
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -38,7 +39,11 @@ export function BookingPage() {
     void services.bookings.getAll().then(setBookings);
   }, [roomId]);
 
-  const images = useMemo(() => room ? [...(room.imageUrls ?? []), room.imageUrl].filter((image): image is string => Boolean(image)) : [], [room]);
+  const images = useMemo(() => room ? getRoomImages(room) : [], [room]);
+
+  useEffect(() => {
+    setImageIndex(0);
+  }, [roomId]);
   const finalIndex = endIndex ?? startIndex;
   const duration = startIndex === null || finalIndex === null ? 0 : finalIndex - startIndex + 1;
   const selectedSlot = startIndex === null || finalIndex === null || !HOURS[startIndex] || !HOURS[finalIndex] ? '' : `${HOURS[startIndex]} - ${addHours(HOURS[finalIndex], 1)}`;
@@ -110,11 +115,10 @@ export function BookingPage() {
       <div className="booking-layout">
         <section className="booking-content">
           <article className="room-details card">
-            <div className="room-gallery">
-              {images.length > 1 && <button className="room-gallery__arrow" type="button" aria-label="Imagem anterior" onClick={() => setImageIndex((imageIndex - 1 + images.length) % images.length)}>‹</button>}
-              <div className="room-gallery__image" style={images[imageIndex] ? { backgroundImage: `url(${images[imageIndex]})` } : undefined}><span hidden={images.length > 0}>{room.name}</span></div>
-              {images.length > 1 && <button className="room-gallery__arrow" type="button" aria-label="Próxima imagem" onClick={() => setImageIndex((imageIndex + 1) % images.length)}>›</button>}
-              <div className="room-gallery__dots" aria-label="Navegação das imagens">{images.length ? images.map((_, index) => <button key={index} type="button" className={`room-gallery__dot${index === imageIndex ? ' is-active' : ''}`} aria-label={`Exibir imagem ${index + 1}`} onClick={() => setImageIndex(index)} />) : <span className="room-gallery__dot is-active" />}</div>
+            <div className="room-gallery" aria-label={`Galeria de imagens de ${room.name}`}>
+              {images[imageIndex] ? <img className="room-gallery__image" src={images[imageIndex]} alt={`${room.name}, imagem ${imageIndex + 1} de ${images.length}`} /> : <div className="room-gallery__fallback"><span>{room.name}</span></div>}
+              {images.length > 1 && <><button className="room-gallery__arrow room-gallery__arrow--previous" type="button" aria-label="Imagem anterior" onClick={() => setImageIndex((imageIndex - 1 + images.length) % images.length)}>‹</button><button className="room-gallery__arrow room-gallery__arrow--next" type="button" aria-label="Próxima imagem" onClick={() => setImageIndex((imageIndex + 1) % images.length)}>›</button></>}
+              {images.length > 1 && <div className="room-gallery__navigation"><span aria-live="polite">{imageIndex + 1} / {images.length}</span><div className="room-gallery__dots" aria-label="Navegação das imagens">{images.map((_, index) => <button key={index} type="button" className={`room-gallery__dot${index === imageIndex ? ' is-active' : ''}`} aria-label={`Exibir imagem ${index + 1}`} aria-current={index === imageIndex ? 'true' : undefined} onClick={() => setImageIndex(index)} />)}</div></div>}
             </div>
             <div className="room-details__body"><div className="room-details__heading"><div><h1>{room.name}</h1><div className="room-details__meta"><span>{unit.name}</span><span aria-hidden="true">•</span><span>{room.capacity === 1 ? '1 pessoa' : `${room.capacity} pessoas`}</span></div></div><span className="room-details__price">{currency.format(room.pricePerHour)}/hora</span></div><div className="room-amenities" aria-label="Comodidades da sala">{room.amenities.map((amenity) => <span className="room-amenity" key={amenity}>{amenity}</span>)}</div></div>
           </article>

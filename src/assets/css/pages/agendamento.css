@@ -829,3 +829,103 @@ body {
     transform: none;
   }
 }
+
+/* Galeria consolidada: imagem, controles laterais e navegação não se sobrepõem. */
+.room-gallery {
+  aspect-ratio: 16 / 7;
+  min-height: 270px;
+  isolation: isolate;
+}
+
+.room-gallery__image,
+.room-gallery__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.room-gallery__image {
+  display: block;
+  object-fit: cover;
+  background: none;
+}
+
+.room-gallery__fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 52%, rgba(251, 191, 36, 0.14), transparent 42%),
+    linear-gradient(145deg, #19170f, #111111 70%);
+}
+
+.room-gallery__fallback span {
+  max-width: 80%;
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.room-gallery__arrow--previous { left: var(--space-4); }
+.room-gallery__arrow--next { right: var(--space-4); }
+
+.room-gallery__navigation {
+  position: absolute;
+  bottom: var(--space-3);
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 8px 4px 12px;
+  border-radius: 999px;
+  background-color: rgba(10, 10, 10, 0.82);
+  color: var(--color-text-primary);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
+}
+
+.room-gallery__navigation .room-gallery__dots {
+  position: static;
+  display: flex;
+  gap: 0;
+  transform: none;
+}
+
+.room-gallery__navigation .room-gallery__dot {
+  position: relative;
+  width: 32px;
+  height: 36px;
+  background: transparent;
+}
+
+.room-gallery__navigation .room-gallery__dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-text-tertiary);
+  transform: translate(-50%, -50%);
+}
+
+.room-gallery__navigation .room-gallery__dot.is-active::after {
+  background-color: var(--color-accent);
+}
+
+@media (max-width: 760px) {
+  .room-gallery {
+    aspect-ratio: 4 / 3;
+    min-height: 220px;
+  }
+
+  .room-gallery__arrow--previous { left: var(--space-3); }
+  .room-gallery__arrow--next { right: var(--space-3); }
+}

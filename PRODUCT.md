@@ -34,11 +34,14 @@ destaque dourado reservado para marca, foco, seleção e ações principais.
 
 ## Estado atual
 
+- Gestão de usuários implementada para administradores, com papéis `client`, `admin` e `secretaria`, controle de acesso ativo/inativo e autoproteção administrativa.
+- O papel `secretaria` existe no domínio, mas suas permissões de rota ainda aguardam definição de produto.
+
 - Catálogo inicial de serviços empresariais implementado; consultas comerciais direcionadas ao WhatsApp e contratação digital pendente.
 
 - Frontend React completo.
 - Persistência local provisória.
 - Checkout e pagamento demonstrativo implementados; gateway real ainda pendente.
 - Login Google aguarda escolha do backend.
-- Administração de unidades, salas e imagens planejada.
-- Dashboard administrativo e gestão de unidades implementados; gestão de salas e agendamentos pendente.
+- Administração de unidades, salas e imagens locais implementada.
+- Dashboard administrativo e gestão de unidades, salas e agendamentos implementados.

@@ -3,8 +3,41 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { BackLink } from '../components/BackLink';
 import { services } from '../services';
 import type { Room, Unit } from '../types/domain';
+import { getRoomImages } from '../utils/room-images';
 
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+function RoomCard({ room }: { room: Room }) {
+  const images = getRoomImages(room);
+  const [imageIndex, setImageIndex] = useState(0);
+  const bookingUrl = `/agendamento?sala=${encodeURIComponent(room.id)}`;
+  const currentImage = images[imageIndex];
+
+  return (
+    <article className="room-card card">
+      <div className="room-card__visual">
+        {currentImage ? <img className="room-card__image" src={currentImage} alt={`${room.name}, imagem ${imageIndex + 1} de ${images.length}`} /> : <span className="room-card__name-fallback">{room.name}</span>}
+        <Link className="room-card__visual-link" to={bookingUrl} aria-label={`Ver detalhes e agendar ${room.name}`} />
+        <span className="room-card__price">{money.format(room.pricePerHour)}/h</span>
+        {images.length > 1 && (
+          <>
+            <button className="room-card__arrow room-card__arrow--previous" type="button" aria-label={`Imagem anterior de ${room.name}`} onClick={() => setImageIndex((imageIndex - 1 + images.length) % images.length)}>‹</button>
+            <button className="room-card__arrow room-card__arrow--next" type="button" aria-label={`Próxima imagem de ${room.name}`} onClick={() => setImageIndex((imageIndex + 1) % images.length)}>›</button>
+            <div className="room-card__gallery-navigation">
+              <span aria-live="polite">{imageIndex + 1}/{images.length}</span>
+              <div className="room-card__dots" aria-label={`Navegação das imagens de ${room.name}`}>
+                {images.map((_, index) => <button key={index} type="button" className={`room-card__dot${index === imageIndex ? ' is-active' : ''}`} aria-label={`Exibir imagem ${index + 1} de ${room.name}`} aria-current={index === imageIndex ? 'true' : undefined} onClick={() => setImageIndex(index)} />)}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <Link to={bookingUrl} className="room-card__body" aria-label={`Agendar a sala ${room.name}`}>
+        <h2 className="room-card__title">{room.name}</h2><p className="room-card__capacity">{room.capacity} pessoas</p><div className="room-card__tags">{room.amenities.slice(0, 3).map((amenity) => <span className="room-card__tag" key={amenity}>{amenity}</span>)}</div>
+      </Link>
+    </article>
+  );
+}
 
 export function RoomsPage() {
   const [params] = useSearchParams();
@@ -35,12 +68,7 @@ export function RoomsPage() {
       </article>
       <section className="rooms-hero"><h1>Escolha uma <span className="text-accent">Sala</span></h1><p className="rooms-subtitle">Selecione a sala ideal para sua reserva</p></section>
       <section className="rooms-grid" aria-label="Salas disponíveis">
-        {rooms.map((room) => (
-          <Link key={room.id} to={`/agendamento?sala=${encodeURIComponent(room.id)}`} className="room-card card" aria-label={`Agendar a sala ${room.name}`}>
-            <div className="room-card__visual" aria-hidden="true"><span className="room-card__name-fallback">{room.name}</span><span className="room-card__price">{money.format(room.pricePerHour)}/h</span></div>
-            <div className="room-card__body"><h2 className="room-card__title">{room.name}</h2><p className="room-card__capacity">{room.capacity} pessoas</p><div className="room-card__tags">{room.amenities.slice(0, 3).map((amenity) => <span className="room-card__tag" key={amenity}>{amenity}</span>)}</div></div>
-          </Link>
-        ))}
+        {rooms.map((room) => <RoomCard key={room.id} room={room} />)}
       </section>
     </main>
   );

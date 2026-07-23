@@ -3,6 +3,9 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AdminUnitsPage } from './pages/AdminUnitsPage';
+import { AdminRoomsPage } from './pages/AdminRoomsPage';
+import { AdminBookingsPage } from './pages/AdminBookingsPage';
+import { AdminUsersPage } from './pages/AdminUsersPage';
 import { BookingsPage } from './pages/BookingsPage';
 import { BookingPage } from './pages/BookingPage';
 import { LoginPage } from './pages/LoginPage';
@@ -33,7 +36,9 @@ export function App() {
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
         <Route path="/admin/unidades" element={<AdminUnitsPage />} />
-        {/* Futuras rotas: /admin/salas e /admin/agendamentos. */}
+        <Route path="/admin/salas" element={<AdminRoomsPage />} />
+        <Route path="/admin/agendamentos" element={<AdminBookingsPage />} />
+        <Route path="/admin/usuarios" element={<AdminUsersPage />} />
         <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
       </Route>
       <Route path="/" element={<Navigate to="/unidades" replace />} />

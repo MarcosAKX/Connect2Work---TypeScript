@@ -1,11 +1,12 @@
 import type { AppServices } from './contracts';
-import { rooms, units as seedUnits } from './mock-data';
-import type { Booking, BookingStatus, CheckoutDraft, StoredUser, Unit, User } from '../types/domain';
+import { rooms as seedRooms, units as seedUnits } from './mock-data';
+import type { Booking, BookingStatus, CheckoutDraft, CreateRoomInput, Room, StoredUser, Unit, User, UserRole } from '../types/domain';
 import { canCancelBooking, getEffectiveBookingStatus } from '../utils/booking';
 
 const KEYS = {
   users: 'c2w_mock_users',
   units: 'c2w_mock_units',
+  rooms: 'c2w_mock_rooms',
   session: 'c2w_mock_session',
   bookings: 'c2w_mock_bookings',
   resets: 'c2w_mock_password_resets',
@@ -18,6 +19,7 @@ const seedUser: StoredUser = {
   email: 'teste@connect2work.com',
   password: '123456',
   role: 'client',
+  active: true,
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
@@ -27,6 +29,7 @@ const seedAdmin: StoredUser = {
   email: 'admin@connect2work.com',
   password: 'admin123',
   role: 'admin',
+  active: true,
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
@@ -49,11 +52,15 @@ function readObject<T>(key: string): T | null {
 }
 
 function ensureSeedUsers() {
-  const users = readArray<StoredUser>(KEYS.users);
+  const users = readArray<StoredUser>(KEYS.users).map((user) => ({
+    ...user,
+    role: normalizeUserRole(user.role),
+    active: user.active !== false,
+  }));
   const seeds = [seedUser, seedAdmin].filter(
     (seed) => !users.some(({ id }) => id === seed.id),
   );
-  if (seeds.length > 0) localStorage.setItem(KEYS.users, JSON.stringify([...seeds, ...users]));
+  localStorage.setItem(KEYS.users, JSON.stringify([...seeds, ...users]));
 }
 
 function ensureSeedUnits() {
@@ -62,19 +69,61 @@ function ensureSeedUnits() {
   }
 }
 
+function ensureSeedRooms() {
+  if (localStorage.getItem(KEYS.rooms) === null) {
+    localStorage.setItem(KEYS.rooms, JSON.stringify(seedRooms));
+  }
+}
+
+function normalizeRoomInput(input: CreateRoomInput) {
+  const imageUrls = (input.imageUrls ?? []).filter(Boolean);
+  const normalizedImages = imageUrls.length > 0
+    ? imageUrls
+    : input.imageUrl ? [input.imageUrl] : [];
+  return {
+    unitId: input.unitId,
+    name: input.name.trim(),
+    capacity: input.capacity,
+    pricePerHour: input.pricePerHour,
+    amenities: input.amenities.map((amenity) => amenity.trim()).filter(Boolean),
+    imageUrl: normalizedImages[0] ?? null,
+    imageUrls: normalizedImages,
+  };
+}
+
+function normalizeUserRole(role: unknown): UserRole {
+  if (role === 'admin' || role === 'secretaria') return role;
+  return 'client';
+}
+
 function sanitizeUser({ password: _password, ...user }: StoredUser): User {
-  return { ...user, role: user.role === 'admin' ? 'admin' : 'client' };
+  return {
+    ...user,
+    role: normalizeUserRole(user.role),
+    active: user.active !== false,
+  };
 }
 
 export function createLocalStorageServices(now: () => Date = () => new Date()): AppServices {
   ensureSeedUsers();
   ensureSeedUnits();
+  ensureSeedRooms();
 
   return {
     auth: {
       getCurrentUser() {
         const session = readObject<User>(KEYS.session);
-        return session ? { ...session, role: session.role === 'admin' ? 'admin' : 'client' } : null;
+        if (!session) return null;
+        const storedUser = readArray<StoredUser>(KEYS.users).find(({ id }) => id === session.id);
+        if (storedUser?.active === false) {
+          localStorage.removeItem(KEYS.session);
+          return null;
+        }
+        return {
+          ...session,
+          role: normalizeUserRole(session.role),
+          active: session.active !== false,
+        };
       },
       async getUserById(id) {
         const user = readArray<StoredUser>(KEYS.users).find((candidate) => candidate.id === id);
@@ -89,6 +138,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         if (!user || user.password !== password) {
           throw new Error('E-mail ou senha incorretos.');
         }
+        if (!user.active) throw new Error('Esta conta está inativa. Procure um administrador.');
 
         const session = sanitizeUser(user);
         localStorage.setItem(KEYS.session, JSON.stringify(session));
@@ -113,6 +163,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           phone: input.phone.trim(),
           password: input.password,
           role: 'client',
+          active: true,
           createdAt: now().toISOString(),
         };
 
@@ -133,6 +184,39 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
       async logout() {
         localStorage.removeItem(KEYS.session);
         sessionStorage.removeItem(KEYS.checkout);
+      },
+    },
+    users: {
+      async listUsers() {
+        return readArray<StoredUser>(KEYS.users).map(sanitizeUser);
+      },
+      async updateUserRole(id, role) {
+        const users = readArray<StoredUser>(KEYS.users);
+        const index = users.findIndex((user) => user.id === id);
+        const current = users[index];
+        if (!current) throw new Error('Usuário não encontrado.');
+        const session = readObject<User>(KEYS.session);
+        if (session?.id === id && role !== 'admin') {
+          throw new Error('Você não pode remover sua própria permissão de administrador.');
+        }
+        const updated: StoredUser = { ...current, role };
+        users[index] = updated;
+        localStorage.setItem(KEYS.users, JSON.stringify(users));
+        return sanitizeUser(updated);
+      },
+      async updateUserStatus(id, active) {
+        const users = readArray<StoredUser>(KEYS.users);
+        const index = users.findIndex((user) => user.id === id);
+        const current = users[index];
+        if (!current) throw new Error('Usuário não encontrado.');
+        const session = readObject<User>(KEYS.session);
+        if (session?.id === id && !active) {
+          throw new Error('Você não pode desativar sua própria conta.');
+        }
+        const updated: StoredUser = { ...current, active };
+        users[index] = updated;
+        localStorage.setItem(KEYS.users, JSON.stringify(users));
+        return sanitizeUser(updated);
       },
     },
     catalog: {
@@ -179,17 +263,53 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         // Regra deliberada: impedir exclusão enquanto houver salas vinculadas.
         // Se o produto adotar exclusão em cascata, este bloqueio deve ser substituído
         // pela remoção atômica das salas e pela validação dos agendamentos relacionados.
-        if (rooms.some((room) => room.unitId === id)) {
+        if (readArray<Room>(KEYS.rooms).some((room) => room.unitId === id)) {
           throw new Error(`Não é possível excluir ${unit.name} enquanto houver salas vinculadas.`);
         }
 
         localStorage.setItem(KEYS.units, JSON.stringify(existing.filter((candidate) => candidate.id !== id)));
       },
       async getRoomsByUnitId(unitId) {
-        return rooms.filter((room) => room.unitId === unitId);
+        return readArray<Room>(KEYS.rooms).filter((room) => room.unitId === unitId);
       },
       async getRoomById(id) {
-        return rooms.find((room) => room.id === id) ?? null;
+        return readArray<Room>(KEYS.rooms).find((room) => room.id === id) ?? null;
+      },
+      async createRoom(input) {
+        const units = readArray<Unit>(KEYS.units);
+        if (!units.some((unit) => unit.id === input.unitId)) throw new Error('Unidade não encontrada.');
+        const existing = readArray<Room>(KEYS.rooms);
+        const room: Room = {
+          id: `room-${Date.now()}-${crypto.randomUUID()}`,
+          ...normalizeRoomInput(input),
+        };
+        localStorage.setItem(KEYS.rooms, JSON.stringify([...existing, room]));
+        return room;
+      },
+      async updateRoom(id, input) {
+        const existing = readArray<Room>(KEYS.rooms);
+        const index = existing.findIndex((room) => room.id === id);
+        const current = existing[index];
+        if (!current) throw new Error('Sala não encontrada.');
+        if (!readArray<Unit>(KEYS.units).some((unit) => unit.id === input.unitId)) {
+          throw new Error('Unidade não encontrada.');
+        }
+        const updated: Room = { ...current, ...normalizeRoomInput(input) };
+        existing[index] = updated;
+        localStorage.setItem(KEYS.rooms, JSON.stringify(existing));
+        return updated;
+      },
+      async deleteRoom(id) {
+        const existing = readArray<Room>(KEYS.rooms);
+        const room = existing.find((candidate) => candidate.id === id);
+        if (!room) throw new Error('Sala não encontrada.');
+
+        // Regra deliberada: impedir exclusão de sala com agendamentos vinculados.
+        // Preserva o histórico; se o produto adotar arquivamento, trocar esta remoção por status inativo.
+        if (readArray<Booking>(KEYS.bookings).some((booking) => booking.roomId === id)) {
+          throw new Error(`Não é possível excluir ${room.name} enquanto houver agendamentos vinculados.`);
+        }
+        localStorage.setItem(KEYS.rooms, JSON.stringify(existing.filter((candidate) => candidate.id !== id)));
       },
     },
     bookings: {
@@ -221,6 +341,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const existing = readArray<Booking>(KEYS.bookings);
         const booking: Booking = {
           ...input,
+          adminStatus: input.adminStatus ?? (input.status === 'cancelled' ? 'cancelled' : 'confirmed'),
           id: `booking-${Date.now()}-${crypto.randomUUID()}`,
           createdAt: now().toISOString(),
         };
@@ -238,7 +359,33 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         if (!canCancelBooking(booking, current)) {
           throw new Error('O cancelamento só é permitido com pelo menos 24 horas de antecedência.');
         }
-        const cancelled: Booking = { ...booking, status: 'cancelled', cancelledAt: current.toISOString() };
+        const cancelled: Booking = { ...booking, status: 'cancelled', adminStatus: 'cancelled', cancelledAt: current.toISOString() };
+        existing[index] = cancelled;
+        localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        return cancelled;
+      },
+      async confirmBooking(bookingId) {
+        const existing = readArray<Booking>(KEYS.bookings);
+        const index = existing.findIndex((booking) => booking.id === bookingId);
+        const booking = existing[index];
+        if (!booking) throw new Error('Agendamento não encontrado.');
+        if (booking.status === 'cancelled' || booking.adminStatus === 'cancelled') {
+          throw new Error('Agendamento cancelado não pode ser confirmado.');
+        }
+        const confirmed: Booking = { ...booking, adminStatus: 'confirmed' };
+        existing[index] = confirmed;
+        localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        return confirmed;
+      },
+      async cancelBookingAsAdmin(bookingId) {
+        const existing = readArray<Booking>(KEYS.bookings);
+        const index = existing.findIndex((booking) => booking.id === bookingId);
+        const booking = existing[index];
+        if (!booking) throw new Error('Agendamento não encontrado.');
+        if (booking.status === 'cancelled' || booking.adminStatus === 'cancelled') {
+          throw new Error('Agendamento já foi cancelado.');
+        }
+        const cancelled: Booking = { ...booking, status: 'cancelled', adminStatus: 'cancelled', cancelledAt: now().toISOString() };
         existing[index] = cancelled;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
         return cancelled;

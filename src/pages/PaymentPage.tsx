@@ -95,6 +95,8 @@ export function PaymentPage() {
         date: activeDraft.date,
         timeSlot: activeDraft.timeSlot,
         status: 'upcoming',
+        adminStatus: 'confirmed',
+        total: activeDraft.total,
       });
       services.checkout.clearDraft();
       navigate('/pagamento-confirmado', {

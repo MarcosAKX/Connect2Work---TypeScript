@@ -34,8 +34,14 @@ Fonte: `src/assets/css/base.css`.
 - Serviços usa três planos comparáveis; apenas o plano recomendado recebe destaque dourado.
 - Dashboard administrativo usa métricas compactas, dois painéis operacionais e uma faixa de ações rápidas; azul e verde têm uso semântico.
 - Gestão administrativa usa tabelas no desktop, linhas reordenadas no celular e modais nativos para formulários e confirmações destrutivas.
+- Gestão de salas usa filtro por unidade, tags compactas para comodidades e alvos interativos de pelo menos 44 px.
+- Cada card de sala possui galeria própria com setas, contador e indicadores; a tela de agendamento mantém galeria ampliada com os mesmos controles.
+- Gestão de agendamentos abre filtrada no dia atual, destaca pendências por fundo e mantém busca, status, unidade e datas em uma barra operacional compacta.
 
 ## Acessibilidade
+
+- Ferramentas administrativas secundárias usam drawer lateral com overlay, fechamento por clique externo, botão e tecla Esc.
+- Gestão de usuários mantém badges semânticos, filtros compactos, tabela responsiva e confirmações em modal.
 
 - Foco visível em todos os controles.
 - Alvo mínimo de 44px em celular.

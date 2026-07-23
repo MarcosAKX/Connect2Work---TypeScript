@@ -7,6 +7,7 @@ Persistência provisória no `localStorage`. Implementação em
 
 - `c2w_mock_users` — usuários cadastrados.
 - `c2w_mock_units` — unidades cadastradas e editadas pelo administrador.
+- `c2w_mock_rooms` — salas cadastradas e editadas pelo administrador.
 - `c2w_mock_session` — usuário autenticado, sem senha.
 - `c2w_mock_bookings` — agendamentos.
 - `c2w_mock_password_resets` — solicitações simuladas de redefinição.
@@ -16,8 +17,9 @@ Persistência provisória no `localStorage`. Implementação em
 
 ### User
 
-- `id`, `name`, `email`, `role`, `createdAt`.
-- `role`: `client` ou `admin`; registros antigos sem o campo são tratados como `client`.
+- `id`, `name`, `email`, `role`, `active`, `createdAt`.
+- `role`: `client`, `admin` ou `secretaria`; registros antigos sem o campo são tratados como `client`.
+- `active`: controla acesso ao sistema; registros antigos sem o campo são migrados como ativos.
 - `profession` e `phone` opcionais.
 - `StoredUser` acrescenta `password` somente no mock.
 
@@ -31,12 +33,16 @@ Persistência provisória no `localStorage`. Implementação em
 ### Room
 
 - `id`, `unitId`, `name`, `capacity`, `pricePerHour`, `amenities`, `imageUrl`, `imageUrls?`.
-- Dados estáticos em `src/services/mock-data.ts`.
+- Seed inicial em `src/services/mock-data.ts` e persistência administrativa em `c2w_mock_rooms`.
+- Imagens podem ser caminhos, URLs ou base64; `imageUrl` mantém a imagem principal e `imageUrls` a galeria.
+- Exclusão é bloqueada enquanto houver registros `Booking` vinculados.
 
 ### Booking
 
-- `id`, `userId`, `unitId`, `roomId`, `date`, `timeSlot`, `status`, `createdAt`, `cancelledAt?`.
+- `id`, `userId`, `unitId`, `roomId`, `date`, `timeSlot`, `status`, `adminStatus?`, `total?`, `createdAt`, `cancelledAt?`.
 - Status: `upcoming`, `past` ou `cancelled`.
+- Status administrativo: `pending`, `confirmed` ou `cancelled`; registros antigos ativos são tratados como confirmados.
+- `total` guarda o valor final pago; registros antigos têm valor derivado da duração e do preço atual da sala.
 - Status não cancelados são recalculados pela data/hora atual durante a leitura.
 - Cancelamento exige o mesmo `userId` e pelo menos 24 horas até o início.
 
@@ -64,12 +70,19 @@ Persistência provisória no `localStorage`. Implementação em
 ## Contratos
 
 - `AuthGateway` — sessão, consulta segura de usuário por ID, login, Google, cadastro, reset e logout.
-- `CatalogGateway` — leitura de unidades e salas, além de criação, edição e exclusão protegida de unidades.
-- `BookingGateway` — consulta, contagem, criação e cancelamento.
+- `UserManagementGateway` — listagem segura e atualização de papel/status, sem exposição de senha.
+- `CatalogGateway` — leitura e CRUD de unidades e salas, com exclusões protegidas por vínculos.
+- `BookingGateway` — consulta, contagem, criação, confirmação administrativa e cancelamento de cliente ou administrador.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
 
 Firebase ou Supabase deve implementar esses contratos. Componentes não devem
 acessar SDK, banco ou `localStorage` diretamente.
+
+## Permissões administrativas
+
+- `/admin/usuarios` permanece exclusiva para `admin`.
+- Autoalterações perigosas são bloqueadas na interface e no gateway.
+- TODO: definir quais rotas e ações serão liberadas para `secretaria`.
 
 ## Obrigatório ao trocar o mock
 

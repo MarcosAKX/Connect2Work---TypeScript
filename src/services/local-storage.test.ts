@@ -80,6 +80,25 @@ describe('localStorage services', () => {
     await expect(services.catalog.deleteUnit('unit-1')).rejects.toThrow('salas vinculadas');
   });
 
+  it('cria, edita e exclui sala sem agendamentos vinculados', async () => {
+    const services = createLocalStorageServices();
+    const created = await services.catalog.createRoom({
+      unitId: 'unit-1', name: '  Sala Nova  ', capacity: 7, pricePerHour: 59.9,
+      amenities: [' Wi-Fi ', 'TV'], imageUrl: '/images/nova.jpg',
+      imageUrls: ['/images/nova.jpg', '/images/nova-2.jpg'],
+    });
+    expect(created).toMatchObject({ name: 'Sala Nova', capacity: 7, amenities: ['Wi-Fi', 'TV'], imageUrl: '/images/nova.jpg' });
+    await expect(services.catalog.updateRoom(created.id, { ...created, name: 'Sala Nova Premium', capacity: 9 })).resolves.toMatchObject({ name: 'Sala Nova Premium', capacity: 9 });
+    await expect(services.catalog.deleteRoom(created.id)).resolves.toBeUndefined();
+    await expect(services.catalog.getRoomById(created.id)).resolves.toBeNull();
+  });
+
+  it('impede excluir sala com agendamento vinculado', async () => {
+    const services = createLocalStorageServices();
+    await services.bookings.create({ userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10', timeSlot: '09:00 - 10:00', status: 'upcoming' });
+    await expect(services.catalog.deleteRoom('room-1-1')).rejects.toThrow('agendamentos vinculados');
+  });
+
   it('cadastra usuário e rejeita e-mail duplicado', async () => {
     const services = createLocalStorageServices();
     const input = { name: 'Maria Silva', email: 'maria@example.com', profession: 'Designer', phone: '(11) 98765-4321', password: '123456' };
@@ -88,11 +107,42 @@ describe('localStorage services', () => {
     await expect(services.auth.register(input)).rejects.toThrow('já está cadastrado');
   });
 
+  it('lista usuários sem senha e permite gerenciar papel e acesso', async () => {
+    const services = createLocalStorageServices();
+    const users = await services.users.listUsers();
+    expect(users).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'seed-usuario-teste', role: 'client', active: true }),
+      expect.objectContaining({ id: 'seed-administrador', role: 'admin', active: true }),
+    ]));
+    expect(users.some((user) => 'password' in user)).toBe(false);
+    await expect(services.users.updateUserRole('seed-usuario-teste', 'secretaria')).resolves.toMatchObject({ role: 'secretaria' });
+    await expect(services.users.updateUserStatus('seed-usuario-teste', false)).resolves.toMatchObject({ active: false });
+    await expect(services.auth.login('teste@connect2work.com', '123456')).rejects.toThrow('conta está inativa');
+  });
+
+  it('protege o administrador contra perda do próprio acesso', async () => {
+    const services = createLocalStorageServices();
+    await services.auth.login('admin@connect2work.com', 'admin123');
+    await expect(services.users.updateUserRole('seed-administrador', 'client')).rejects.toThrow('própria permissão');
+    await expect(services.users.updateUserStatus('seed-administrador', false)).rejects.toThrow('própria conta');
+  });
+
   it('persiste reserva vinculada ao usuário', async () => {
     const services = createLocalStorageServices();
     const booking = await services.bookings.create({ userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10', timeSlot: '09:00 - 11:00', status: 'upcoming' });
     expect(booking.id).toMatch(/^booking-/);
     await expect(services.bookings.getByUserAndStatus('user-1', 'upcoming')).resolves.toHaveLength(1);
+  });
+
+  it('administrador confirma e cancela agendamentos', async () => {
+    const services = createLocalStorageServices();
+    const booking = await services.bookings.create({
+      userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10',
+      timeSlot: '09:00 - 11:00', status: 'upcoming', adminStatus: 'pending', total: 160,
+    });
+    await expect(services.bookings.confirmBooking(booking.id)).resolves.toMatchObject({ adminStatus: 'confirmed', total: 160 });
+    await expect(services.bookings.cancelBookingAsAdmin(booking.id)).resolves.toMatchObject({ status: 'cancelled', adminStatus: 'cancelled' });
+    await expect(services.bookings.confirmBooking(booking.id)).rejects.toThrow('não pode ser confirmado');
   });
 
   it('cancela somente a reserva do usuário com pelo menos 24 horas', async () => {

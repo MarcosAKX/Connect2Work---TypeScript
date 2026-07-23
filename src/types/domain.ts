@@ -1,10 +1,11 @@
-export type UserRole = 'client' | 'admin';
+export type UserRole = 'client' | 'admin' | 'secretaria';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  active: boolean;
   createdAt: string;
   profession?: string;
   phone?: string;
@@ -51,7 +52,20 @@ export interface Room {
   imageUrls?: string[];
 }
 
+export interface CreateRoomInput {
+  unitId: string;
+  name: string;
+  capacity: number;
+  pricePerHour: number;
+  amenities: string[];
+  imageUrl: string | null;
+  imageUrls?: string[];
+}
+
+export type UpdateRoomInput = CreateRoomInput;
+
 export type BookingStatus = 'upcoming' | 'past' | 'cancelled';
+export type BookingAdminStatus = 'pending' | 'confirmed' | 'cancelled';
 
 export interface Booking {
   id: string;
@@ -61,6 +75,8 @@ export interface Booking {
   date: string;
   timeSlot: string;
   status: BookingStatus;
+  adminStatus?: BookingAdminStatus;
+  total?: number;
   createdAt: string;
   cancelledAt?: string;
 }

@@ -21,6 +21,9 @@
 - `src/pages/ServicesPage.tsx` — `/servicos`, protegida; endereço fiscal, endereço comercial, plano de horas e consulta pelo WhatsApp.
 - `src/pages/AdminDashboardPage.tsx` — `/admin`, protegida por perfil; resumo administrativo e agenda.
 - `src/pages/AdminUnitsPage.tsx` — `/admin/unidades`, protegida por perfil; CRUD de unidades e upload local.
+- `src/pages/AdminRoomsPage.tsx` — `/admin/salas`, protegida por perfil; CRUD, filtro, imagens e comodidades.
+- `src/pages/AdminBookingsPage.tsx` — `/admin/agendamentos`, protegida por perfil; métricas, filtros e ações operacionais.
+- `src/pages/AdminUsersPage.tsx` — `/admin/usuarios`, exclusiva de administradores; acessos e permissões.
 
 ## Componentes
 
@@ -28,6 +31,7 @@
 - `src/components/ProtectedRoute.tsx` — exige sessão.
 - `src/components/AdminRoute.tsx` — exige sessão com perfil `admin`.
 - `src/components/AdminShell.tsx` — header e navegação da área administrativa.
+- `src/components/AdminSidebar.tsx` — drawer das ferramentas administrativas.
 - `src/components/BackLink.tsx` — retorno reutilizável.
 - `src/components/NetworkBackground.tsx` — fundo animado das telas públicas.
 - `src/components/icons.tsx` — ícones SVG reutilizáveis.
@@ -43,8 +47,12 @@
 - `src/state/AuthContext.tsx` — estado da sessão para React.
 - `src/hooks/useAdminDashboard.ts` — composição dos dados administrativos via gateways.
 - `src/hooks/useAdminUnits.ts` — listagem, contagem de salas e mutações administrativas de unidades.
+- `src/hooks/useAdminRooms.ts` — listagem filtrada e mutações administrativas de salas.
+- `src/hooks/useAdminBookings.ts` — enriquecimento, filtros, estatísticas e ações administrativas de agendamentos.
+- `src/hooks/useAdminUsers.ts` — listagem, filtros, métricas e mutações administrativas de usuários.
 - `src/utils/validators.ts` — validações e máscara de telefone.
 - `src/utils/booking.ts` — datas, horários, conflitos, status automático e janela de cancelamento.
+- `src/utils/room-images.ts` — normalização e remoção de imagens duplicadas da galeria de salas.
 
 ## Visual
 
@@ -57,6 +65,10 @@
 - `src/assets/css/pages/servicos.css` — comparação de serviços e etapas de contratação.
 - `src/assets/css/pages/admin-dashboard.css` — shell, métricas, agenda e responsividade administrativa.
 - `src/assets/css/pages/admin-units.css` — tabela, modais, upload e responsividade da gestão de unidades.
+- `src/assets/css/pages/admin-rooms.css` — tabela, filtro, modal e responsividade da gestão de salas.
+- `src/assets/css/pages/admin-bookings.css` — painel diário, filtros, tabela e modal da gestão de agendamentos.
+- `src/assets/css/pages/admin-users.css` — painel responsivo de usuários, filtros, tabela e modais.
+- `src/assets/css/admin-sidebar.css` — drawer administrativo, overlay e estados ativos.
 - `src/assets/img/` — imagens próprias da aplicação, incluindo a logo compacta `cwlogo.ico`.
 
 ## Testes

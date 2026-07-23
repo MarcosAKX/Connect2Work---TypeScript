@@ -1,4 +1,4 @@
-import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, CreateBookingInput, CreateUnitInput, RegisterInput, Room, Unit, UpdateUnitInput, User } from '../types/domain';
+import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, CreateBookingInput, CreateRoomInput, CreateUnitInput, RegisterInput, Room, Unit, UpdateRoomInput, UpdateUnitInput, User, UserRole } from '../types/domain';
 
 export interface AuthGateway {
   getCurrentUser(): User | null;
@@ -10,6 +10,12 @@ export interface AuthGateway {
   logout(): Promise<void>;
 }
 
+export interface UserManagementGateway {
+  listUsers(): Promise<User[]>;
+  updateUserRole(id: string, role: UserRole): Promise<User>;
+  updateUserStatus(id: string, active: boolean): Promise<User>;
+}
+
 export interface CatalogGateway {
   getUnits(): Promise<Unit[]>;
   getUnitById(id: string): Promise<Unit | null>;
@@ -18,6 +24,9 @@ export interface CatalogGateway {
   deleteUnit(id: string): Promise<void>;
   getRoomsByUnitId(unitId: string): Promise<Room[]>;
   getRoomById(id: string): Promise<Room | null>;
+  createRoom(input: CreateRoomInput): Promise<Room>;
+  updateRoom(id: string, input: UpdateRoomInput): Promise<Room>;
+  deleteRoom(id: string): Promise<void>;
 }
 
 export interface BookingGateway {
@@ -26,6 +35,8 @@ export interface BookingGateway {
   getAll(): Promise<Booking[]>;
   create(input: CreateBookingInput): Promise<Booking>;
   cancel(bookingId: string, userId: string): Promise<Booking>;
+  confirmBooking(bookingId: string): Promise<Booking>;
+  cancelBookingAsAdmin(bookingId: string): Promise<Booking>;
 }
 
 export interface CheckoutGateway {
@@ -36,6 +47,7 @@ export interface CheckoutGateway {
 
 export interface AppServices {
   auth: AuthGateway;
+  users: UserManagementGateway;
   catalog: CatalogGateway;
   bookings: BookingGateway;
   checkout: CheckoutGateway;

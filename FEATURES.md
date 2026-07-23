@@ -16,8 +16,8 @@
 - Benefícios “Por que escolher o Connect2Work?”: implementados.
 - Listagem de salas por unidade: implementada (dados locais).
 - Detalhes, capacidade, preço e comodidades: implementados.
-- Galeria preparada para `imageUrl` e `imageUrls`: implementada.
-- CRUD administrativo e upload: planejados.
+- Carrossel individual em cada card e galeria ampliada deduplicada via `imageUrl` e `imageUrls`: implementados.
+- CRUD administrativo e upload local de imagens: implementados.
 
 ## Administração
 
@@ -29,7 +29,15 @@
 - Confirmações de criação, edição e exclusão desaparecem automaticamente após cinco segundos.
 - Unidades com salas vinculadas não podem ser excluídas.
 - A tabela administrativa usa a contagem real de salas vinculadas.
-- Gestão de salas e agendamentos: planejada; links preparados sob `/admin`.
+- Gestão de salas: implementada em `/admin/salas`, com filtro por unidade, criação, edição, imagens, comodidades e exclusão protegida.
+- Salas com agendamentos vinculados não podem ser excluídas.
+- Notificações de sucesso da gestão de salas desaparecem após cinco segundos.
+- Gestão de agendamentos: implementada em `/admin/agendamentos`, com visão diária padrão, busca, filtros, métricas, receita, confirmação e cancelamento.
+- Status administrativo usa `pending`, `confirmed` e `cancelled`, mantendo separado o status temporal usado pelo cliente.
+- Gestão de usuários: implementada em `/admin/usuarios`, com busca, filtros, estatísticas, edição de permissão e ativação/desativação.
+- Papéis disponíveis: `client`, `admin` e `secretaria`; permissões da secretaria ainda aguardam definição.
+- O administrador autenticado não pode remover a própria permissão nem desativar a própria conta.
+- Menu lateral de ferramentas administrativas: implementado no shell admin.
 
 ## Serviços empresariais
 

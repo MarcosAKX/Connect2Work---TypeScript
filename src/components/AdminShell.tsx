@@ -2,7 +2,8 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import logo from '../assets/img/cwlogo.ico';
 import { useAuth } from '../state/AuthContext';
-import { BuildingIcon, CalendarIcon, DashboardIcon, DoorIcon, UserIcon } from './icons';
+import { BuildingIcon, CalendarIcon, DashboardIcon, DoorIcon, MenuIcon, UserIcon } from './icons';
+import { AdminSidebar } from './AdminSidebar';
 
 const adminNavigation = [
   { to: '/admin', label: 'Dashboard', icon: DashboardIcon, end: true },
@@ -15,6 +16,7 @@ export function AdminShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   async function handleLogout() {
     setIsLeaving(true);
@@ -30,6 +32,9 @@ export function AdminShell() {
     <>
       <header className="admin-header">
         <div className="admin-brand">
+          <button type="button" className="admin-menu-button" aria-label="Abrir ferramentas administrativas" aria-controls="admin-sidebar" aria-expanded={isSidebarOpen} onClick={() => setIsSidebarOpen(true)}>
+            <MenuIcon width="20" height="20" />
+          </button>
           <NavLink to="/admin" className="admin-brand__logo" aria-label="Dashboard administrativo da Connect2Work">
             <img src={logo} alt="" />
           </NavLink>
@@ -52,6 +57,7 @@ export function AdminShell() {
           </button>
         </div>
       </header>
+      <AdminSidebar open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <Outlet />
     </>
   );
