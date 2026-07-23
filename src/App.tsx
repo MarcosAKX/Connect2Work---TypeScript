@@ -5,6 +5,7 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AdminUnitsPage } from './pages/AdminUnitsPage';
 import { AdminRoomsPage } from './pages/AdminRoomsPage';
 import { AdminBookingsPage } from './pages/AdminBookingsPage';
+import { AdminDailyPanelPage } from './pages/AdminDailyPanelPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { BookingsPage } from './pages/BookingsPage';
 import { BookingPage } from './pages/BookingPage';
@@ -32,14 +33,16 @@ export function App() {
         <Route path="/meus-agendamentos" element={<BookingsPage />} />
         <Route path="/servicos" element={<ServicesPage />} />
       </Route>
-      <Route element={<AdminRoute />}>
+      <Route element={<AdminRoute allowedRoles={['admin']} />}>
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
         <Route path="/admin/unidades" element={<AdminUnitsPage />} />
         <Route path="/admin/salas" element={<AdminRoomsPage />} />
-        <Route path="/admin/agendamentos" element={<AdminBookingsPage />} />
         <Route path="/admin/usuarios" element={<AdminUsersPage />} />
-        <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+      </Route>
+      <Route element={<AdminRoute allowedRoles={['admin', 'secretaria']} />}>
+        <Route path="/admin/painel-do-dia" element={<AdminDailyPanelPage />} />
+        <Route path="/admin/agendamentos" element={<AdminBookingsPage />} />
       </Route>
       <Route path="/" element={<Navigate to="/unidades" replace />} />
       <Route path="*" element={<Navigate to="/unidades" replace />} />

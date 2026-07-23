@@ -33,6 +33,16 @@ const seedAdmin: StoredUser = {
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
+const seedSecretary: StoredUser = {
+  id: 'seed-secretaria',
+  name: 'Secretaria',
+  email: 'secretaria@connect2work.com',
+  password: 'secretaria123',
+  role: 'secretaria',
+  active: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
+
 function readArray<T>(key: string): T[] {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(key) ?? '[]');
@@ -57,7 +67,7 @@ function ensureSeedUsers() {
     role: normalizeUserRole(user.role),
     active: user.active !== false,
   }));
-  const seeds = [seedUser, seedAdmin].filter(
+  const seeds = [seedUser, seedAdmin, seedSecretary].filter(
     (seed) => !users.some(({ id }) => id === seed.id),
   );
   localStorage.setItem(KEYS.users, JSON.stringify([...seeds, ...users]));
@@ -218,6 +228,14 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         localStorage.setItem(KEYS.users, JSON.stringify(users));
         return sanitizeUser(updated);
       },
+      async searchClients(query) {
+        const normalizedQuery = query.trim().toLocaleLowerCase('pt-BR');
+        return readArray<StoredUser>(KEYS.users)
+          .filter((user) => user.role === 'client' && user.active !== false)
+          .filter((user) => !normalizedQuery || `${user.name} ${user.email}`.toLocaleLowerCase('pt-BR').includes(normalizedQuery))
+          .slice(0, 10)
+          .map(({ id, name, email }) => ({ id, name, email }));
+      },
     },
     catalog: {
       async getUnits() {
@@ -377,7 +395,48 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
         return confirmed;
       },
-      async cancelBookingAsAdmin(bookingId) {
+      async confirmPayment(bookingId) {
+        const existing = readArray<Booking>(KEYS.bookings);
+        const index = existing.findIndex((booking) => booking.id === bookingId);
+        const booking = existing[index];
+        if (!booking) throw new Error('Agendamento não encontrado.');
+        if (booking.status === 'cancelled' || booking.adminStatus === 'cancelled') {
+          throw new Error('Não é possível confirmar o pagamento de um agendamento cancelado.');
+        }
+        if (booking.paymentStatus === 'completed') {
+          throw new Error('O pagamento deste agendamento já foi confirmado.');
+        }
+        const paid: Booking = { ...booking, paymentStatus: 'completed' };
+        existing[index] = paid;
+        localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        return paid;
+      },
+      async checkInBooking(bookingId, staffUserId) {
+        const staff = readArray<StoredUser>(KEYS.users).find((user) => user.id === staffUserId);
+        if (!staff || staff.active === false || (staff.role !== 'admin' && staff.role !== 'secretaria')) {
+          throw new Error('Usuário sem permissão para realizar check-in.');
+        }
+        const existing = readArray<Booking>(KEYS.bookings);
+        const index = existing.findIndex((booking) => booking.id === bookingId);
+        const booking = existing[index];
+        if (!booking) throw new Error('Agendamento não encontrado.');
+        const adminStatus = booking.status === 'cancelled' ? 'cancelled' : (booking.adminStatus ?? 'confirmed');
+        if (adminStatus !== 'confirmed') {
+          throw new Error('Check-in permitido somente em agendamentos confirmados.');
+        }
+        if (booking.checkedInAt) throw new Error('O check-in deste agendamento já foi realizado.');
+        const checkedIn: Booking = {
+          ...booking,
+          checkedInAt: now().toISOString(),
+          checkedInBy: staffUserId,
+        };
+        existing[index] = checkedIn;
+        localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        return checkedIn;
+      },
+      async cancelBookingAsAdmin(bookingId, reason) {
+        const normalizedReason = reason.trim();
+        if (!normalizedReason) throw new Error('Informe o motivo do cancelamento.');
         const existing = readArray<Booking>(KEYS.bookings);
         const index = existing.findIndex((booking) => booking.id === bookingId);
         const booking = existing[index];
@@ -385,7 +444,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         if (booking.status === 'cancelled' || booking.adminStatus === 'cancelled') {
           throw new Error('Agendamento já foi cancelado.');
         }
-        const cancelled: Booking = { ...booking, status: 'cancelled', adminStatus: 'cancelled', cancelledAt: now().toISOString() };
+        const cancelled: Booking = { ...booking, status: 'cancelled', adminStatus: 'cancelled', cancelledAt: now().toISOString(), cancellationReason: normalizedReason };
         existing[index] = cancelled;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
         return cancelled;

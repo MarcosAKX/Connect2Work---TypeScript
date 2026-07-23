@@ -1,4 +1,4 @@
-import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, CreateBookingInput, CreateRoomInput, CreateUnitInput, RegisterInput, Room, Unit, UpdateRoomInput, UpdateUnitInput, User, UserRole } from '../types/domain';
+import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateRoomInput, CreateUnitInput, RegisterInput, Room, Unit, UpdateRoomInput, UpdateUnitInput, User, UserRole } from '../types/domain';
 
 export interface AuthGateway {
   getCurrentUser(): User | null;
@@ -14,6 +14,7 @@ export interface UserManagementGateway {
   listUsers(): Promise<User[]>;
   updateUserRole(id: string, role: UserRole): Promise<User>;
   updateUserStatus(id: string, active: boolean): Promise<User>;
+  searchClients(query: string): Promise<ClientSummary[]>;
 }
 
 export interface CatalogGateway {
@@ -36,7 +37,9 @@ export interface BookingGateway {
   create(input: CreateBookingInput): Promise<Booking>;
   cancel(bookingId: string, userId: string): Promise<Booking>;
   confirmBooking(bookingId: string): Promise<Booking>;
-  cancelBookingAsAdmin(bookingId: string): Promise<Booking>;
+  confirmPayment(bookingId: string): Promise<Booking>;
+  checkInBooking(bookingId: string, staffUserId: string): Promise<Booking>;
+  cancelBookingAsAdmin(bookingId: string, reason: string): Promise<Booking>;
 }
 
 export interface CheckoutGateway {

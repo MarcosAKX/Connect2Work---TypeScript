@@ -11,6 +11,8 @@ export interface User {
   phone?: string;
 }
 
+export type ClientSummary = Pick<User, 'id' | 'name' | 'email'>;
+
 export interface StoredUser extends User {
   password: string;
 }
@@ -66,6 +68,7 @@ export type UpdateRoomInput = CreateRoomInput;
 
 export type BookingStatus = 'upcoming' | 'past' | 'cancelled';
 export type BookingAdminStatus = 'pending' | 'confirmed' | 'cancelled';
+export type BookingPaymentStatus = 'pending' | 'completed';
 
 export interface Booking {
   id: string;
@@ -77,8 +80,12 @@ export interface Booking {
   status: BookingStatus;
   adminStatus?: BookingAdminStatus;
   total?: number;
+  paymentStatus?: BookingPaymentStatus;
   createdAt: string;
   cancelledAt?: string;
+  cancellationReason?: string;
+  checkedInAt?: string;
+  checkedInBy?: string;
 }
 
 export interface BookingCounts {

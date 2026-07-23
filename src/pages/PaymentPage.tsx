@@ -96,6 +96,7 @@ export function PaymentPage() {
         timeSlot: activeDraft.timeSlot,
         status: 'upcoming',
         adminStatus: 'confirmed',
+        paymentStatus: 'completed',
         total: activeDraft.total,
       });
       services.checkout.clearDraft();

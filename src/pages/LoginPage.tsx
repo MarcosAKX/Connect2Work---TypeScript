@@ -13,7 +13,7 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/unidades'} replace />;
+  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades'} replace />;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -26,7 +26,7 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       const authenticatedUser = await login(email, password);
-      navigate(authenticatedUser.role === 'admin' ? '/admin' : '/unidades', { replace: true });
+      navigate(authenticatedUser.role === 'admin' ? '/admin' : authenticatedUser.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades', { replace: true });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Não foi possível entrar.');
     } finally {
@@ -39,7 +39,7 @@ export function LoginPage() {
     setError('');
     try {
       const authenticatedUser = await loginWithGoogle();
-      navigate(authenticatedUser.role === 'admin' ? '/admin' : '/unidades', { replace: true });
+      navigate(authenticatedUser.role === 'admin' ? '/admin' : authenticatedUser.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades', { replace: true });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Não foi possível entrar com Google.');
     } finally {

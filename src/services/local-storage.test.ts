@@ -127,6 +127,17 @@ describe('localStorage services', () => {
     await expect(services.users.updateUserStatus('seed-administrador', false)).rejects.toThrow('própria conta');
   });
 
+  it('oferece busca segura somente de clientes ativos', async () => {
+    const services = createLocalStorageServices();
+    await expect(services.auth.login('secretaria@connect2work.com', 'secretaria123'))
+      .resolves.toMatchObject({ role: 'secretaria', active: true });
+    const clients = await services.users.searchClients('teste');
+    expect(clients).toEqual([
+      expect.objectContaining({ id: 'seed-usuario-teste', email: 'teste@connect2work.com' }),
+    ]);
+    expect(clients.some((client) => 'password' in client || 'role' in client)).toBe(false);
+  });
+
   it('persiste reserva vinculada ao usuário', async () => {
     const services = createLocalStorageServices();
     const booking = await services.bookings.create({ userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10', timeSlot: '09:00 - 11:00', status: 'upcoming' });
@@ -138,11 +149,55 @@ describe('localStorage services', () => {
     const services = createLocalStorageServices();
     const booking = await services.bookings.create({
       userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10',
-      timeSlot: '09:00 - 11:00', status: 'upcoming', adminStatus: 'pending', total: 160,
+      timeSlot: '09:00 - 11:00', status: 'upcoming', adminStatus: 'pending', total: 160, paymentStatus: 'pending',
     });
-    await expect(services.bookings.confirmBooking(booking.id)).resolves.toMatchObject({ adminStatus: 'confirmed', total: 160 });
-    await expect(services.bookings.cancelBookingAsAdmin(booking.id)).resolves.toMatchObject({ status: 'cancelled', adminStatus: 'cancelled' });
+    await expect(services.bookings.confirmBooking(booking.id)).resolves.toMatchObject({ adminStatus: 'confirmed', total: 160, paymentStatus: 'pending' });
+    await expect(services.bookings.confirmPayment(booking.id)).resolves.toMatchObject({ paymentStatus: 'completed' });
+    await expect(services.bookings.cancelBookingAsAdmin(booking.id, 'Solicitado pelo cliente')).resolves.toMatchObject({ status: 'cancelled', adminStatus: 'cancelled', cancellationReason: 'Solicitado pelo cliente' });
     await expect(services.bookings.confirmBooking(booking.id)).rejects.toThrow('não pode ser confirmado');
+  });
+
+  it('exige motivo no cancelamento administrativo', async () => {
+    const services = createLocalStorageServices();
+    const booking = await services.bookings.create({
+      userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10',
+      timeSlot: '09:00 - 10:00', status: 'upcoming',
+    });
+    await expect(services.bookings.cancelBookingAsAdmin(booking.id, '  ')).rejects.toThrow('motivo');
+  });
+
+  it('não confirma pagamento de agendamento cancelado', async () => {
+    const services = createLocalStorageServices();
+    const booking = await services.bookings.create({
+      userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10',
+      timeSlot: '10:00 - 11:00', status: 'upcoming', paymentStatus: 'pending',
+    });
+    await services.bookings.cancelBookingAsAdmin(booking.id, 'Cliente desistiu');
+    await expect(services.bookings.confirmPayment(booking.id)).rejects.toThrow('cancelado');
+  });
+
+  it('registra check-in confirmado com horário e responsável', async () => {
+    const checkInTime = new Date('2026-07-23T14:05:00.000Z');
+    const services = createLocalStorageServices(() => checkInTime);
+    const booking = await services.bookings.create({
+      userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-07-23',
+      timeSlot: '14:00 - 15:00', status: 'upcoming', adminStatus: 'confirmed',
+    });
+    await expect(services.bookings.checkInBooking(booking.id, 'seed-secretaria')).resolves.toMatchObject({
+      checkedInAt: checkInTime.toISOString(),
+      checkedInBy: 'seed-secretaria',
+    });
+    await expect(services.bookings.checkInBooking(booking.id, 'seed-secretaria')).rejects.toThrow('já foi realizado');
+  });
+
+  it('bloqueia check-in pendente ou feito por cliente', async () => {
+    const services = createLocalStorageServices();
+    const booking = await services.bookings.create({
+      userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10',
+      timeSlot: '15:00 - 16:00', status: 'upcoming', adminStatus: 'pending',
+    });
+    await expect(services.bookings.checkInBooking(booking.id, 'seed-secretaria')).rejects.toThrow('confirmados');
+    await expect(services.bookings.checkInBooking(booking.id, 'seed-usuario-teste')).rejects.toThrow('sem permissão');
   });
 
   it('cancela somente a reserva do usuário com pelo menos 24 horas', async () => {

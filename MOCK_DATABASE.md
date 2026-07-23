@@ -39,12 +39,17 @@ Persistência provisória no `localStorage`. Implementação em
 
 ### Booking
 
-- `id`, `userId`, `unitId`, `roomId`, `date`, `timeSlot`, `status`, `adminStatus?`, `total?`, `createdAt`, `cancelledAt?`.
+- `id`, `userId`, `unitId`, `roomId`, `date`, `timeSlot`, `status`, `adminStatus?`, `paymentStatus?`, `total?`, `createdAt`, `cancelledAt?`, `cancellationReason?`, `checkedInAt?`, `checkedInBy?`.
 - Status: `upcoming`, `past` ou `cancelled`.
 - Status administrativo: `pending`, `confirmed` ou `cancelled`; registros antigos ativos são tratados como confirmados.
 - `total` guarda o valor final pago; registros antigos têm valor derivado da duração e do preço atual da sala.
+- `paymentStatus`: `pending` ou `completed`; registros antigos são tratados como concluídos.
+- `confirmPayment` permite avançar de pendente para concluído e bloqueia agendamentos cancelados.
+- `checkedInAt` guarda o timestamp ISO da chegada; `checkedInBy` identifica o admin/secretaria responsável.
+- Check-in é independente do status da reserva, permitido apenas quando confirmado e somente uma vez.
 - Status não cancelados são recalculados pela data/hora atual durante a leitura.
 - Cancelamento exige o mesmo `userId` e pelo menos 24 horas até o início.
+- Cancelamento administrativo exige `cancellationReason`; registros antigos cancelados podem não possuir motivo.
 
 ### PasswordResetRequest
 
@@ -67,6 +72,10 @@ Persistência provisória no `localStorage`. Implementação em
   - E-mail: `admin@connect2work.com`.
   - Senha: `admin123`.
 
+- Perfil secretaria:
+  - E-mail: `secretaria@connect2work.com`.
+  - Senha: `secretaria123`.
+
 ## Contratos
 
 - `AuthGateway` — sessão, consulta segura de usuário por ID, login, Google, cadastro, reset e logout.
@@ -82,7 +91,9 @@ acessar SDK, banco ou `localStorage` diretamente.
 
 - `/admin/usuarios` permanece exclusiva para `admin`.
 - Autoalterações perigosas são bloqueadas na interface e no gateway.
-- TODO: definir quais rotas e ações serão liberadas para `secretaria`.
+- `secretaria` acessa somente `/admin/agendamentos`.
+- Dashboard, unidades, salas e usuários permanecem exclusivos de `admin`.
+- A busca operacional retorna somente `id`, `name` e `email` de clientes ativos.
 
 ## Obrigatório ao trocar o mock
 

@@ -23,13 +23,14 @@
 - `src/pages/AdminUnitsPage.tsx` — `/admin/unidades`, protegida por perfil; CRUD de unidades e upload local.
 - `src/pages/AdminRoomsPage.tsx` — `/admin/salas`, protegida por perfil; CRUD, filtro, imagens e comodidades.
 - `src/pages/AdminBookingsPage.tsx` — `/admin/agendamentos`, protegida por perfil; métricas, filtros e ações operacionais.
+- `src/pages/AdminDailyPanelPage.tsx` — `/admin/painel-do-dia`; visão diária e tela inicial da secretaria.
 - `src/pages/AdminUsersPage.tsx` — `/admin/usuarios`, exclusiva de administradores; acessos e permissões.
 
 ## Componentes
 
 - `src/components/AppShell.tsx` — header autenticado e logout.
 - `src/components/ProtectedRoute.tsx` — exige sessão.
-- `src/components/AdminRoute.tsx` — exige sessão com perfil `admin`.
+- `src/components/AdminRoute.tsx` — exige sessão e aceita lista explícita de papéis permitidos.
 - `src/components/AdminShell.tsx` — header e navegação da área administrativa.
 - `src/components/AdminSidebar.tsx` — drawer das ferramentas administrativas.
 - `src/components/BackLink.tsx` — retorno reutilizável.
@@ -49,6 +50,7 @@
 - `src/hooks/useAdminUnits.ts` — listagem, contagem de salas e mutações administrativas de unidades.
 - `src/hooks/useAdminRooms.ts` — listagem filtrada e mutações administrativas de salas.
 - `src/hooks/useAdminBookings.ts` — enriquecimento, filtros, estatísticas e ações administrativas de agendamentos.
+- `src/hooks/useCreateBookingForAdmin.ts` — clientes, catálogo, horários, conflito e criação manual.
 - `src/hooks/useAdminUsers.ts` — listagem, filtros, métricas e mutações administrativas de usuários.
 - `src/utils/validators.ts` — validações e máscara de telefone.
 - `src/utils/booking.ts` — datas, horários, conflitos, status automático e janela de cancelamento.

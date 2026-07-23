@@ -23,6 +23,8 @@
 
 - Usuário administrador seed no mock local: implementado.
 - Dashboard com totais de unidades, salas e agendamentos: implementado via gateways.
+- Dashboard administrativo inclui usuários ativos, ocupação atual, pagamentos pendentes, check-ins, agenda com datas, atalhos contextuais e gráfico de reservas ativas/canceladas dos últimos seis meses. Receita permanece indisponível até integração financeira.
+- O gráfico mensal do dashboard permite alternar entre 6/12 meses, filtrar unidade, ocultar séries, consultar valores em tooltip e abrir Agendamentos com mês/unidade já filtrados.
 - Agendamentos de hoje e dos próximos sete dias, com identificação do cliente: implementados.
 - Receita total: indisponível até o domínio persistir o valor efetivamente pago.
 - Gestão de unidades com criação, edição, imagem local e exclusão protegida: implementada via `CatalogGateway`.
@@ -35,7 +37,15 @@
 - Gestão de agendamentos: implementada em `/admin/agendamentos`, com visão diária padrão, busca, filtros, métricas, receita, confirmação e cancelamento.
 - Status administrativo usa `pending`, `confirmed` e `cancelled`, mantendo separado o status temporal usado pelo cliente.
 - Gestão de usuários: implementada em `/admin/usuarios`, com busca, filtros, estatísticas, edição de permissão e ativação/desativação.
-- Papéis disponíveis: `client`, `admin` e `secretaria`; permissões da secretaria ainda aguardam definição.
+- Papéis disponíveis: `client`, `admin` e `secretaria`; secretaria acessa exclusivamente `/admin/agendamentos`.
+- Secretaria possui navegação reduzida e é redirecionada ao tentar acessar dashboard, unidades, salas ou usuários.
+- Cancelamento administrativo exige motivo, persistido e consultável na tabela.
+- Admin e secretaria podem criar agendamentos confirmados para clientes ativos, com busca segura, conflito de horário e valor ajustável.
+- Criação administrativa permite registrar pagamento `pending` ou `completed`; reservas do checkout nascem concluídas.
+- Admin e secretaria podem confirmar pagamentos pendentes diretamente na lista, com confirmação em modal.
+- Admin e secretaria podem realizar check-in rápido em reservas confirmadas; horário e responsável ficam registrados.
+- Admin e secretaria possuem `/admin/painel-do-dia`, com nomes dos clientes, agenda cronológica, próxima chegada, presença atual e pendências de check-in/pagamento. A agenda diária pode ser filtrada por busca, unidade, situação operacional e período do dia. Esta é a tela inicial da secretaria.
+- Lista destaca reservas confirmadas de hoje ainda aguardando chegada e mostra a métrica “Check-ins Hoje”.
 - O administrador autenticado não pode remover a própria permissão nem desativar a própria conta.
 - Menu lateral de ferramentas administrativas: implementado no shell admin.
 

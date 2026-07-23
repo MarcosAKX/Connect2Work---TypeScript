@@ -1,14 +1,15 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../state/AuthContext';
 import { AdminShell } from './AdminShell';
+import type { UserRole } from '../types/domain';
 
-export function AdminRoute() {
+export function AdminRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
   const { user } = useAuth();
 
   if (!user) return <Navigate to="/login" replace />;
-  // TODO: definir permissões e rotas da role "secretaria" quando o escopo for aprovado.
-  // Até lá, inclusive /admin/usuarios permanece exclusivamente administrativo.
-  if (user.role !== 'admin') return <Navigate to="/unidades" replace />;
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to={user.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades'} replace />;
+  }
 
   return <AdminShell />;
 }
