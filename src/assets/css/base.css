@@ -19,10 +19,10 @@
   --color-text-tertiary: #6b6b6b;
 
   /* Cores — marca */
-  --color-accent: #fbbf24;
-  --color-accent-hover: #fcd34d;
+  --color-accent: #ffc400;
+  --color-accent-hover: #ffd54a;
   --color-accent-text: #1a1400; /* texto sobre fundo dourado */
-  --color-accent-bright: #facc15;
+  --color-accent-bright: #ffc400;
 
   /* Cores — estado */
   --color-error: #f87171;
@@ -66,10 +66,10 @@ html[data-theme='light'] {
   --color-text-primary: #131820;
   --color-text-secondary: #4b5563;
   --color-text-tertiary: #667085;
-  --color-accent: #806b00;
-  --color-accent-hover: #685700;
+  --color-accent: #ffc400;
+  --color-accent-hover: #ffd54a;
   --color-accent-text: #1a1400;
-  --color-accent-bright: #facc15;
+  --color-accent-bright: #ffc400;
   --color-error: #c62828;
   --color-success: #14783a;
   --color-info: #245fc5;

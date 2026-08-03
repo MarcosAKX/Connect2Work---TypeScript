@@ -1,0 +1,17 @@
+/* Acabamento compartilhado: estados previsíveis sem alterar regras das telas. */
+:where(button,a,input,select,textarea):focus-visible{outline:2px solid var(--color-accent-bright);outline-offset:2px}
+:where(button,input,select,textarea):disabled{cursor:not-allowed;opacity:.58}
+:where(button,a,input,select,textarea){-webkit-tap-highlight-color:transparent}
+:where(input,textarea)::placeholder{color:var(--color-text-secondary);opacity:1}
+:where(table) th{position:sticky;top:0;z-index:1;background:color-mix(in srgb,var(--color-surface-raised) 74%,var(--color-surface));color:var(--color-text-primary);font-variant-numeric:tabular-nums}
+:where(table) td{font-variant-numeric:tabular-nums}
+:where(table) tbody tr{transition:background-color var(--duration-fast) var(--ease-out)}
+:where(table) tbody tr:hover{background:color-mix(in srgb,var(--color-text-primary) 3.5%,transparent)}
+:where(.admin-units-table-wrap,.admin-rooms-table-wrap,.admin-users-table-wrap,.admin-bookings-table-wrap,.hours-plan-table-wrap){scrollbar-gutter:stable}
+:where(.admin-units-empty,.admin-rooms-empty,.admin-users-empty,.admin-bookings-empty,.admin-day-empty,.admin-day-upcoming__empty,.governance-empty){text-wrap:pretty}
+:where(.admin-units-empty,.admin-rooms-empty,.admin-users-empty,.admin-bookings-empty) h3{font-size:1rem}
+:where(.admin-units-empty,.admin-rooms-empty,.admin-users-empty,.admin-bookings-empty) p{max-width:52ch}
+:where(.admin-dashboard-page,.admin-units-page,.admin-rooms-page,.admin-bookings-page,.admin-users-page,.admin-tasks-page,.hours-plan-page,.admin-day-page,.governance-page) h1{font-size:2rem;letter-spacing:-.03em;text-wrap:balance}
+:where(.admin-dashboard-page,.admin-units-page,.admin-rooms-page,.admin-bookings-page,.admin-users-page,.admin-tasks-page,.hours-plan-page,.admin-day-page,.governance-page) h2{letter-spacing:-.015em;text-wrap:balance}
+@media(max-width:720px){:where(.admin-dashboard-page,.admin-units-page,.admin-rooms-page,.admin-bookings-page,.admin-users-page,.admin-tasks-page,.hours-plan-page,.admin-day-page,.governance-page) h1{font-size:1.65rem}:where(table) th{position:static}}
+@media(prefers-reduced-motion:reduce){:where(table) tbody tr{transition:none}}

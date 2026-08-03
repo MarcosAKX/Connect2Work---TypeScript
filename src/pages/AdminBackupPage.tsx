@@ -21,6 +21,12 @@ export function AdminBackupPage() {
     if (user) void services.backup.getLastBackupAt(user.id).then(setLastBackupAt);
   }, [user]);
 
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timeout = window.setTimeout(() => setNotice(''), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
+
   async function exportBackup() {
     if (!user) return;
     setBusy(true); setError('');
@@ -61,7 +67,7 @@ export function AdminBackupPage() {
   return <main className="governance-page">
     <BackLink to="/admin" label="Voltar ao Dashboard" />
     <header className="governance-heading"><div><span>Segurança local</span><h1>Backup dos dados</h1><p>Exporte uma cópia ou restaure o estado completo deste navegador.</p></div></header>
-    {(notice || error) && <div className={`governance-notice ${error ? 'is-error' : ''}`} role="status">{error || notice}</div>}
+    {(notice || error) && <div className={`governance-notice ${error ? 'is-error' : ''}`} role={error ? 'alert' : 'status'}>{error || notice}</div>}
     <section className="governance-grid">
       <article className="governance-card"><span className="governance-card__eyebrow">Cópia segura</span><h2>Exportar backup</h2><p>Inclui dados operacionais, unidades, salas, reservas, tarefas e históricos. Senhas, tokens e sessões nunca são exportados.</p><strong>{lastBackupAt ? `Último: ${new Date(lastBackupAt).toLocaleString('pt-BR')}` : 'Nenhum backup registrado'}</strong><button type="button" className="governance-primary" onClick={() => void exportBackup()} disabled={busy}>Baixar backup JSON</button></article>
       <article className="governance-card governance-card--danger"><span className="governance-card__eyebrow">Ação crítica</span><h2>Restaurar backup</h2><p>Substitui os dados locais e preserva credenciais existentes. Contas novas importadas ficam inativas por segurança. A sessão será encerrada.</p><input ref={fileRef} type="file" accept="application/json,.json" onChange={(event) => void chooseFile(event)} />

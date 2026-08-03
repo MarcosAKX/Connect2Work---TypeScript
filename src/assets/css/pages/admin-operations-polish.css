@@ -238,3 +238,20 @@ html[data-theme='light'] .hours-plan-stats article {
     transition: none;
   }
 }
+
+/* O Painel do Dia preserva a coluna lateral em notebooks; a agenda aceita rolagem horizontal. */
+@media (min-width: 1051px) {
+  .admin-daily-page .admin-day-workspace {
+    grid-template-columns: minmax(0, 1.95fr) minmax(330px, 1fr);
+  }
+  .admin-daily-page .admin-day-side { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1050px) {
+  .admin-daily-page .admin-day-workspace { grid-template-columns: 1fr; }
+  .admin-daily-page .admin-day-side { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .admin-daily-page .admin-day-side { grid-template-columns: 1fr; }
+}

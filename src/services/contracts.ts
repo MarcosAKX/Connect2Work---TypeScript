@@ -1,4 +1,4 @@
-import type { AuditLog, BackupPayload, Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, HoursPlanTransaction, RegisterInput, Room, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, UpdateUserHoursPlanInput, User, UserRole } from '../types/domain';
+import type { AuditLog, BackupPayload, Booking, BookingCounts, BookingStatus, BusinessService, CheckoutDraft, ClientSummary, CreateBookingInput, CreateBusinessServiceInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, HoursPlanTransaction, RegisterInput, Room, Task, TaskStatus, Unit, UpdateBusinessServiceInput, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, UpdateUserHoursPlanInput, User, UserRole } from '../types/domain';
 
 export interface AuthGateway {
   getCurrentUser(): User | null;
@@ -61,6 +61,13 @@ export interface TaskGateway {
   deleteTask(id: string, actorUserId: string): Promise<void>;
 }
 
+export interface BusinessServiceGateway {
+  listServices(options?: { includeInactive?: boolean }): Promise<BusinessService[]>;
+  createService(input: CreateBusinessServiceInput): Promise<BusinessService>;
+  updateService(id: string, input: UpdateBusinessServiceInput): Promise<BusinessService>;
+  deleteService(id: string): Promise<void>;
+}
+
 export interface AuditGateway {
   listRecent(actorUserId: string, limit?: number): Promise<AuditLog[]>;
   listHoursPlanTransactions(userId: string, actorUserId: string): Promise<HoursPlanTransaction[]>;
@@ -78,6 +85,7 @@ export interface AppServices {
   catalog: CatalogGateway;
   bookings: BookingGateway;
   checkout: CheckoutGateway;
+  businessServices: BusinessServiceGateway;
   tasks: TaskGateway;
   audit: AuditGateway;
   backup: BackupGateway;

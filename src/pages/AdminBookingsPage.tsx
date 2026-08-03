@@ -62,11 +62,13 @@ export function AdminBookingsPage() {
   const queryDateFrom = searchParams.get('de') ?? '';
   const queryDateTo = searchParams.get('ate') ?? '';
   const queryUnitId = searchParams.get('unidade') ?? '';
+  const shouldCreateBooking = searchParams.get('novo') === '1';
   useEffect(() => {
     if (queryDateFrom) data.setDateFrom(queryDateFrom);
     if (queryDateTo) data.setDateTo(queryDateTo);
     if (queryUnitId) data.setUnitId(queryUnitId);
   }, [data.setDateFrom, data.setDateTo, data.setUnitId, queryDateFrom, queryDateTo, queryUnitId]);
+  useEffect(() => { if (shouldCreateBooking) setCreating(true); }, [shouldCreateBooking]);
   useEffect(() => { if (!statusMessage) return; const timer = window.setTimeout(() => setStatusMessage(''), 5000); return () => window.clearTimeout(timer); }, [statusMessage]);
   async function confirm(item: AdminBookingRow) { if (await data.confirmBooking(item.booking.id)) setStatusMessage('Agendamento confirmado com sucesso.'); }
   async function cancel(reason: string) { if (cancelling && await data.cancelBooking(cancelling.booking.id, reason)) { setCancelling(null); setStatusMessage('Agendamento cancelado com sucesso.'); } }

@@ -55,6 +55,8 @@ export interface Unit {
   availableRooms: number;
   imageUrl: string | null;
   description?: string;
+  latitude?: number;
+  longitude?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -64,6 +66,8 @@ export interface CreateUnitInput {
   address: string;
   description?: string;
   imageUrl: string | null;
+  latitude?: number;
+  longitude?: number;
 }
 
 export type UpdateUnitInput = CreateUnitInput;
@@ -92,6 +96,25 @@ export interface CreateRoomInput {
 }
 
 export type UpdateRoomInput = CreateRoomInput;
+
+export type BusinessServiceKind = 'fiscal_address' | 'commercial_address' | 'hours_plan';
+
+export interface BusinessService {
+  id: string;
+  kind: BusinessServiceKind;
+  name: string;
+  description: string;
+  primaryFeatures: string[];
+  secondaryFeatures: string[];
+  imageUrl: string | null;
+  active: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type CreateBusinessServiceInput = Omit<BusinessService, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateBusinessServiceInput = CreateBusinessServiceInput;
 
 export type BookingStatus = 'upcoming' | 'past' | 'cancelled';
 export type BookingAdminStatus = 'pending' | 'confirmed' | 'cancelled';
@@ -175,7 +198,7 @@ export interface CreateTaskInput {
 export type UpdateTaskInput = Pick<Task, 'title' | 'description' | 'assignedTo' | 'priority' | 'dueDate'>;
 
 export type AuditAction = 'create' | 'update' | 'delete' | 'cancel' | 'confirm' | 'check_in' | 'renew' | 'import';
-export type AuditEntity = 'user' | 'unit' | 'room' | 'booking' | 'task' | 'hours_plan' | 'backup';
+export type AuditEntity = 'user' | 'unit' | 'room' | 'business_service' | 'booking' | 'task' | 'hours_plan' | 'backup';
 
 export interface AuditLog {
   id: string;
@@ -211,6 +234,7 @@ export interface BackupPayload {
     users: User[];
     units: Unit[];
     rooms: Room[];
+    businessServices?: BusinessService[];
     bookings: Booking[];
     tasks: Task[];
     auditLogs: AuditLog[];

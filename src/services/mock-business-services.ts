@@ -1,0 +1,7 @@
+import type { BusinessService } from '../types/domain';
+
+export const businessServices: BusinessService[] = [
+  { id: 'service-fiscal-address', kind: 'fiscal_address', name: 'Endereço Fiscal', description: 'Tenha um endereço de prestígio para sua empresa, com gestão de correspondências e total sigilo.', primaryFeatures: ['Endereço fiscal em localização estratégica', 'Recebimento de correspondências e notificações', 'Gestão segura e sigilosa', 'Mais credibilidade para o seu negócio'], secondaryFeatures: [], imageUrl: null, active: true, sortOrder: 1 },
+  { id: 'service-commercial-address', kind: 'commercial_address', name: 'Endereço Comercial', description: 'Fortaleça sua marca com um endereço comercial em uma das melhores localizações da cidade.', primaryFeatures: ['Endereço comercial de alto padrão', 'Recebimento de correspondências', 'Ambiente corporativo e profissional', 'Mais confiança para seus clientes'], secondaryFeatures: [], imageUrl: null, active: true, sortOrder: 2 },
+  { id: 'service-hours-plan', kind: 'hours_plan', name: 'Plano de Horas', description: 'Use salas privativas, estações de trabalho e espaços compartilhados conforme a sua necessidade.', primaryFeatures: ['Horas para usar quando precisar', 'Mais liberdade para o dia a dia', 'Ideal para demandas variáveis'], secondaryFeatures: ['Mais horas para o seu negócio', 'Condições especiais', 'Planejamento e economia'], imageUrl: null, active: true, sortOrder: 3 },
+];

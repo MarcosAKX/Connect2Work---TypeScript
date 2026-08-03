@@ -653,14 +653,18 @@ body {
 }
 
 .room-gallery__arrow {
-  background-color: rgba(10, 10, 10, 0.82);
+  border-color: var(--color-accent-bright);
+  background-color: var(--color-accent-bright);
+  color: #171200;
   transition: border-color var(--duration-fast) var(--ease-out),
               color var(--duration-fast) var(--ease-out),
               background-color var(--duration-fast) var(--ease-out);
 }
 
 .room-gallery__arrow:hover:not(:disabled) {
-  background-color: var(--color-surface);
+  border-color: #ffd54a;
+  background-color: #ffd54a;
+  color: #171200;
 }
 
 .room-gallery__dot[data-image-index] {

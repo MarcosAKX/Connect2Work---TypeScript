@@ -10,8 +10,10 @@
 @import './assets/css/pages/pagamento-confirmado.css';
 @import './assets/css/pages/meus-agendamentos.css';
 @import './assets/css/pages/servicos.css';
+@import './assets/css/pages/admin-business-services.css';
 @import './assets/css/theme.css';
 @import './assets/css/pages/admin-operations-polish.css';
+@import './assets/css/ui-foundations.css';
 
 .migration-form-error,
 .auth-form-error {

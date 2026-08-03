@@ -1,6 +1,8 @@
-import { BackLink } from '../components/BackLink';
-import { BuildingIcon, CheckIcon } from '../components/icons';
+import { useEffect, useState, type ReactNode } from 'react';
+import { BuildingIcon, CheckIcon, ClockIcon, UsersIcon } from '../components/icons';
+import { services } from '../services';
 import { useAuth } from '../state/AuthContext';
+import type { BusinessService } from '../types/domain';
 
 const WHATSAPP_NUMBER = '5517997529769';
 
@@ -16,84 +18,82 @@ function getWhatsAppUrl(userName: string, serviceName: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-const plans = [
-  {
-    name: 'Endereço Fiscal',
-    description: 'Use o endereço da Connect2Work no registro da sua empresa junto aos órgãos públicos.',
-    features: ['Válido para abertura de empresa', 'Transferência de endereço fiscal', 'Endereço comercial incluído'],
-    featured: false,
-  },
-  {
-    name: 'Endereço Comercial',
-    description: 'Use o endereço da Connect2Work como referência profissional para seus clientes.',
-    features: ['Referência comercial para clientes', 'Mais credibilidade para sua empresa', 'Serviços adicionais disponíveis'],
-    featured: false,
-  },
-  {
-    name: 'Plano de horas',
-    description: 'Escolha a modalidade mais adequada à frequência de uso do espaço.',
-    features: [
-      'Flex mensal: indicado para quem precisa usar o espaço ao longo do mês, mas não tem uma frequência definida.',
-      'Flex semestral/anual: para uma necessidade de utilização mais definida, o plano anual oferece o melhor custo-benefício.',
-    ],
-    featured: true,
-  },
-] as const;
+interface ServiceMediaProps {
+  imageUrl: string | null;
+  alt: string;
+}
+
+function ServiceMedia({ imageUrl, alt }: ServiceMediaProps) {
+  return imageUrl
+    ? <img className="service-showcase__image" src={imageUrl} alt={alt} />
+    : <div className="service-showcase__image-fallback" role="img" aria-label={`${alt}. Imagem ainda não cadastrada.`}><span>C2W</span><small>Imagem disponível após cadastro administrativo</small></div>;
+}
+
+interface ServiceContentProps {
+  icon: ReactNode;
+  name: string;
+  description: string;
+  primaryFeatures: readonly string[];
+  secondaryFeatures: readonly string[];
+  userName: string;
+  children?: ReactNode;
+}
+
+function ServiceContent({ icon, name, description, primaryFeatures, secondaryFeatures, userName, children }: ServiceContentProps) {
+  return <div className="service-showcase__content">
+    <div className="service-showcase__heading"><span>{icon}</span><div><h2>{name}</h2><p>{description}</p></div></div>
+    {children}
+    {secondaryFeatures.length > 0 ? <div className="service-showcase__plan-options"><div><strong>Flex mensal</strong><FeatureList items={primaryFeatures} /></div><div><strong>Flex semestral/anual</strong><FeatureList items={secondaryFeatures} /></div></div> : <FeatureList items={primaryFeatures} />}
+    <div className="service-showcase__actions">
+      <a className="btn btn-primary" href={getWhatsAppUrl(userName, name)} target="_blank" rel="noreferrer">Consultar nas unidades</a>
+      <span>Condições sob consulta</span>
+    </div>
+  </div>;
+}
+
+function FeatureList({ items }: { items: readonly string[] }) {
+  return items.length > 0 ? <ul>{items.map((feature) => <li key={feature}><CheckIcon width="17" height="17" /><span>{feature}</span></li>)}</ul> : null;
+}
 
 export function ServicesPage() {
   const { user } = useAuth();
   const userName = user?.name.trim() || 'cliente';
+  const [items, setItems] = useState<BusinessService[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  return (
-    <main className="services-page">
-      <BackLink to="/unidades" />
+  useEffect(() => {
+    let active = true;
+    void services.businessServices.listServices().then((nextItems) => { if (active) setItems(nextItems); }).finally(() => { if (active) setIsLoading(false); });
+    return () => { active = false; };
+  }, []);
 
-      <header className="services-hero">
-        <div className="services-hero__icon"><BuildingIcon width="28" height="28" /></div>
-        <h1>Serviços para sua empresa <span className="text-accent">crescer</span></h1>
-        <p>Use a estrutura Connect2Work para estabelecer uma presença profissional e cuidar do endereço da sua empresa.</p>
-      </header>
+  const fiscal = items.find(({ kind }) => kind === 'fiscal_address');
+  const commercial = items.find(({ kind }) => kind === 'commercial_address');
+  const hours = items.find(({ kind }) => kind === 'hours_plan');
 
-      <section className="services-plans" aria-labelledby="services-plans-title">
-        <div className="services-section-heading">
-          <h2 id="services-plans-title">Escolha a solução ideal</h2>
-          <p>Valores e condições variam conforme a unidade e o período contratado.</p>
-        </div>
+  function content(item: BusinessService, icon: ReactNode) {
+    return <ServiceContent icon={icon} name={item.name} description={item.description} primaryFeatures={item.primaryFeatures} secondaryFeatures={item.secondaryFeatures} userName={userName} />;
+  }
 
-        <div className="services-plan-grid">
-          {plans.map((plan) => (
-            <article className={`service-plan${plan.featured ? ' service-plan--featured' : ''}`} key={plan.name}>
-              {plan.featured && <span className="service-plan__badge">Mais completo</span>}
-              <div className="service-plan__heading">
-                <h3>{plan.name}</h3>
-                <p>{plan.description}</p>
-              </div>
-              <div className="service-plan__price"><strong>Condições sob consulta</strong><span>Conforme unidade e contratação</span></div>
-              <a
-                href={getWhatsAppUrl(userName, plan.name)}
-                className={`btn ${plan.featured ? 'btn-primary' : 'btn-secondary'}`}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Consultar ${plan.name} pelo WhatsApp`}
-              >
-                Consultar pelo WhatsApp
-              </a>
-              <ul className="service-plan__features" aria-label={`Incluído em ${plan.name}`}>
-                {plan.features.map((feature) => <li key={feature}><CheckIcon width="18" height="18" /><span>{feature}</span></li>)}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
+  return <main className="services-page">
+    <header className="services-header">
+      <h1>Serviços para o seu negócio</h1>
+      <p>Soluções inteligentes que dão mais profissionalismo e flexibilidade para sua empresa crescer.</p>
+    </header>
 
-      <section className="services-how" aria-labelledby="services-how-title">
-        <div><h2 id="services-how-title">Como contratar</h2><p>Ao escolher um serviço, você inicia uma conversa com a equipe pelo WhatsApp.</p></div>
-        <ol>
-          <li><span>1</span><div><strong>Escolha o serviço</strong><p>Compare as opções conforme a necessidade da empresa.</p></div></li>
-          <li><span>2</span><div><strong>Envie a mensagem</strong><p>O WhatsApp abrirá com seu nome e o serviço escolhido já preenchidos.</p></div></li>
-          <li><span>3</span><div><strong>Ative seu plano</strong><p>Após a contratação, a equipe orientará os próximos passos.</p></div></li>
-        </ol>
-      </section>
-    </main>
-  );
+    <section className={`services-showcase${isLoading ? ' is-loading' : ''}`} aria-label="Serviços empresariais" aria-busy={isLoading}>
+      {fiscal && <article className="service-showcase service-showcase--fiscal">{content(fiscal, <BuildingIcon width="27" height="27" />)}<ServiceMedia imageUrl={fiscal.imageUrl} alt={`Imagem de ${fiscal.name}`} /></article>}
+
+      <div className="services-showcase__pair">
+        {commercial && <article className="service-showcase service-showcase--commercial"><ServiceMedia imageUrl={commercial.imageUrl} alt={`Imagem de ${commercial.name}`} />{content(commercial, <BuildingIcon width="25" height="25" />)}</article>}
+        {hours && <article className="service-showcase service-showcase--hours"><ServiceMedia imageUrl={hours.imageUrl} alt={`Imagem de ${hours.name}`} />{content(hours, <ClockIcon width="27" height="27" />)}</article>}
+      </div>
+    </section>
+
+    <section className="services-benefits" aria-label="Benefícios dos serviços">
+      <div><span><UsersIcon width="25" height="25" /></span><p><strong>Atendimento nas unidades</strong>Apoio presencial para atender você e sua empresa.</p></div>
+      <div><span><CheckIcon width="25" height="25" /></span><p><strong>Contrato flexível</strong>Mais liberdade para ajustar conforme sua necessidade.</p></div>
+      <div><span><BuildingIcon width="25" height="25" /></span><p><strong>Suporte da equipe C2W</strong>Conte com nosso time sempre que precisar.</p></div>
+    </section>
+  </main>;
 }

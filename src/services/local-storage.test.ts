@@ -385,6 +385,17 @@ describe('localStorage services', () => {
     await expect(services.users.confirmHoursPlanRenewal('seed-usuario-teste')).resolves.toMatchObject({ hoursBalance: 10, hoursPlanRenewsOn: '2026-09-01' });
   });
 
+  it('lista e edita serviços empresariais independentemente do catálogo', async () => {
+    const services = createLocalStorageServices();
+    const items = await services.businessServices.listServices({ includeInactive: true });
+    expect(items).toHaveLength(3);
+    const fiscal = items.find(({ kind }) => kind === 'fiscal_address');
+    expect(fiscal).toBeDefined();
+    await expect(services.businessServices.updateService(fiscal!.id, { ...fiscal!, imageUrl: 'data:image/webp;base64,dGVzdGU=', active: false }))
+      .resolves.toMatchObject({ kind: 'fiscal_address', active: false, imageUrl: 'data:image/webp;base64,dGVzdGU=' });
+    await expect(services.businessServices.listServices()).resolves.toHaveLength(2);
+  });
+
   it('registra extrato e auditoria do consumo do plano', async () => {
     const services = createLocalStorageServices(() => new Date('2026-08-01T12:00:00.000Z'));
     await services.auth.login('secretaria@connect2work.com', 'secretaria123');
@@ -406,7 +417,8 @@ describe('localStorage services', () => {
     const admin = await services.auth.login('admin@connect2work.com', 'admin123');
     const created = await services.catalog.createUnit({ name: 'Unidade Backup', address: 'Rua Backup, 10', imageUrl: null });
     const backup = await services.backup.exportData(admin.id);
-    expect(backup).toMatchObject({ schemaVersion: 2, exportedAt: '2026-08-01T12:00:00.000Z', credentialsIncluded: false });
+    expect(backup).toMatchObject({ schemaVersion: 3, exportedAt: '2026-08-01T12:00:00.000Z', credentialsIncluded: false });
+    expect(backup.data.businessServices).toHaveLength(3);
     expect(backup.data.users.every((user) => !('password' in user))).toBe(true);
     await expect(services.backup.getLastBackupAt(admin.id)).resolves.toBe(backup.exportedAt);
 

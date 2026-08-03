@@ -8,6 +8,7 @@ Persistência provisória no `localStorage`. Implementação em
 - `c2w_mock_users` — usuários cadastrados.
 - `c2w_mock_units` — unidades cadastradas e editadas pelo administrador.
 - `c2w_mock_rooms` — salas cadastradas e editadas pelo administrador.
+- `c2w_mock_business_services` — serviços empresariais e conteúdo da vitrine.
 - `c2w_mock_session` — usuário autenticado, sem senha.
 - `c2w_mock_bookings` — agendamentos.
 - `c2w_mock_password_resets` — solicitações simuladas de redefinição.
@@ -30,9 +31,11 @@ Persistência provisória no `localStorage`. Implementação em
 
 ### Unit
 
-- `id`, `name`, `address`, `availableRooms`, `imageUrl`, `description?`.
+- `id`, `name`, `address`, `availableRooms`, `imageUrl`, `description?`, `latitude?`, `longitude?`.
 - Seed inicial em `src/services/mock-data.ts` e persistência administrativa em `c2w_mock_units`.
 - Imagens do mock são armazenadas como base64 em `imageUrl`.
+- Latitude e longitude posicionam a unidade no mapa; registros seed antigos recebem as coordenadas padrão durante a leitura.
+- As unidades seed usam os endereços reais informados em Bebedouro/SP. As coordenadas são pontos aproximados dos respectivos trechos e podem ser refinadas pelo formulário administrativo.
 - Exclusão é bloqueada enquanto houver registros `Room` vinculados.
 
 ### Room
@@ -40,6 +43,12 @@ Persistência provisória no `localStorage`. Implementação em
 - `id`, `unitId`, `name`, `capacity`, `pricePerHour`, `amenities`, `imageUrl`, `imageUrls?`.
 - Seed inicial em `src/services/mock-data.ts` e persistência administrativa em `c2w_mock_rooms`.
 - Imagens podem ser caminhos, URLs ou base64; `imageUrl` mantém a imagem principal e `imageUrls` a galeria.
+
+### BusinessService
+
+- `id`, `kind`, `name`, `description`, `primaryFeatures`, `secondaryFeatures`, `imageUrl`, `active`, `sortOrder`, `createdAt?`, `updatedAt?`.
+- `kind`: `fiscal_address`, `commercial_address` ou `hours_plan`; apenas um registro de cada tipo.
+- Imagem, benefícios e visibilidade são editados em `/admin/servicos`, sem vínculo artificial com unidades ou salas.
 - Exclusão é bloqueada enquanto houver registros `Booking` vinculados.
 
 ### Booking
@@ -113,6 +122,7 @@ Persistência provisória no `localStorage`. Implementação em
 - `UserManagementGateway` — listagem segura, cadastro e edição de dados, papel/status e redefinição opcional de senha, sem exposição da senha armazenada.
 - `UserManagementGateway` também lista informações de plano, edita o plano e confirma renovação; esta restaura o pacote, registra auditoria e calcula o próximo vencimento a partir do dia da confirmação.
 - `CatalogGateway` — leitura e CRUD de unidades e salas, com exclusões protegidas por vínculos.
+- `BusinessServiceGateway` — listagem pública e CRUD dos serviços empresariais.
 - `BookingGateway` — consulta, contagem, criação com rejeição de intervalos sobrepostos, confirmação administrativa e cancelamento de cliente ou administrador.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
 - `TaskGateway` — listagem, criação e movimentação compartilhada; administrador edita/exclui qualquer tarefa, enquanto secretária edita/exclui somente as próprias e não pode alterar a data estimada depois da criação.
@@ -145,5 +155,5 @@ operação atômica para evitar dois usuários reservando o mesmo intervalo.
 - A restauração de backup é validada, possui rollback local e encerra a sessão ativa.
 - O backup do mock inclui `StoredUser`, portanto contém senhas de desenvolvimento em texto simples. Deve ser guardado como dado sensível e esse formato não será usado no backend real.
 - Registros de auditoria podem armazenar `actorName` como fotografia do nome exibido no momento da operação.
-- Backups novos usam schema 2 e `credentialsIncluded: false`. Usuários são exportados sem `password`, tokens ou sessão.
+- Backups novos usam schema 3, incluem `businessServices` e mantêm `credentialsIncluded: false`. Usuários são exportados sem `password`, tokens ou sessão.
 - Ao restaurar no mock, credenciais de contas já presentes são preservadas. Contas desconhecidas importadas ficam inativas até revisão do administrador.

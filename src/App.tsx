@@ -21,6 +21,7 @@ import { ServicesPage } from './pages/ServicesPage';
 import { UnitsPage } from './pages/UnitsPage';
 import { AdminActivityPage } from './pages/AdminActivityPage';
 import { AdminBackupPage } from './pages/AdminBackupPage';
+import { AdminBusinessServicesPage } from './pages/AdminBusinessServicesPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export function App() {
@@ -46,6 +47,7 @@ export function App() {
         <Route path="/admin/usuarios" element={<AdminUsersPage />} />
         <Route path="/admin/atividades" element={<AdminActivityPage />} />
         <Route path="/admin/backup" element={<AdminBackupPage />} />
+        <Route path="/admin/servicos" element={<AdminBusinessServicesPage />} />
       </Route>
       <Route element={<AdminRoute allowedRoles={['admin', 'secretaria']} />}>
         <Route path="/admin/painel-do-dia" element={<AdminDailyPanelPage />} />

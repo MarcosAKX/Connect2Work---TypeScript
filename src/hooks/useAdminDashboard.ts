@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { services } from '../services';
-import type { Booking } from '../types/domain';
+import type { Booking, BookingAdminStatus } from '../types/domain';
 import { formatStorageDate, parseTimeSlot } from '../utils/booking';
+import { countAttentionTasks } from '../utils/tasks';
 
 export interface AdminBookingItem {
   id: string;
@@ -10,6 +11,8 @@ export interface AdminBookingItem {
   unitName: string;
   timeSlot: string;
   date: string;
+  adminStatus: BookingAdminStatus;
+  checkedInAt?: string;
 }
 
 export interface AdminDashboardData {
@@ -19,6 +22,9 @@ export interface AdminDashboardData {
   upcomingCount: number;
   activeUserCount: number;
   pendingPaymentCount: number;
+  pendingConfirmationCount: number;
+  awaitingArrivalTodayCount: number;
+  attentionTaskCount: number;
   occupiedRoomCount: number;
   checkInsToday: number;
   todayBookings: AdminBookingItem[];
@@ -51,10 +57,11 @@ export function useAdminDashboard() {
   const load = useCallback(async () => {
     setState((current) => ({ ...current, error: '', isLoading: true }));
     try {
-      const [units, bookings, users] = await Promise.all([
+      const [units, bookings, users, tasks] = await Promise.all([
         services.catalog.getUnits(),
         services.bookings.getAll(),
         services.users.listUsers(),
+        services.tasks.listTasks(),
       ]);
       const roomGroups = await Promise.all(units.map(({ id }) => services.catalog.getRoomsByUnitId(id)));
       const rooms = roomGroups.flat();
@@ -92,6 +99,8 @@ export function useAdminDashboard() {
         unitName: unitNames.get(booking.unitId) ?? 'Unidade não encontrada',
         timeSlot: booking.timeSlot,
         date: booking.date,
+        adminStatus: booking.adminStatus ?? (booking.status === 'cancelled' ? 'cancelled' : 'confirmed'),
+        checkedInAt: booking.checkedInAt,
       });
 
       setState({
@@ -102,6 +111,11 @@ export function useAdminDashboard() {
           upcomingCount: bookings.filter(({ status }) => status === 'upcoming').length,
           activeUserCount: users.filter(({ active }) => active).length,
           pendingPaymentCount: bookings.filter(({ status, adminStatus, paymentStatus }) => status !== 'cancelled' && adminStatus !== 'cancelled' && paymentStatus === 'pending').length,
+          pendingConfirmationCount: bookings.filter(({ status, adminStatus }) => status !== 'cancelled' && adminStatus === 'pending').length,
+          awaitingArrivalTodayCount: bookings.filter(({ date, status, adminStatus, checkedInAt }) =>
+            date === todayValue && status !== 'cancelled' && adminStatus === 'confirmed' && !checkedInAt,
+          ).length,
+          attentionTaskCount: countAttentionTasks(tasks, today),
           occupiedRoomCount: bookings.filter((booking) => {
             const range = parseTimeSlot(booking.timeSlot);
             return booking.date === todayValue

@@ -509,3 +509,5 @@
 @media (prefers-reduced-motion: reduce) {
   .admin-units-loading span { animation: none; }
 }
+.admin-unit-form__coordinates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+@media(max-width:560px){.admin-unit-form__coordinates{grid-template-columns:1fr}}

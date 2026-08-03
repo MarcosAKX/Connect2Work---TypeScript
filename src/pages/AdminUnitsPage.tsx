@@ -19,6 +19,8 @@ function UnitFormDialog({ unit, isSaving, gatewayError, onCancel, onSave }: Unit
   const [name, setName] = useState(unit?.name ?? '');
   const [address, setAddress] = useState(unit?.address ?? '');
   const [description, setDescription] = useState(unit?.description ?? '');
+  const [latitude, setLatitude] = useState(unit?.latitude?.toString() ?? '');
+  const [longitude, setLongitude] = useState(unit?.longitude?.toString() ?? '');
   const [imageUrl, setImageUrl] = useState<string | null>(unit?.imageUrl ?? null);
   const [validationError, setValidationError] = useState('');
 
@@ -48,11 +50,24 @@ function UnitFormDialog({ unit, isSaving, gatewayError, onCancel, onSave }: Unit
       setValidationError('Preencha o nome e o endereço da unidade.');
       return;
     }
+    const normalizedLatitude = latitude.trim() ? Number(latitude.replace(',', '.')) : undefined;
+    const normalizedLongitude = longitude.trim() ? Number(longitude.replace(',', '.')) : undefined;
+    if ((normalizedLatitude !== undefined && (!Number.isFinite(normalizedLatitude) || normalizedLatitude < -90 || normalizedLatitude > 90))
+      || (normalizedLongitude !== undefined && (!Number.isFinite(normalizedLongitude) || normalizedLongitude < -180 || normalizedLongitude > 180))) {
+      setValidationError('Informe coordenadas válidas ou deixe os dois campos vazios.');
+      return;
+    }
+    if ((normalizedLatitude === undefined) !== (normalizedLongitude === undefined)) {
+      setValidationError('Informe latitude e longitude juntas.');
+      return;
+    }
     const saved = await onSave({
       name: normalizedName,
       address: normalizedAddress,
       description: description.trim() || undefined,
       imageUrl,
+      latitude: normalizedLatitude,
+      longitude: normalizedLongitude,
     }, unit?.id);
     if (saved) onCancel();
   }
@@ -78,6 +93,10 @@ function UnitFormDialog({ unit, isSaving, gatewayError, onCancel, onSave }: Unit
           <div className="field">
             <label htmlFor="unit-description">Descrição <span>(opcional)</span></label>
             <textarea id="unit-description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={4} />
+          </div>
+          <div className="admin-unit-form__coordinates">
+            <div className="field"><label htmlFor="unit-latitude">Latitude <span>(opcional)</span></label><input id="unit-latitude" inputMode="decimal" value={latitude} onChange={(event) => setLatitude(event.target.value)} placeholder="Ex.: -23,550520" /></div>
+            <div className="field"><label htmlFor="unit-longitude">Longitude <span>(opcional)</span></label><input id="unit-longitude" inputMode="decimal" value={longitude} onChange={(event) => setLongitude(event.target.value)} placeholder="Ex.: -46,633308" /></div>
           </div>
           <div className="admin-unit-form__image-field">
             <label htmlFor="unit-image"><UploadIcon width="17" height="17" />Imagem da unidade <span>(até 2 MB)</span></label>

@@ -18,7 +18,7 @@ html[data-theme='light'] .btn-primary {
 }
 
 html[data-theme='light'] .btn-primary:hover:not(:disabled) {
-  background: #eab308;
+  background: #ffd54a;
   box-shadow: 0 3px 6px rgb(80 55 0 / 18%);
 }
 
@@ -175,7 +175,7 @@ html[data-theme='light'] .calendar__day.is-today:not(.is-selected) {
 
 html[data-theme='light'] .calendar__day.is-selected {
   border-color: #bd7f00;
-  background: #fbbf24;
+  background: #ffc400;
   color: #1a1400;
   box-shadow: none;
 }
@@ -208,7 +208,7 @@ html[data-theme='light'] .time-button:hover:not(:disabled) {
 
 html[data-theme='light'] .time-button.is-selected {
   border-color: #bd7f00;
-  background: #fbbf24;
+  background: #ffc400;
   color: #1a1400;
   box-shadow: none;
 }
@@ -227,7 +227,7 @@ html[data-theme='light'] .time-legend__box {
 
 html[data-theme='light'] .time-legend__box--selected {
   border-color: #bd7f00;
-  background: #fbbf24;
+  background: #ffc400;
 }
 
 html[data-theme='light'] .time-legend__box--unavailable {
@@ -246,8 +246,8 @@ html[data-theme='light'] .login-page {
   --color-text-primary: #fafafa;
   --color-text-secondary: #a3a3a3;
   --color-text-tertiary: #7d7d7d;
-  --color-accent: #fbbf24;
-  --color-accent-hover: #fcd34d;
+  --color-accent: #ffc400;
+  --color-accent-hover: #ffd54a;
   --color-accent-text: #1a1400;
   background-color: var(--color-bg);
 }
@@ -267,6 +267,117 @@ html[data-theme='light'] .login-card-header h1 {
 }
 
 html[data-theme='light'] .login-card .btn-primary {
-  background: linear-gradient(135deg, #fcd34d, #fbbf24 60%);
+  background: linear-gradient(135deg, #ffd54a, #ffc400 60%);
   color: #1a1400;
+}
+html[data-theme='light'] :is(.room-card__price, .room-details__price) {
+  border: 1px solid color-mix(in srgb, var(--color-accent-bright) 72%, #171200);
+  background-color: var(--color-accent-bright);
+  color: #171200;
+  box-shadow: 0 2px 4px color-mix(in srgb, #171200 24%, transparent);
+}
+
+html[data-theme='light'] .room-card__booking-button {
+  border-color: color-mix(in srgb, var(--color-accent-bright) 72%, #171200);
+  background-color: var(--color-accent-bright);
+  color: #171200;
+}
+
+html[data-theme='light'] .room-card__booking-button:hover,
+html[data-theme='light'] .room-card__booking-button:focus-visible {
+  background-color: #ffc400;
+}
+
+html[data-theme='light'] .units-nearest__permission button {
+  min-height: 44px;
+  border-color: color-mix(in srgb, var(--color-accent-bright) 72%, #171200);
+  background-color: var(--color-accent-bright);
+  color: #171200;
+}
+
+html[data-theme='light'] .units-nearest__permission button:hover,
+html[data-theme='light'] .units-nearest__permission button:focus-visible {
+  background-color: #ffc400;
+}
+
+html[data-theme='light'] .room-card__gallery-navigation {
+  background-color: rgb(10 10 10 / 92%);
+  color: #fafafa;
+}
+
+html[data-theme='light'] .room-card__dot::after {
+  background-color: #a3a3a3;
+}
+
+html[data-theme='light'] .room-card__dot.is-active::after {
+  background-color: var(--color-accent-bright);
+}
+
+html[data-theme='light'] .room-gallery__arrow {
+  border-color: var(--color-accent-bright);
+  background-color: var(--color-accent-bright);
+  color: #171200;
+}
+
+html[data-theme='light'] .room-gallery__arrow:hover:not(:disabled),
+html[data-theme='light'] .room-gallery__arrow:focus-visible {
+  border-color: #ffc400;
+  background-color: #ffc400;
+  color: #171200;
+}
+
+html[data-theme='light'] .room-gallery__navigation {
+  background-color: rgb(10 10 10 / 92%);
+  color: #fafafa;
+}
+
+html[data-theme='light'] .room-gallery__navigation .room-gallery__dot::after {
+  background-color: #a3a3a3;
+}
+
+html[data-theme='light'] .room-gallery__navigation .room-gallery__dot.is-active::after {
+  background-color: var(--color-accent-bright);
+}
+
+html[data-theme='light'] .services-page .service-showcase {
+  border-color: #c8ced8;
+  background-color: #ffffff;
+}
+
+html[data-theme='light'] .services-page .service-showcase__heading > span,
+html[data-theme='light'] .services-page .services-benefits > div > span {
+  border-color: #d8dde5;
+  background-color: #f6f7f9;
+  color: #17191d;
+}
+
+html[data-theme='light'] .services-page .service-showcase__image-fallback {
+  background-color: #eef1f5;
+  color: #555e6b;
+}
+
+html[data-theme='light'] .services-page .btn-primary {
+  border-color: color-mix(in srgb, var(--color-accent-bright) 72%, #171200);
+  background-color: var(--color-accent-bright);
+  color: #171200;
+}
+
+html[data-theme='light'] .services-page .btn-primary:hover,
+html[data-theme='light'] .services-page .btn-primary:focus-visible {
+  background-color: #ffc400;
+}
+
+html[data-theme='light'] .services-page .services-benefits {
+  border-color: #c8ced8;
+  background-color: rgb(255 255 255 / 56%);
+}
+
+html[data-theme='dark'] .services-page .service-showcase__image-fallback {
+  background-color: color-mix(in srgb, var(--color-surface-raised) 90%, var(--color-accent) 10%);
+}
+
+html[data-theme='dark'] .services-page .service-showcase__heading > span,
+html[data-theme='dark'] .services-page .services-benefits > div > span {
+  background-color: var(--color-surface-raised);
+  color: var(--color-text-primary);
 }

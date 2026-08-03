@@ -1,16 +1,23 @@
 import { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ClockIcon, CloseIcon, DashboardIcon, TaskIcon, UsersIcon } from './icons';
+import { BuildingIcon, ClockIcon, CloseIcon, DashboardIcon, TaskIcon, UsersIcon } from './icons';
 import '../assets/css/admin-sidebar.css';
 import type { UserRole } from '../types/domain';
 
-const administrativeTools = [
-  { to: '/admin/atividades', label: 'Atividades', icon: DashboardIcon, roles: ['admin'] },
-  { to: '/admin/backup', label: 'Backup', icon: DashboardIcon, roles: ['admin'] },
-  { to: '/admin/usuarios', label: 'Gerenciar Usuários', icon: UsersIcon, roles: ['admin'] },
-  { to: '/admin/planos-horas', label: 'Planos de Horas', icon: ClockIcon, roles: ['admin', 'secretaria'] },
-  { to: '/admin/tarefas', label: 'Tarefas', icon: TaskIcon, roles: ['admin', 'secretaria'] },
-] satisfies Array<{ to: string; label: string; icon: typeof UsersIcon; roles: UserRole[] }>;
+const administrativeGroups = [
+  { label: 'Operação', items: [
+    { to: '/admin/planos-horas', label: 'Planos de Horas', icon: ClockIcon, roles: ['admin', 'secretaria'] },
+    { to: '/admin/tarefas', label: 'Tarefas', icon: TaskIcon, roles: ['admin', 'secretaria'] },
+  ] },
+  { label: 'Administração', items: [
+    { to: '/admin/usuarios', label: 'Gerenciar Usuários', icon: UsersIcon, roles: ['admin'] },
+    { to: '/admin/servicos', label: 'Gerenciar Serviços', icon: BuildingIcon, roles: ['admin'] },
+  ] },
+  { label: 'Controle', items: [
+    { to: '/admin/atividades', label: 'Atividades', icon: DashboardIcon, roles: ['admin'] },
+    { to: '/admin/backup', label: 'Backup', icon: DashboardIcon, roles: ['admin'] },
+  ] },
+] satisfies Array<{ label: string; items: Array<{ to: string; label: string; icon: typeof UsersIcon; roles: UserRole[] }> }>;
 
 interface AdminSidebarProps {
   open: boolean;
@@ -56,14 +63,17 @@ export function AdminSidebar({ open, hoverMode, onClose, onMouseEnter, onMouseLe
           </button>
         </header>
         <nav aria-label="Ferramentas administrativas">
-          <p>Ferramentas Administrativas</p>
-          {administrativeTools.filter((item) => (item.roles as UserRole[]).includes(role)).map(({ to, label, icon: Icon }) => (
-            <NavLink key={to} to={to} className={({ isActive }) => isActive ? 'is-active' : ''} onClick={onClose} tabIndex={open ? 0 : -1}>
-              <Icon width="19" height="19" />
-              <span>{label}</span>
-              {to === '/admin/tarefas' && taskAttentionCount > 0 && <strong className="admin-task-menu-badge" aria-label={`${taskAttentionCount} tarefas vencidas ou vencendo hoje`}>{taskAttentionCount}</strong>}
-            </NavLink>
-          ))}
+          {administrativeGroups.map((group) => {
+            const items = group.items.filter((item) => (item.roles as UserRole[]).includes(role));
+            if (!items.length) return null;
+            return <section className="admin-sidebar__group" key={group.label} aria-label={group.label}>
+              <p>{group.label}</p>
+              {items.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => isActive ? 'is-active' : ''} onClick={onClose} tabIndex={open ? 0 : -1}>
+                <Icon width="19" height="19" /><span>{label}</span>
+                {to === '/admin/tarefas' && taskAttentionCount > 0 && <strong className="admin-task-menu-badge" aria-label={`${taskAttentionCount} tarefas vencidas ou vencendo hoje`}>{taskAttentionCount}</strong>}
+              </NavLink>)}
+            </section>;
+          })}
         </nav>
       </aside>
     </div>

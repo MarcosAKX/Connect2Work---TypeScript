@@ -18,10 +18,11 @@
 - `src/pages/PaymentPage.tsx` — `/pagamento`, protegida; PIX, cartão demonstrativo e confirmação da reserva.
 - `src/pages/PaymentConfirmationPage.tsx` — `/pagamento-confirmado`, protegida; confirmação e resumo da reserva.
 - `src/pages/BookingsPage.tsx` — `/meus-agendamentos`, protegida; filtros por usuário e cancelamento inline.
-- `src/pages/ServicesPage.tsx` — `/servicos`, protegida; endereço fiscal, endereço comercial, plano de horas e consulta pelo WhatsApp.
+- `src/pages/ServicesPage.tsx` — `/servicos`, protegida; composição visual de endereço fiscal, endereço comercial e plano de horas, imagens derivadas do catálogo e consulta pelo WhatsApp.
 - `src/pages/AdminDashboardPage.tsx` — `/admin`, protegida por perfil; resumo administrativo e agenda.
 - `src/pages/AdminUnitsPage.tsx` — `/admin/unidades`, protegida por perfil; CRUD de unidades e upload local.
 - `src/pages/AdminRoomsPage.tsx` — `/admin/salas`, protegida por perfil; CRUD, filtro, imagens e comodidades.
+- `src/pages/AdminBusinessServicesPage.tsx` — `/admin/servicos`, exclusiva de administradores; conteúdo, imagem e visibilidade dos serviços empresariais.
 - `src/pages/AdminBookingsPage.tsx` — `/admin/agendamentos`, protegida por perfil; métricas, filtros e ações operacionais.
 - `src/pages/AdminDailyPanelPage.tsx` — `/admin/painel-do-dia`; visão diária e tela inicial da secretaria.
 - `src/pages/AdminUsersPage.tsx` — `/admin/usuarios`, exclusiva de administradores; cadastro, edição, acessos e permissões.
@@ -39,6 +40,7 @@
 - `src/components/AdminSidebar.tsx` — drawer das ferramentas administrativas.
 - `src/components/BackLink.tsx` — retorno reutilizável.
 - `src/components/ThemeToggle.tsx` — controle único de tema usado por login, cliente, admin e secretaria.
+- `src/components/UnitsMap.tsx` — mapa Leaflet/OpenStreetMap, marcadores das unidades e posição opcional do cliente.
 - `src/components/NetworkBackground.tsx` — fundo animado das telas públicas.
 - `src/components/icons.tsx` — ícones SVG reutilizáveis.
 
@@ -55,6 +57,8 @@
 - `supabase/seed.sql` — ponto seguro para seeds futuros, sem senhas do mock.
 - `CheckoutGateway` — rascunho temporário entre agendamento e pagamento.
 - `src/services/mock-data.ts` — unidades e salas locais.
+- `src/services/mock-business-services.ts` — seeds de Endereço Fiscal, Endereço Comercial e Plano de Horas.
+- `src/hooks/useAdminBusinessServices.ts` — leitura e atualização administrativa dos serviços empresariais.
 - `src/state/AuthContext.tsx` — estado da sessão para React.
 - `src/hooks/useAdminDashboard.ts` — composição dos dados administrativos via gateways.
 - `src/hooks/useAdminUnits.ts` — listagem, contagem de salas e mutações administrativas de unidades.
@@ -79,6 +83,7 @@
 - `src/assets/css/pages/pagamento.css` — checkout responsivo e estados de pagamento.
 - `src/assets/css/pages/pagamento-confirmado.css` — confirmação responsiva após pagamento.
 - `src/assets/css/pages/servicos.css` — comparação de serviços e etapas de contratação.
+- `src/assets/css/pages/admin-business-services.css` — cards e formulário administrativo dos serviços empresariais.
 - `src/assets/css/pages/admin-dashboard.css` — shell, métricas, agenda e responsividade administrativa.
 - `src/assets/css/pages/admin-units.css` — tabela, modais, upload e responsividade da gestão de unidades.
 - `src/assets/css/pages/admin-rooms.css` — tabela, filtro, modal e responsividade da gestão de salas.
@@ -88,6 +93,7 @@
 - `src/assets/css/pages/admin-operations-polish.css` — acabamento compartilhado das três telas operacionais críticas.
 - `src/assets/css/pages/admin-tasks.css` — quadro Kanban, cards, estados de prazo e modais de tarefas.
 - `src/assets/css/admin-sidebar.css` — drawer administrativo, overlay e estados ativos.
+- `src/assets/css/ui-foundations.css` — foco, tabelas, tipografia administrativa, placeholders e movimento reduzido compartilhados.
 - `src/assets/img/` — imagens próprias da aplicação, incluindo a logo compacta `cwlogo.ico`.
 
 ## Testes

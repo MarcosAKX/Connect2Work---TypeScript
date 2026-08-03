@@ -1,0 +1,33 @@
+.admin-services-page { width: min(1180px, 100%); margin: 0 auto; padding: 120px var(--space-6) var(--space-7); }
+.admin-services-page__intro { margin: var(--space-4) 0 var(--space-6); }
+.admin-services-page__intro h1 { display: flex; align-items: center; gap: var(--space-3); font-size: 1.8rem; }
+.admin-services-page__intro h1 svg { color: var(--color-accent); }
+.admin-services-page__intro p { margin-top: var(--space-2); color: var(--color-text-secondary); }
+.admin-services-page__status, .admin-services-page__error { margin-bottom: var(--space-4); padding: var(--space-3); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface)); }
+.admin-services-grid { display: grid; gap: var(--space-4); }
+.admin-services-grid article { display: grid; grid-template-columns: 220px minmax(0,1fr); overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.admin-services-grid article.is-inactive { opacity: .66; }
+.admin-services-card__media { display: grid; min-height: 150px; place-items: center; background: var(--color-surface-raised); color: var(--color-text-tertiary); }
+.admin-services-card__media img { width: 100%; height: 100%; object-fit: cover; }
+.admin-services-card__body { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); padding: var(--space-5); }
+.admin-services-card__body span { color: var(--color-accent); font-size: .72rem; font-weight: 700; }
+.admin-services-card__body h2 { margin: 3px 0 var(--space-2); font-size: 1.2rem; }
+.admin-services-card__body p { max-width: 65ch; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.5; }
+.admin-service-modal { width: min(720px, calc(100% - 32px)); max-height: calc(100vh - 32px); padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-primary); }
+.admin-service-modal::backdrop { background: rgb(0 0 0 / 66%); }
+.admin-service-modal form { display: grid; gap: var(--space-4); padding: var(--space-5); overflow-y: auto; }
+.admin-service-modal header, .admin-service-modal footer, .admin-service-modal__image > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.admin-service-modal header p, .admin-service-modal__image span { color: var(--color-text-secondary); font-size: .78rem; }
+.admin-service-modal header > button { width: 44px; height: 44px; border: 0; background: transparent; color: inherit; }
+.admin-service-modal label { display: grid; gap: 7px; font-size: .78rem; font-weight: 650; }
+.admin-service-modal input:not([type='checkbox']), .admin-service-modal textarea { width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text-primary); font: inherit; font-weight: 400; }
+.admin-service-modal input:not([type='checkbox']) { min-height: 44px; padding: 0 var(--space-3); }
+.admin-service-modal textarea { padding: var(--space-3); resize: vertical; }
+.admin-service-modal__columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--space-4); }
+.admin-service-modal__image { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.admin-service-modal__image > div:first-child { align-items: flex-start; flex-direction: column; gap: 3px; }
+.admin-service-modal__image img { width: 100%; max-height: 220px; border-radius: var(--radius-sm); object-fit: cover; }
+.admin-service-modal__toggle { grid-template-columns: 20px 1fr; align-items: center; }
+.admin-service-modal__error { color: var(--color-error); font-size: .8rem; }
+.admin-service-modal footer { justify-content: flex-end; padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+@media (max-width: 680px) { .admin-services-page { padding: 128px var(--space-4) var(--space-7); } .admin-services-grid article { grid-template-columns: 1fr; } .admin-services-card__media { min-height: 190px; } .admin-services-card__body { align-items: stretch; flex-direction: column; } .admin-service-modal__columns { grid-template-columns: 1fr; } }

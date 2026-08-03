@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { BackLink } from '../components/BackLink';
+import { ArrowLeftIcon, ArrowRightIcon } from '../components/icons';
 import { services } from '../services';
 import { useAuth } from '../state/AuthContext';
 import type { Booking, Room, Unit, User } from '../types/domain';
@@ -144,7 +145,7 @@ export function BookingPage() {
           <article className="room-details card">
             <div className="room-gallery" aria-label={`Galeria de imagens de ${room.name}`}>
               {images[imageIndex] ? <img className="room-gallery__image" src={images[imageIndex]} alt={`${room.name}, imagem ${imageIndex + 1} de ${images.length}`} /> : <div className="room-gallery__fallback"><span>{room.name}</span></div>}
-              {images.length > 1 && <><button className="room-gallery__arrow room-gallery__arrow--previous" type="button" aria-label="Imagem anterior" onClick={() => setImageIndex((imageIndex - 1 + images.length) % images.length)}>‹</button><button className="room-gallery__arrow room-gallery__arrow--next" type="button" aria-label="Próxima imagem" onClick={() => setImageIndex((imageIndex + 1) % images.length)}>›</button></>}
+              {images.length > 1 && <><button className="room-gallery__arrow room-gallery__arrow--previous" type="button" aria-label="Imagem anterior" onClick={() => setImageIndex((imageIndex - 1 + images.length) % images.length)}><ArrowLeftIcon width="18" height="18" /></button><button className="room-gallery__arrow room-gallery__arrow--next" type="button" aria-label="Próxima imagem" onClick={() => setImageIndex((imageIndex + 1) % images.length)}><ArrowRightIcon width="18" height="18" /></button></>}
               {images.length > 1 && <div className="room-gallery__navigation"><span aria-live="polite">{imageIndex + 1} / {images.length}</span><div className="room-gallery__dots" aria-label="Navegação das imagens">{images.map((_, index) => <button key={index} type="button" className={`room-gallery__dot${index === imageIndex ? ' is-active' : ''}`} aria-label={`Exibir imagem ${index + 1}`} aria-current={index === imageIndex ? 'true' : undefined} onClick={() => setImageIndex(index)} />)}</div></div>}
             </div>
             <div className="room-details__body"><div className="room-details__heading"><div><h1>{room.name}</h1><div className="room-details__meta"><span>{unit.name}</span><span aria-hidden="true">•</span><span>{room.capacity === 1 ? '1 pessoa' : `${room.capacity} pessoas`}</span></div></div><span className="room-details__price">{currency.format(room.pricePerHour)}/hora</span></div><div className="room-amenities" aria-label="Comodidades da sala">{room.amenities.map((amenity) => <span className="room-amenity" key={amenity}>{amenity}</span>)}</div></div>

@@ -17,13 +17,17 @@
 - Listagem de salas por unidade: implementada (dados locais).
 - Detalhes, capacidade, preço e comodidades: implementados.
 - Carrossel individual em cada card e galeria ampliada deduplicada via `imageUrl` e `imageUrls`: implementados.
+- Cards de salas com fotos 16:9, comparação compacta de capacidade e comodidades e CTA de agendamento com preço por hora: implementados.
 - CRUD administrativo e upload local de imagens: implementados.
+- Endereço Fiscal, Endereço Comercial e Plano de Horas são entidades próprias, com conteúdo, imagem, benefícios, ordem e visibilidade editáveis em `/admin/servicos`.
 
 ## Administração
 
 - Usuário administrador seed no mock local: implementado.
 - Dashboard com totais de unidades, salas e agendamentos: implementado via gateways.
-- Dashboard administrativo inclui usuários ativos, ocupação atual, pagamentos pendentes, check-ins, agenda com datas, atalhos contextuais e gráfico de reservas ativas/canceladas dos últimos seis meses. Receita permanece indisponível até integração financeira.
+- Dashboard administrativo inclui faixa de indicadores, atalhos contextuais, central de atenção com pagamentos, confirmações, chegadas e tarefas críticas, agenda com datas e gráfico de reservas ativas/canceladas. Receita permanece fora do painel até integração financeira.
+- A seleção de unidades possui mapa interativo Leaflet/OpenStreetMap, marcadores vinculados ao catálogo, geolocalização opcional e cálculo local da unidade mais próxima.
+- Painel do Dia oferece faixa operacional, filtros da agenda, linha do tempo diária, confirmação de pagamento, check-in rápido, central de pendências e contagem de reservas dos próximos sete dias.
 - O gráfico mensal do dashboard permite alternar entre 6/12 meses, filtrar unidade, ocultar séries, consultar valores em tooltip e abrir Agendamentos com mês/unidade já filtrados.
 - O cabeçalho administrativo permite alternar entre modo escuro e claro; a preferência respeita o sistema na primeira visita e fica persistida localmente.
 - O cabeçalho do cliente também permite alternar entre modo escuro e claro, compartilhando a mesma preferência persistida.
@@ -127,4 +131,4 @@
 - Sessões de usuários removidos ou inativos são invalidadas automaticamente.
 - Uploads administrativos aceitam apenas JPEG, PNG e WebP, com limite de 2 MB e normalização WebP.
 - A aplicação possui tela 404 e limite global para falhas inesperadas da interface.
-- O backup operacional usa schema 2 e não exporta senhas, tokens ou sessões; autenticação fica separada para a futura adoção do Supabase Auth.
+- O backup operacional usa schema 3, inclui serviços empresariais e não exporta senhas, tokens ou sessões; autenticação fica separada para a futura adoção do Supabase Auth.

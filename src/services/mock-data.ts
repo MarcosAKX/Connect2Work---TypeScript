@@ -4,18 +4,22 @@ export const units: Unit[] = [
   {
     id: 'unit-1',
     name: 'Connect2Work 1',
-    address: 'Rua das Empresas, 100 - Centro',
+    address: 'Av. Osvaldo Perrone, 776 - Parque Eldorado, Bebedouro - SP, 14706-136',
     availableRooms: 5,
     imageUrl: null,
-    description: 'Unidade no coração do Centro, com fácil acesso ao metrô e estacionamento conveniado.',
+    latitude: -20.939809,
+    longitude: -48.499324,
+    description: 'Unidade no Parque Eldorado, com acesso facilitado e estrutura completa para trabalho e reuniões.',
   },
   {
     id: 'unit-2',
     name: 'Connect2Work 2',
-    address: 'Av. dos Negócios, 500 - Zona Sul',
+    address: 'R. Lucas Evangelista, 368 - Centro, Bebedouro - SP, 14700-425',
     availableRooms: 5,
     imageUrl: null,
-    description: 'Espaço moderno na Zona Sul, ideal para reuniões e trabalho em equipe.',
+    latitude: -20.949552,
+    longitude: -48.479537,
+    description: 'Espaço moderno no Centro de Bebedouro, ideal para reuniões e trabalho em equipe.',
   },
 ];
 

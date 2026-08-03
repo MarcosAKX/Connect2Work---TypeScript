@@ -1,17 +1,19 @@
 import type { AppServices } from './contracts';
 import { rooms as seedRooms, units as seedUnits } from './mock-data';
-import type { AuditAction, AuditEntity, AuditLog, BackupPayload, Booking, BookingStatus, CheckoutDraft, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, HoursPlanTransaction, Room, StoredUser, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateTaskInput, User, UserRole } from '../types/domain';
+import { businessServices as seedBusinessServices } from './mock-business-services';
+import type { AuditAction, AuditEntity, AuditLog, BackupPayload, Booking, BookingStatus, BusinessService, CheckoutDraft, CreateBusinessServiceInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, HoursPlanTransaction, Room, StoredUser, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateTaskInput, User, UserRole } from '../types/domain';
 import { bookingHasConflict, canCancelBooking, formatStorageDate, getEffectiveBookingStatus, isHoursPlanExpired, parseTimeSlot } from '../utils/booking';
 import { TASKS_CHANGED_EVENT } from '../utils/tasks';
 import { createEntityId } from './ids';
 import { ValidationError } from './errors';
 
-const STORAGE_SCHEMA_VERSION = 2;
+const STORAGE_SCHEMA_VERSION = 3;
 
 const KEYS = {
   users: 'c2w_mock_users',
   units: 'c2w_mock_units',
   rooms: 'c2w_mock_rooms',
+  businessServices: 'c2w_mock_business_services',
   session: 'c2w_mock_session',
   bookings: 'c2w_mock_bookings',
   resets: 'c2w_mock_password_resets',
@@ -116,7 +118,7 @@ function appendHoursTransaction(now: () => Date, input: Omit<HoursPlanTransactio
 }
 
 function validateBackup(payload: BackupPayload) {
-  if (!payload || ![1, STORAGE_SCHEMA_VERSION].includes(payload.schemaVersion) || !payload.data) {
+  if (!payload || ![1, 2, STORAGE_SCHEMA_VERSION].includes(payload.schemaVersion) || !payload.data) {
     throw new ValidationError('Backup incompatível com esta versão da aplicação.');
   }
   const collections: Array<keyof BackupPayload['data']> = ['users', 'units', 'rooms', 'bookings', 'tasks', 'auditLogs', 'hoursPlanTransactions'];
@@ -149,6 +151,10 @@ function ensureSeedRooms() {
   if (localStorage.getItem(KEYS.rooms) === null) {
     localStorage.setItem(KEYS.rooms, JSON.stringify(seedRooms));
   }
+}
+
+function ensureSeedBusinessServices() {
+  if (localStorage.getItem(KEYS.businessServices) === null) writeArray(KEYS.businessServices, seedBusinessServices);
 }
 
 function dateKeyWithOffset(base: Date, offset: number) {
@@ -243,6 +249,23 @@ function refundPlanHours(booking: Booking, now: () => Date) {
   appendHoursTransaction(now, { userId: booking.userId, bookingId: booking.id, type: 'refund', hours: booking.hoursFromPlan, balanceAfter: users[index].hoursBalance, reason: 'Estorno por cancelamento elegível', createdBy: currentActorId() });
 }
 
+function normalizeBusinessServiceInput(input: CreateBusinessServiceInput) {
+  const name = input.name.trim();
+  const description = input.description.trim();
+  if (!name || !description) throw new ValidationError('Informe nome e descrição do serviço.');
+  if (!Number.isInteger(input.sortOrder) || input.sortOrder < 0) throw new ValidationError('Informe uma ordem válida.');
+  return {
+    kind: input.kind,
+    name,
+    description,
+    primaryFeatures: input.primaryFeatures.map((item) => item.trim()).filter(Boolean),
+    secondaryFeatures: input.secondaryFeatures.map((item) => item.trim()).filter(Boolean),
+    imageUrl: input.imageUrl?.trim() || null,
+    active: input.active,
+    sortOrder: input.sortOrder,
+  };
+}
+
 function getAdminUser(userId: string) {
   const user = getStaffUser(userId);
   if (user.role !== 'admin') throw new Error('Somente administradores podem gerenciar backups.');
@@ -269,6 +292,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
   ensureSeedUsers();
   ensureSeedUnits();
   ensureSeedRooms();
+  ensureSeedBusinessServices();
   ensureSeedTasks(now());
   if (localStorage.getItem(KEYS.auditLogs) === null) writeArray(KEYS.auditLogs, []);
   if (localStorage.getItem(KEYS.hoursPlanTransactions) === null) writeArray(KEYS.hoursPlanTransactions, []);
@@ -477,10 +501,30 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
     },
     catalog: {
       async getUnits() {
-        return readArray<Unit>(KEYS.units);
+        return readArray<Unit>(KEYS.units).map((unit) => {
+          const seed = seedUnits.find(({ id }) => id === unit.id);
+          const hasLegacySeedAddress = /^Rua das Empresas, 100 - Centro,?$/i.test(unit.address.trim()) || /^Av\. dos Negócios, 500 - Zona Sul,?$/i.test(unit.address.trim());
+          return {
+            ...unit,
+            address: hasLegacySeedAddress ? seed?.address ?? unit.address : unit.address,
+            description: hasLegacySeedAddress ? seed?.description ?? unit.description : unit.description,
+            latitude: hasLegacySeedAddress ? seed?.latitude : unit.latitude ?? seed?.latitude,
+            longitude: hasLegacySeedAddress ? seed?.longitude : unit.longitude ?? seed?.longitude,
+          };
+        });
       },
       async getUnitById(id) {
-        return readArray<Unit>(KEYS.units).find((unit) => unit.id === id) ?? null;
+        const unit = readArray<Unit>(KEYS.units).find((candidate) => candidate.id === id);
+        if (!unit) return null;
+        const seed = seedUnits.find((candidate) => candidate.id === id);
+        const hasLegacySeedAddress = /^Rua das Empresas, 100 - Centro,?$/i.test(unit.address.trim()) || /^Av\. dos Negócios, 500 - Zona Sul,?$/i.test(unit.address.trim());
+        return {
+          ...unit,
+          address: hasLegacySeedAddress ? seed?.address ?? unit.address : unit.address,
+          description: hasLegacySeedAddress ? seed?.description ?? unit.description : unit.description,
+          latitude: hasLegacySeedAddress ? seed?.latitude : unit.latitude ?? seed?.latitude,
+          longitude: hasLegacySeedAddress ? seed?.longitude : unit.longitude ?? seed?.longitude,
+        };
       },
       async createUnit(input) {
         const existing = readArray<Unit>(KEYS.units);
@@ -490,6 +534,8 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           address: input.address.trim(),
           description: input.description?.trim() || undefined,
           imageUrl: input.imageUrl,
+          latitude: input.latitude,
+          longitude: input.longitude,
           availableRooms: 0,
         };
         localStorage.setItem(KEYS.units, JSON.stringify([...existing, unit]));
@@ -507,6 +553,8 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           address: input.address.trim(),
           description: input.description?.trim() || undefined,
           imageUrl: input.imageUrl,
+          latitude: input.latitude,
+          longitude: input.longitude,
         };
         existing[index] = updated;
         localStorage.setItem(KEYS.units, JSON.stringify(existing));
@@ -572,6 +620,40 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         }
         localStorage.setItem(KEYS.rooms, JSON.stringify(existing.filter((candidate) => candidate.id !== id)));
         appendAudit(now, 'delete', 'room', id, { name: room.name });
+      },
+    },
+    businessServices: {
+      async listServices(options) {
+        return readArray<BusinessService>(KEYS.businessServices)
+          .filter((service) => options?.includeInactive || service.active)
+          .sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name, 'pt-BR'));
+      },
+      async createService(input) {
+        const existing = readArray<BusinessService>(KEYS.businessServices);
+        if (existing.some((service) => service.kind === input.kind)) throw new ValidationError('Já existe um serviço deste tipo.');
+        const created: BusinessService = { id: createEntityId(), ...normalizeBusinessServiceInput(input), createdAt: now().toISOString() };
+        writeArray(KEYS.businessServices, [...existing, created]);
+        appendAudit(now, 'create', 'business_service', created.id, { name: created.name, kind: created.kind });
+        return created;
+      },
+      async updateService(id, input) {
+        const existing = readArray<BusinessService>(KEYS.businessServices);
+        const index = existing.findIndex((service) => service.id === id);
+        const current = existing[index];
+        if (!current) throw new ValidationError('Serviço não encontrado.');
+        if (existing.some((service) => service.id !== id && service.kind === input.kind)) throw new ValidationError('Já existe um serviço deste tipo.');
+        const updated: BusinessService = { ...current, ...normalizeBusinessServiceInput(input), updatedAt: now().toISOString() };
+        existing[index] = updated;
+        writeArray(KEYS.businessServices, existing);
+        appendAudit(now, 'update', 'business_service', id, { name: updated.name, active: updated.active });
+        return updated;
+      },
+      async deleteService(id) {
+        const existing = readArray<BusinessService>(KEYS.businessServices);
+        const current = existing.find((service) => service.id === id);
+        if (!current) throw new ValidationError('Serviço não encontrado.');
+        writeArray(KEYS.businessServices, existing.filter((service) => service.id !== id));
+        appendAudit(now, 'delete', 'business_service', id, { name: current.name });
       },
     },
     bookings: {
@@ -824,6 +906,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
             users: readArray<StoredUser>(KEYS.users).map(sanitizeUser),
             units: readArray<Unit>(KEYS.units),
             rooms: readArray<Room>(KEYS.rooms),
+            businessServices: readArray<BusinessService>(KEYS.businessServices),
             bookings: readArray<Booking>(KEYS.bookings),
             tasks: readArray<Task>(KEYS.tasks),
             auditLogs: readArray<AuditLog>(KEYS.auditLogs),
@@ -840,6 +923,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           users: readArray<StoredUser>(KEYS.users),
           units: readArray<Unit>(KEYS.units),
           rooms: readArray<Room>(KEYS.rooms),
+          businessServices: readArray<BusinessService>(KEYS.businessServices),
           bookings: readArray<Booking>(KEYS.bookings),
           tasks: readArray<Task>(KEYS.tasks),
           auditLogs: readArray<AuditLog>(KEYS.auditLogs),
@@ -858,6 +942,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           writeArray(KEYS.users, restoredUsers);
           writeArray(KEYS.units, payload.data.units);
           writeArray(KEYS.rooms, payload.data.rooms);
+          writeArray(KEYS.businessServices, payload.data.businessServices ?? seedBusinessServices);
           writeArray(KEYS.bookings, payload.data.bookings);
           writeArray(KEYS.tasks, payload.data.tasks);
           writeArray(KEYS.auditLogs, payload.data.auditLogs);
@@ -870,6 +955,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           writeArray(KEYS.users, rollback.users);
           writeArray(KEYS.units, rollback.units);
           writeArray(KEYS.rooms, rollback.rooms);
+          writeArray(KEYS.businessServices, rollback.businessServices);
           writeArray(KEYS.bookings, rollback.bookings);
           writeArray(KEYS.tasks, rollback.tasks);
           writeArray(KEYS.auditLogs, rollback.auditLogs);
