@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { services } from '../services';
 import type { Booking, BookingPaymentStatus, ClientSummary, Room, Unit } from '../types/domain';
-import { bookingHasConflict, formatStorageDate, getBookingStart, HOURS, parseTimeSlot } from '../utils/booking';
+import { bookingHasConflict, calculateHoursPlanUsage, formatStorageDate, getBookingStart, HOURS, isHoursPlanExpired, parseTimeSlot } from '../utils/booking';
 
 export function useCreateBookingForAdmin(open: boolean, onCreated: () => Promise<void>) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
@@ -49,15 +49,17 @@ export function useCreateBookingForAdmin(open: boolean, onCreated: () => Promise
   }, [unitId]);
 
   const selectedRoom = rooms.find((room) => room.id === roomId);
+  const selectedClient = clients.find((client) => client.id === clientId);
   const timeSlot = startTime && endTime ? `${startTime} - ${endTime}` : '';
   const duration = useMemo(() => {
     const range = parseTimeSlot(timeSlot);
     return range ? (range.end - range.start) / 60 : 0;
   }, [timeSlot]);
+  const planUsage = selectedClient && selectedRoom ? calculateHoursPlanUsage(duration, selectedRoom.pricePerHour, selectedClient) : null;
 
   useEffect(() => {
-    if (!totalEdited) setTotal(selectedRoom && duration > 0 ? String(selectedRoom.pricePerHour * duration) : '');
-  }, [duration, selectedRoom, totalEdited]);
+    if (!totalEdited) setTotal(selectedRoom && duration > 0 ? String(planUsage?.amountToPay ?? selectedRoom.pricePerHour * duration) : '');
+  }, [duration, planUsage?.amountToPay, selectedRoom, totalEdited]);
 
   function reset() {
     setClientQuery(''); setClientId(''); setUnitId(''); setRoomId('');
@@ -99,7 +101,8 @@ export function useCreateBookingForAdmin(open: boolean, onCreated: () => Promise
       // Revisar quando o fluxo de aprovação/manual mudar no backend real.
       await services.bookings.create({
         userId: clientId, unitId, roomId, date, timeSlot,
-        status: 'upcoming', adminStatus: 'confirmed', total: parsedTotal, paymentStatus,
+        status: 'upcoming', adminStatus: 'confirmed', total: parsedTotal, paymentStatus: planUsage?.amountToPay === 0 ? 'completed' : paymentStatus,
+        hoursFromPlan: planUsage?.hoursFromPlan || undefined,
       });
       await onCreated();
       reset();
@@ -116,6 +119,8 @@ export function useCreateBookingForAdmin(open: boolean, onCreated: () => Promise
     clients, units, rooms, clientQuery, setClientQuery, clientId, setClientId,
     unitId, setUnitId, roomId, setRoomId, date, setDate, startTime, setStartTime,
     endTime, setEndTime, total, setTotal: (value: string) => { setTotal(value); setTotalEdited(true); },
-    paymentStatus, setPaymentStatus, duration, error, isLoading, isSaving, submit, reset, hours: HOURS,
+    paymentStatus, setPaymentStatus, duration, selectedClient, planUsage,
+    planExpired: selectedClient ? isHoursPlanExpired(selectedClient) : false,
+    error, isLoading, isSaving, submit, reset, hours: HOURS,
   };
 }

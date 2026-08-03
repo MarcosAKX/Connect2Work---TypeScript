@@ -1,4 +1,22 @@
-import type { Booking } from '../types/domain';
+import type { Booking, User } from '../types/domain';
+
+export interface HoursPlanUsage {
+  hoursFromPlan: number;
+  hoursToPay: number;
+  amountToPay: number;
+}
+
+export function isHoursPlanExpired(user: Pick<User, 'hasHoursPlan' | 'hoursPlanRenewsOn' | 'hoursPlanPaymentConfirmed'>, today = formatStorageDate(new Date())) {
+  // A confirmação vale até a data do próximo ciclo; ao ultrapassá-la, a nova renovação volta a ficar pendente.
+  return Boolean(user.hasHoursPlan && user.hoursPlanRenewsOn && user.hoursPlanRenewsOn < today);
+}
+
+export function calculateHoursPlanUsage(duration: number, pricePerHour: number, user: Pick<User, 'hasHoursPlan' | 'hoursBalance' | 'hoursPlanRenewsOn' | 'hoursPlanPaymentConfirmed'>, today = formatStorageDate(new Date())): HoursPlanUsage {
+  const usableBalance = user.hasHoursPlan && !isHoursPlanExpired(user, today) ? Math.max(0, user.hoursBalance) : 0;
+  const hoursFromPlan = Math.min(Math.max(0, duration), usableBalance);
+  const hoursToPay = Math.max(0, duration - hoursFromPlan);
+  return { hoursFromPlan, hoursToPay, amountToPay: hoursToPay * Math.max(0, pricePerHour) };
+}
 
 export const HOURS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'] as const;
 

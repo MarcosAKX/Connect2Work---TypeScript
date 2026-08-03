@@ -8,6 +8,7 @@ import { AdminBookingsPage } from './pages/AdminBookingsPage';
 import { AdminDailyPanelPage } from './pages/AdminDailyPanelPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { AdminTasksPage } from './pages/AdminTasksPage';
+import { AdminHoursPlanPage } from './pages/AdminHoursPlanPage';
 import { BookingsPage } from './pages/BookingsPage';
 import { BookingPage } from './pages/BookingPage';
 import { LoginPage } from './pages/LoginPage';
@@ -45,6 +46,7 @@ export function App() {
         <Route path="/admin/painel-do-dia" element={<AdminDailyPanelPage />} />
         <Route path="/admin/agendamentos" element={<AdminBookingsPage />} />
         <Route path="/admin/tarefas" element={<AdminTasksPage />} />
+        <Route path="/admin/planos-horas" element={<AdminHoursPlanPage />} />
       </Route>
       <Route path="/" element={<Navigate to="/unidades" replace />} />
       <Route path="*" element={<Navigate to="/unidades" replace />} />

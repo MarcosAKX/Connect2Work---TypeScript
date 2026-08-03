@@ -9,9 +9,17 @@ export interface User {
   createdAt: string;
   profession?: string;
   phone?: string;
+  hasHoursPlan: boolean;
+  hoursBalance: number;
+  hoursPlanTotal?: number;
+  hoursPlanRenewsOn?: string;
+  hoursPlanPaymentConfirmed?: boolean;
+  hoursPlanLastRenewalAt?: string;
 }
 
-export type ClientSummary = Pick<User, 'id' | 'name' | 'email'>;
+export type ClientSummary = Pick<User, 'id' | 'name' | 'email' | 'hasHoursPlan' | 'hoursBalance' | 'hoursPlanTotal' | 'hoursPlanRenewsOn' | 'hoursPlanPaymentConfirmed'>;
+
+export type UpdateUserHoursPlanInput = Pick<User, 'hasHoursPlan' | 'hoursBalance' | 'hoursPlanTotal' | 'hoursPlanRenewsOn'>;
 
 export interface CreateManagedUserInput {
   name: string;
@@ -100,6 +108,7 @@ export interface Booking {
   cancellationReason?: string;
   checkedInAt?: string;
   checkedInBy?: string;
+  hoursFromPlan?: number;
 }
 
 export interface BookingCounts {
@@ -118,6 +127,8 @@ export interface CheckoutDraft {
   timeSlot: string;
   duration: number;
   total: number;
+  hoursFromPlan?: number;
+  hoursToPay?: number;
 }
 
 export interface PaymentConfirmation {

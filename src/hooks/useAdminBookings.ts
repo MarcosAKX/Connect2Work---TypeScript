@@ -106,6 +106,12 @@ export function useAdminBookings() {
 
   const dayPanel = useMemo(() => {
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const tomorrow = new Date(`${today}T12:00:00`);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDate = formatStorageDate(tomorrow);
+    const nextWeek = new Date(`${today}T12:00:00`);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const nextWeekDate = formatStorageDate(nextWeek);
     const todayBookings = bookings
       .filter(({ booking }) => booking.date === today)
       .sort((first, second) => first.booking.timeSlot.localeCompare(second.booking.timeSlot));
@@ -119,6 +125,9 @@ export function useAdminBookings() {
       const range = parseTimeSlot(booking.timeSlot);
       return Boolean(range && range.start >= nowMinutes);
     }) ?? null;
+    const upcomingBookings = bookings
+      .filter(({ booking, adminStatus }) => booking.date > today && booking.date <= nextWeekDate && adminStatus !== 'cancelled')
+      .sort((first, second) => `${first.booking.date} ${first.booking.timeSlot}`.localeCompare(`${second.booking.date} ${second.booking.timeSlot}`));
 
     return {
       now,
@@ -128,6 +137,9 @@ export function useAdminBookings() {
       pendingPayments,
       pendingPaymentTotal: pendingPayments.reduce((sum, item) => sum + item.total, 0),
       nextArrival,
+      upcomingBookings,
+      tomorrowDate,
+      nextWeekDate,
     };
   }, [bookings, now, today]);
 

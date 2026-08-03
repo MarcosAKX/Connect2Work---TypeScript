@@ -101,7 +101,7 @@ export function BookingsPage() {
           const isCancelling = cancellingId === booking.id;
           return <article className="card booking-card" key={booking.id}>
             <div className="booking-card__content">
-              <div><p className="booking-card__eyebrow">{unit?.name ?? 'Unidade'}</p><h2>{room?.name ?? 'Sala reservada'}</h2></div>
+              <div><p className="booking-card__eyebrow">{unit?.name ?? 'Unidade'}</p><h2>{room?.name ?? 'Sala reservada'}</h2>{booking.hoursFromPlan ? <span className="booking-hours-plan">Plano de horas · {booking.hoursFromPlan}h</span> : null}</div>
               <dl className="booking-card__details"><div><dt>Data</dt><dd>{formatBookingDate(booking.date)}</dd></div><div><dt>Horário</dt><dd>{booking.timeSlot}</dd></div></dl>
             </div>
             {status === 'upcoming' && <div className="booking-card__actions">

@@ -370,4 +370,16 @@ describe('localStorage services', () => {
     });
     await expect(services.tasks.deleteTask(created.id, 'seed-administrador')).resolves.toBeUndefined();
   });
+
+  it('debita, estorna e renova plano de horas', async () => {
+    const services = createLocalStorageServices(() => new Date('2026-08-01T12:00:00.000Z'));
+    await services.users.updateUserHoursPlan('seed-usuario-teste', { hasHoursPlan: true, hoursPlanTotal: 10, hoursBalance: 4, hoursPlanRenewsOn: '2026-08-20' });
+    const booking = await services.bookings.create({ userId: 'seed-usuario-teste', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-09-10', timeSlot: '08:00 - 10:00', status: 'upcoming', hoursFromPlan: 2, total: 0 });
+    await expect(services.auth.getUserById('seed-usuario-teste')).resolves.toMatchObject({ hoursBalance: 2 });
+    await services.bookings.cancel(booking.id, 'seed-usuario-teste');
+    await expect(services.auth.getUserById('seed-usuario-teste')).resolves.toMatchObject({ hoursBalance: 4 });
+    await services.users.updateUserHoursPlan('seed-usuario-teste', { hasHoursPlan: true, hoursPlanTotal: 10, hoursBalance: 1, hoursPlanRenewsOn: '2026-07-20' });
+    await expect(services.bookings.create({ userId: 'seed-usuario-teste', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-09-11', timeSlot: '08:00 - 09:00', status: 'upcoming', hoursFromPlan: 1, total: 0 })).rejects.toThrow('não está disponível');
+    await expect(services.users.confirmHoursPlanRenewal('seed-usuario-teste')).resolves.toMatchObject({ hoursBalance: 10, hoursPlanRenewsOn: '2026-09-01' });
+  });
 });

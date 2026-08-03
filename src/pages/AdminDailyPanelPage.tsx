@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarIcon, CheckIcon, ClockIcon, CurrencyIcon, UserIcon } from '../components/icons';
+import { ArrowRightIcon, CalendarIcon, CheckIcon, ClockIcon, CurrencyIcon, UserIcon } from '../components/icons';
 import { useAdminBookings, type AdminBookingRow } from '../hooks/useAdminBookings';
 import { useAuth } from '../state/AuthContext';
 import '../assets/css/pages/admin-bookings.css';
@@ -17,6 +17,12 @@ function formatCheckInTime(value: string) {
 
 function formatLongDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(`${value}T12:00:00`));
+}
+
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+    .format(new Date(`${value}T12:00:00`))
+    .replace('.', '');
 }
 
 function getStartTime(value: string) { return value.split('-')[0]?.trim() ?? value; }
@@ -125,11 +131,13 @@ export function AdminDailyPanelPage() {
             </article>;
           })}</div>}
         </section>
-        <aside className="admin-day-attention" aria-labelledby="attention-title">
-          <header><h3 id="attention-title">Precisa de atenção</h3><span>{data.dayPanel.waitingArrival.length + data.dayPanel.pendingPayments.length + data.stats.pending}</span></header>
-          <div><span className="tone-accent"><ClockIcon width="17" height="17" /></span><p><strong>{data.dayPanel.waitingArrival.length} aguardando chegada</strong><small>Reservas confirmadas sem check-in</small></p></div>
-          <div><span className="tone-warning"><CurrencyIcon width="17" height="17" /></span><p><strong>{data.dayPanel.pendingPayments.length} pagamentos pendentes</strong><small>{money.format(data.dayPanel.pendingPaymentTotal)} a receber hoje</small></p></div>
-          <div><span className="tone-info"><CheckIcon width="17" height="17" /></span><p><strong>{data.stats.pending} reservas pendentes</strong><small>Aguardando confirmação</small></p></div>
+        <aside className="admin-day-upcoming" aria-labelledby="upcoming-title">
+          <header><div><h3 id="upcoming-title">Próximos agendamentos</h3><p>Próximos 7 dias</p></div><Link to={`/admin/agendamentos?de=${data.dayPanel.tomorrowDate}&ate=${data.dayPanel.nextWeekDate}`} aria-label="Ver todos os próximos agendamentos">Ver todos <ArrowRightIcon width="14" height="14" /></Link></header>
+          {data.dayPanel.upcomingBookings.length === 0 ? <div className="admin-day-upcoming__empty"><CalendarIcon width="24" height="24" /><p>Nenhum agendamento nos próximos sete dias.</p></div> : <div className="admin-day-upcoming__list">{data.dayPanel.upcomingBookings.slice(0, 4).map((item) => <article key={item.booking.id}>
+            <time dateTime={`${item.booking.date}T${getStartTime(item.booking.timeSlot)}`}><strong>{formatShortDate(item.booking.date)}</strong><span>{item.booking.timeSlot}</span></time>
+            <div><strong>{item.roomName}</strong><span>{item.clientName} · {item.unitName}</span></div>
+            <span className={`admin-bookings-badge is-${item.adminStatus}`}>{statusLabels[item.adminStatus]}</span>
+          </article>)}</div>}
         </aside>
       </div>
     </section>

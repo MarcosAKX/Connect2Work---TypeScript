@@ -40,7 +40,7 @@
 - Gestão de agendamentos: implementada em `/admin/agendamentos`, com visão diária padrão, busca, filtros, métricas, receita, confirmação e cancelamento.
 - Status administrativo usa `pending`, `confirmed` e `cancelled`, mantendo separado o status temporal usado pelo cliente.
 - Gestão de usuários: implementada em `/admin/usuarios`, com busca, filtros, estatísticas, cadastro e edição completa de dados, permissão, senha e status.
-- Papéis disponíveis: `client`, `admin` e `secretaria`; secretaria acessa exclusivamente `/admin/agendamentos`.
+- Papéis disponíveis: `client`, `admin` e `secretaria`; secretaria acessa as ferramentas operacionais autorizadas, sem acessar gestão de contas, unidades ou salas.
 - Secretaria possui navegação reduzida e é redirecionada ao tentar acessar dashboard, unidades, salas ou usuários.
 - Na gestão de agendamentos, a receita total é exibida somente ao administrador; a secretária mantém os valores e pagamentos individuais necessários à operação.
 - Cancelamento administrativo exige motivo, persistido e consultável na tabela.
@@ -48,7 +48,7 @@
 - Criação administrativa permite registrar pagamento `pending` ou `completed`; reservas do checkout nascem concluídas.
 - Admin e secretaria podem confirmar pagamentos pendentes diretamente na lista, com confirmação em modal.
 - Admin e secretaria podem realizar check-in rápido em reservas confirmadas; horário e responsável ficam registrados.
-- Admin e secretaria possuem `/admin/painel-do-dia`, com nomes dos clientes, agenda cronológica, próxima chegada, presença atual e pendências de check-in/pagamento. A agenda diária pode ser filtrada por busca, unidade, situação operacional e período do dia. Esta é a tela inicial da secretaria.
+- Admin e secretaria possuem `/admin/painel-do-dia`, com nomes dos clientes, agenda cronológica, próxima chegada, presença atual, pendências de check-in/pagamento e uma prévia não redundante dos agendamentos dos próximos sete dias. A agenda diária pode ser filtrada por busca, unidade, situação operacional e período do dia. Esta é a tela inicial da secretaria.
 - Admin e secretaria compartilham o quadro `/admin/tarefas`, com três etapas fixas, responsáveis da equipe, prioridades, prazos, filtro pessoal e movimentação por drag-and-drop.
 - Administradores podem editar e excluir qualquer tarefa. Secretárias editam e excluem somente as próprias tarefas; após a criação, a data estimada não pode ser alterada por secretárias. A movimentação entre etapas permanece compartilhada.
 - Os menus administrativos exibem a contagem de tarefas vencidas ou vencendo hoje.
@@ -79,6 +79,11 @@
 - Mudança automática de próximo para passado conforme data e hora: implementada (mock local).
 - Cancelamento pelo proprietário com antecedência mínima de 24 horas: implementado (mock local).
 - Confirmação inline, retorno acessível e contagens atualizadas após cancelar: implementados.
+- Plano de horas: consumo integral ou parcial, bloqueio por renovação vencida, débito atômico no mock e estorno no cancelamento elegível implementados.
+- Cliente visualiza o saldo atualizado em um único local, no resumo da tela de agendamento; ao selecionar a duração, vê imediatamente o saldo projetado após a reserva. Reservas pagas com plano são identificadas em “Meus Agendamentos”.
+- Admin/secretaria aplicam automaticamente o saldo ao criar reserva em nome do cliente; excedente permanece como valor operacional ajustável.
+- Planos vencidos podem ser renovados por admin/secretaria na tela dedicada; no agendamento operacional, o plano vencido apenas gera aviso e não concede desconto.
+- Gestão dedicada de planos disponível em `/admin/planos-horas` para admin e secretaria, com busca, filtros, métricas, ativação, ajuste, desativação e confirmação de renovação. A gestão de contas permanece separada e exclusiva do admin.
 - Validação transacional no backend: planejada.
 
 ## Próxima etapa de backend

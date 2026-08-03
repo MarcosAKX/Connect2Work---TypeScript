@@ -18,10 +18,11 @@ Persistência provisória no `localStorage`. Implementação em
 
 ### User
 
-- `id`, `name`, `email`, `role`, `active`, `createdAt`.
+- `id`, `name`, `email`, `role`, `active`, `createdAt`, `hasHoursPlan`, `hoursBalance`, `hoursPlanTotal?`, `hoursPlanRenewsOn?`, `hoursPlanPaymentConfirmed?`, `hoursPlanLastRenewalAt?`.
 - `role`: `client`, `admin` ou `secretaria`; registros antigos sem o campo são tratados como `client`.
 - `active`: controla acesso ao sistema; registros antigos sem o campo são migrados como ativos.
 - `profession` e `phone` opcionais.
+- Usuários antigos recebem `hasHoursPlan: false` e `hoursBalance: 0`. A data de renovação apenas bloqueia o uso após vencida; saldo só é restaurado pela confirmação manual do novo ciclo.
 - `StoredUser` acrescenta `password` somente no mock.
 
 ### Unit
@@ -40,7 +41,7 @@ Persistência provisória no `localStorage`. Implementação em
 
 ### Booking
 
-- `id`, `userId`, `unitId`, `roomId`, `date`, `timeSlot`, `status`, `adminStatus?`, `paymentStatus?`, `total?`, `createdAt`, `cancelledAt?`, `cancellationReason?`, `checkedInAt?`, `checkedInBy?`.
+- `id`, `userId`, `unitId`, `roomId`, `date`, `timeSlot`, `status`, `adminStatus?`, `paymentStatus?`, `total?`, `hoursFromPlan?`, `createdAt`, `cancelledAt?`, `cancellationReason?`, `checkedInAt?`, `checkedInBy?`.
 - Status: `upcoming`, `past` ou `cancelled`.
 - Status administrativo: `pending`, `confirmed` ou `cancelled`; registros antigos ativos são tratados como confirmados.
 - `total` guarda o valor final pago; registros antigos têm valor derivado da duração e do preço atual da sala.
@@ -51,6 +52,7 @@ Persistência provisória no `localStorage`. Implementação em
 - Status não cancelados são recalculados pela data/hora atual durante a leitura.
 - Cancelamento exige o mesmo `userId` e pelo menos 24 horas até o início.
 - Cancelamento administrativo exige `cancellationReason`; registros antigos cancelados podem não possuir motivo.
+- `hoursFromPlan` registra o saldo consumido. Cancelamento elegível pela janela de 24h devolve essas horas mesmo se o plano estiver vencido.
 
 ### PasswordResetRequest
 
@@ -59,7 +61,7 @@ Persistência provisória no `localStorage`. Implementação em
 
 ### CheckoutDraft
 
-- `userId`, `unitId`, `roomId`, `date`, `timeSlot`, `duration`, `total`.
+- `userId`, `unitId`, `roomId`, `date`, `timeSlot`, `duration`, `total`, `hoursFromPlan?`, `hoursToPay?`.
 - Existe apenas durante a sessão e é removido no logout ou após confirmação.
 - Não armazena dados de cartão.
 
@@ -90,6 +92,7 @@ Persistência provisória no `localStorage`. Implementação em
 
 - `AuthGateway` — sessão, consulta segura de usuário por ID, login, Google, cadastro, reset e logout.
 - `UserManagementGateway` — listagem segura, cadastro e edição de dados, papel/status e redefinição opcional de senha, sem exposição da senha armazenada.
+- `UserManagementGateway` também lista informações de plano, edita o plano e confirma renovação; esta restaura o pacote, registra auditoria e calcula o próximo vencimento a partir do dia da confirmação.
 - `CatalogGateway` — leitura e CRUD de unidades e salas, com exclusões protegidas por vínculos.
 - `BookingGateway` — consulta, contagem, criação com rejeição de intervalos sobrepostos, confirmação administrativa e cancelamento de cliente ou administrador.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
@@ -104,6 +107,7 @@ acessar SDK, banco ou `localStorage` diretamente.
 - O admin pode cadastrar contas e editar nome, e-mail, profissão, telefone, papel, status e definir uma nova senha.
 - Autoalterações perigosas são bloqueadas na interface e no gateway.
 - `secretaria` acessa `/admin/agendamentos`, `/admin/painel-do-dia` e `/admin/tarefas`.
+- `secretaria` também acessa `/admin/planos-horas`, sem receber acesso à gestão de contas.
 - Dashboard, unidades, salas e usuários permanecem exclusivos de `admin`.
 - A busca operacional retorna somente `id`, `name` e `email` de clientes ativos.
 

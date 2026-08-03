@@ -1,7 +1,7 @@
 import type { AppServices } from './contracts';
 import { rooms as seedRooms, units as seedUnits } from './mock-data';
 import type { Booking, BookingStatus, CheckoutDraft, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, Room, StoredUser, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateTaskInput, User, UserRole } from '../types/domain';
-import { bookingHasConflict, canCancelBooking, getEffectiveBookingStatus, parseTimeSlot } from '../utils/booking';
+import { bookingHasConflict, canCancelBooking, formatStorageDate, getEffectiveBookingStatus, isHoursPlanExpired, parseTimeSlot } from '../utils/booking';
 import { TASKS_CHANGED_EVENT } from '../utils/tasks';
 
 const KEYS = {
@@ -23,6 +23,8 @@ const seedUser: StoredUser = {
   role: 'client',
   active: true,
   createdAt: '2026-01-01T00:00:00.000Z',
+  hasHoursPlan: false,
+  hoursBalance: 0,
 };
 
 const seedAdmin: StoredUser = {
@@ -33,6 +35,8 @@ const seedAdmin: StoredUser = {
   role: 'admin',
   active: true,
   createdAt: '2026-01-01T00:00:00.000Z',
+  hasHoursPlan: false,
+  hoursBalance: 0,
 };
 
 const seedSecretary: StoredUser = {
@@ -43,6 +47,8 @@ const seedSecretary: StoredUser = {
   role: 'secretaria',
   active: true,
   createdAt: '2026-01-01T00:00:00.000Z',
+  hasHoursPlan: false,
+  hoursBalance: 0,
 };
 
 function readArray<T>(key: string): T[] {
@@ -68,6 +74,8 @@ function ensureSeedUsers() {
     ...user,
     role: normalizeUserRole(user.role),
     active: user.active !== false,
+    hasHoursPlan: user.hasHoursPlan === true,
+    hoursBalance: Math.max(0, Number(user.hoursBalance) || 0),
   }));
   const seeds = [seedUser, seedAdmin, seedSecretary].filter(
     (seed) => !users.some(({ id }) => id === seed.id),
@@ -162,7 +170,20 @@ function sanitizeUser({ password: _password, ...user }: StoredUser): User {
     ...user,
     role: normalizeUserRole(user.role),
     active: user.active !== false,
+    hasHoursPlan: user.hasHoursPlan === true,
+    hoursBalance: Math.max(0, Number(user.hoursBalance) || 0),
   };
+}
+
+function refundPlanHours(booking: Booking) {
+  if (!booking.hoursFromPlan || booking.hoursFromPlan <= 0) return;
+  const users = readArray<StoredUser>(KEYS.users);
+  const index = users.findIndex((user) => user.id === booking.userId);
+  const user = users[index];
+  if (!user) return;
+  // Decisão: saldo já pertencente ao cliente é devolvido mesmo com plano vencido.
+  users[index] = { ...user, hoursBalance: Math.max(0, Number(user.hoursBalance) || 0) + booking.hoursFromPlan };
+  localStorage.setItem(KEYS.users, JSON.stringify(users));
 }
 
 function normalizeManagedUserInput(input: CreateManagedUserInput | UpdateManagedUserInput) {
@@ -242,6 +263,8 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           password: input.password,
           role: 'client',
           active: true,
+          hasHoursPlan: false,
+          hoursBalance: 0,
           createdAt: now().toISOString(),
         };
 
@@ -268,6 +291,9 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
       async listUsers() {
         return readArray<StoredUser>(KEYS.users).map(sanitizeUser);
       },
+      async listUsersWithHoursPlanInfo() {
+        return readArray<StoredUser>(KEYS.users).map(sanitizeUser);
+      },
       async createUser(input) {
         const users = readArray<StoredUser>(KEYS.users);
         const normalized = normalizeManagedUserInput(input);
@@ -277,6 +303,8 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           id: `user-${crypto.randomUUID()}`,
           ...normalized,
           password: input.password,
+          hasHoursPlan: false,
+          hoursBalance: 0,
           createdAt: now().toISOString(),
         };
         localStorage.setItem(KEYS.users, JSON.stringify([...users, created]));
@@ -336,7 +364,41 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           .filter((user) => user.role === 'client' && user.active !== false)
           .filter((user) => !normalizedQuery || `${user.name} ${user.email}`.toLocaleLowerCase('pt-BR').includes(normalizedQuery))
           .slice(0, 10)
-          .map(({ id, name, email }) => ({ id, name, email }));
+          .map(sanitizeUser)
+          .map(({ id, name, email, hasHoursPlan, hoursBalance, hoursPlanTotal, hoursPlanRenewsOn, hoursPlanPaymentConfirmed }) => ({ id, name, email, hasHoursPlan, hoursBalance, hoursPlanTotal, hoursPlanRenewsOn, hoursPlanPaymentConfirmed }));
+      },
+      async updateUserHoursPlan(userId, input) {
+        const users = readArray<StoredUser>(KEYS.users);
+        const index = users.findIndex((user) => user.id === userId);
+        const current = users[index];
+        if (!current) throw new Error('Usuário não encontrado.');
+        if (!Number.isFinite(input.hoursBalance) || input.hoursBalance < 0) throw new Error('O saldo de horas não pode ser negativo.');
+        if (input.hoursPlanTotal !== undefined && (!Number.isFinite(input.hoursPlanTotal) || input.hoursPlanTotal <= 0)) throw new Error('O total do plano deve ser maior que zero.');
+        const updated: StoredUser = {
+          ...current,
+          hasHoursPlan: input.hasHoursPlan,
+          hoursBalance: input.hasHoursPlan ? input.hoursBalance : 0,
+          hoursPlanTotal: input.hasHoursPlan ? input.hoursPlanTotal : undefined,
+          hoursPlanRenewsOn: input.hasHoursPlan ? input.hoursPlanRenewsOn : undefined,
+          hoursPlanPaymentConfirmed: input.hasHoursPlan ? (current.hoursPlanPaymentConfirmed ?? true) : undefined,
+        };
+        users[index] = updated;
+        localStorage.setItem(KEYS.users, JSON.stringify(users));
+        return sanitizeUser(updated);
+      },
+      async confirmHoursPlanRenewal(userId) {
+        const users = readArray<StoredUser>(KEYS.users);
+        const index = users.findIndex((user) => user.id === userId);
+        const current = users[index];
+        if (!current || !current.hasHoursPlan || !current.hoursPlanTotal) throw new Error('Usuário não possui plano de horas configurado.');
+        if (!isHoursPlanExpired(sanitizeUser(current), formatStorageDate(now()))) throw new Error('O plano ainda não está aguardando renovação.');
+        const renewalDate = now();
+        renewalDate.setMonth(renewalDate.getMonth() + 1);
+        // Decisão: próximo vencimento avança a partir de hoje, evitando acumular atraso do ciclo anterior.
+        const updated: StoredUser = { ...current, hoursBalance: current.hoursPlanTotal, hoursPlanPaymentConfirmed: true, hoursPlanLastRenewalAt: now().toISOString(), hoursPlanRenewsOn: formatStorageDate(renewalDate) };
+        users[index] = updated;
+        localStorage.setItem(KEYS.users, JSON.stringify(users));
+        return sanitizeUser(updated);
       },
     },
     catalog: {
@@ -464,6 +526,16 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         if (bookingHasConflict(existing, input.roomId, input.date, input.timeSlot)) {
           throw new Error('Este horário já está ocupado para a sala selecionada.');
         }
+        if (input.hoursFromPlan && input.hoursFromPlan > 0) {
+          const users = readArray<StoredUser>(KEYS.users);
+          const userIndex = users.findIndex((user) => user.id === input.userId);
+          const planUser = users[userIndex];
+          if (!planUser || !planUser.hasHoursPlan || isHoursPlanExpired(sanitizeUser(planUser), formatStorageDate(now()))) throw new Error('O plano de horas não está disponível para esta reserva.');
+          const balance = Math.max(0, Number(planUser.hoursBalance) || 0);
+          if (balance < input.hoursFromPlan) throw new Error('Saldo do plano de horas insuficiente.');
+          users[userIndex] = { ...planUser, hoursBalance: balance - input.hoursFromPlan };
+          localStorage.setItem(KEYS.users, JSON.stringify(users));
+        }
         const booking: Booking = {
           ...input,
           adminStatus: input.adminStatus ?? (input.status === 'cancelled' ? 'cancelled' : 'confirmed'),
@@ -487,6 +559,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const cancelled: Booking = { ...booking, status: 'cancelled', adminStatus: 'cancelled', cancelledAt: current.toISOString() };
         existing[index] = cancelled;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        refundPlanHours(booking);
         return cancelled;
       },
       async confirmBooking(bookingId) {
@@ -554,6 +627,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const cancelled: Booking = { ...booking, status: 'cancelled', adminStatus: 'cancelled', cancelledAt: now().toISOString(), cancellationReason: normalizedReason };
         existing[index] = cancelled;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        if (canCancelBooking(booking, now())) refundPlanHours(booking);
         return cancelled;
       },
     },

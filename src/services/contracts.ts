@@ -1,4 +1,4 @@
-import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, RegisterInput, Room, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, User, UserRole } from '../types/domain';
+import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, RegisterInput, Room, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, UpdateUserHoursPlanInput, User, UserRole } from '../types/domain';
 
 export interface AuthGateway {
   getCurrentUser(): User | null;
@@ -12,11 +12,14 @@ export interface AuthGateway {
 
 export interface UserManagementGateway {
   listUsers(): Promise<User[]>;
+  listUsersWithHoursPlanInfo(): Promise<User[]>;
   createUser(input: CreateManagedUserInput): Promise<User>;
   updateUser(id: string, input: UpdateManagedUserInput): Promise<User>;
   updateUserRole(id: string, role: UserRole): Promise<User>;
   updateUserStatus(id: string, active: boolean): Promise<User>;
   searchClients(query: string): Promise<ClientSummary[]>;
+  updateUserHoursPlan(userId: string, input: UpdateUserHoursPlanInput): Promise<User>;
+  confirmHoursPlanRenewal(userId: string): Promise<User>;
 }
 
 export interface CatalogGateway {

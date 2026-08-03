@@ -40,6 +40,7 @@ Fonte: `src/assets/css/base.css`.
 - No tema claro, calendário e horários usam superfícies frias de alto contraste; amarelo identifica seleção, contorno identifica o dia atual e cinza sólido identifica indisponibilidade.
 - Gestão de agendamentos abre filtrada no dia atual, destaca pendências por fundo e mantém busca, status, unidade e datas em uma barra operacional compacta.
 - O Painel do Dia é uma tela operacional independente da listagem histórica e organiza o trabalho por urgência: aguardando chegada, presentes agora, pagamentos pendentes, check-ins, próxima chegada e agenda cronológica com ações rápidas.
+- No Painel do Dia, a lateral complementa a agenda atual com uma prévia dos próximos sete dias; indicadores de atenção não são repetidos fora da faixa de métricas.
 - Os filtros do Painel do Dia refinam apenas a agenda; os indicadores superiores preservam os totais completos de hoje para manter contexto operacional.
 - Secretaria recebe navegação mínima, com apenas Agendamentos; criação manual usa formulário modal e busca compacta de clientes.
 - O menu lateral administrativo abre por hover em dispositivos com mouse e preserva abertura por clique em telas touch; o fechamento por hover possui atraso curto para permitir a travessia do cursor.
@@ -51,10 +52,13 @@ Fonte: `src/assets/css/base.css`.
 - Para secretárias, tarefas criadas por outro usuário exibem “Somente visualização” e não abrem o formulário. Ao editar uma tarefa própria, a data estimada permanece visivelmente bloqueada; administradores mantêm edição completa.
 - O formulário de tarefas mantém rótulos na mesma linha de base, campos alinhados em grade e ações destrutivas separadas das ações de confirmação.
 - Em telas pequenas, o controle de tema mantém área de toque mínima de 44 px.
-- O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e dourado de marca próprio; não é uma simples inversão do tema escuro.
+- O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e amarelo de marca ajustado para contraste; não é uma simples inversão do tema escuro.
+- No modo claro, palavras de destaque em títulos grandes usam amarelo solar sem efeitos adicionais; superfícies selecionadas e botões usam amarelo vivo com texto escuro.
 - O login é uma exceção deliberada ao tema claro: mantém fundo e card escuros como assinatura da marca, ajustando apenas textos, campos e contraste.
 - A ação “Novo Agendamento” usa tamanho compacto; o formulário registra também a situação do pagamento.
 - Pagamentos pendentes são ações clicáveis e pedem confirmação antes de mudar para concluído.
+- Plano de horas usa resumo contextual na etapa de agendamento, badge discreto no histórico e estado vencido com orientação acionável; o saldo não é repetido em outras telas do cliente.
+- A gestão de planos é uma ferramenta operacional própria no menu lateral, com métricas compactas, tabela de todos os usuários e ações progressivas; não replica permissões nem status de conta.
 - Check-in usa ação direta sem modal; chegadas concluídas ficam verdes e esperados de hoje recebem indicador azul discreto.
 
 ## Acessibilidade

@@ -929,3 +929,4 @@ body {
   .room-gallery__arrow--previous { left: var(--space-3); }
   .room-gallery__arrow--next { right: var(--space-3); }
 }
+.booking-plan-summary{display:flex;flex-direction:column;gap:4px;margin:var(--space-3) 0;padding:var(--space-3);border:1px solid color-mix(in srgb,var(--color-success) 35%,var(--color-border));border-radius:var(--radius-sm);color:var(--color-success)}.booking-plan-summary span{color:var(--color-text-secondary);font-size:.72rem;line-height:1.45}.booking-plan-summary.is-expired{border-color:color-mix(in srgb,var(--color-accent) 45%,var(--color-border));color:var(--color-accent)}

@@ -12,13 +12,13 @@ html[data-theme='light'] .app-header {
 
 html[data-theme='light'] .btn-primary {
   border-color: transparent;
-  background: #e0a800;
+  background: var(--color-accent-bright);
   color: #1a1400;
   box-shadow: 0 2px 4px rgb(80 55 0 / 14%);
 }
 
 html[data-theme='light'] .btn-primary:hover:not(:disabled) {
-  background: #c99500;
+  background: #eab308;
   box-shadow: 0 3px 6px rgb(80 55 0 / 18%);
 }
 
@@ -124,6 +124,11 @@ html[data-theme='light'] .admin-brand__badge {
   border-color: #a36d00;
   background: #fff8dc;
   color: #774d00;
+}
+
+html[data-theme='light'] .text-accent {
+  color: #d19f00;
+  text-decoration: none;
 }
 
 /* Agendamento: estados claros sem herdar as sobreposições escuras da página. */

@@ -98,6 +98,7 @@ export function PaymentPage() {
         adminStatus: 'confirmed',
         paymentStatus: 'completed',
         total: activeDraft.total,
+        hoursFromPlan: activeDraft.hoursFromPlan,
       });
       services.checkout.clearDraft();
       navigate('/pagamento-confirmado', {
@@ -175,6 +176,7 @@ export function PaymentPage() {
             <SummaryRow label="Data" value={formatDisplayDate(activeDraft.date)} />
             <SummaryRow label="Horário" value={activeDraft.timeSlot} />
             <SummaryRow label="Duração" value={`${activeDraft.duration} ${activeDraft.duration === 1 ? 'hora' : 'horas'}`} />
+            {activeDraft.hoursFromPlan ? <SummaryRow label="Plano de horas" value={`${activeDraft.hoursFromPlan}h cobertas · ${activeDraft.hoursToPay ?? 0}h a pagar`} /> : null}
           </dl>
           <div className="payment-summary__total"><span>Total</span><strong>{currency.format(activeDraft.total)}</strong></div>
           {error && <p className="payment-error" role="alert">{error}</p>}

@@ -25,6 +25,7 @@
 - `src/pages/AdminBookingsPage.tsx` — `/admin/agendamentos`, protegida por perfil; métricas, filtros e ações operacionais.
 - `src/pages/AdminDailyPanelPage.tsx` — `/admin/painel-do-dia`; visão diária e tela inicial da secretaria.
 - `src/pages/AdminUsersPage.tsx` — `/admin/usuarios`, exclusiva de administradores; cadastro, edição, acessos e permissões.
+- `src/pages/AdminHoursPlanPage.tsx` — `/admin/planos-horas`; gestão operacional de planos por admin e secretaria.
 - `src/pages/AdminTasksPage.tsx` — `/admin/tarefas`; quadro compartilhado por admin e secretaria.
 - `src/state/ThemeContext.tsx` — preferência global de tema, detecção do sistema e persistência local.
 - `src/assets/css/theme.css` — ajustes ópticos e de contraste específicos do modo claro.
@@ -56,9 +57,11 @@
 - `src/hooks/useAdminBookings.ts` — enriquecimento, filtros, estatísticas e ações administrativas de agendamentos.
 - `src/hooks/useCreateBookingForAdmin.ts` — clientes, catálogo, horários, conflito e criação manual.
 - `src/hooks/useAdminUsers.ts` — listagem, filtros, métricas e mutações administrativas de usuários.
+- `src/hooks/useAdminHoursPlan.ts` — listagem, filtros, métricas, ajustes e renovação de planos de horas.
 - `src/hooks/useAdminTasks.ts` — quadro, responsáveis, filtro pessoal, CRUD, movimentação otimista e indicador de prazos.
 - `src/utils/validators.ts` — validações e máscara de telefone.
 - `src/utils/booking.ts` — datas, horários, conflitos, status automático e janela de cancelamento.
+- `src/utils/booking.ts` também centraliza validade e divisão de consumo/cobrança do plano de horas.
 - `src/utils/room-images.ts` — normalização e remoção de imagens duplicadas da galeria de salas.
 - `src/utils/tasks.ts` — comparação local de prazos, formatação e contagem de tarefas que exigem atenção.
 
@@ -76,6 +79,7 @@
 - `src/assets/css/pages/admin-rooms.css` — tabela, filtro, modal e responsividade da gestão de salas.
 - `src/assets/css/pages/admin-bookings.css` — painel diário, filtros, tabela e modal da gestão de agendamentos.
 - `src/assets/css/pages/admin-users.css` — painel responsivo de usuários, filtros, tabela e modais.
+- `src/assets/css/pages/admin-hours-plan.css` — gestão responsiva de saldo, ciclos e renovação dos planos.
 - `src/assets/css/pages/admin-tasks.css` — quadro Kanban, cards, estados de prazo e modais de tarefas.
 - `src/assets/css/admin-sidebar.css` — drawer administrativo, overlay e estados ativos.
 - `src/assets/img/` — imagens próprias da aplicação, incluindo a logo compacta `cwlogo.ico`.
