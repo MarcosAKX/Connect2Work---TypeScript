@@ -38,6 +38,7 @@ Fonte: `src/assets/css/base.css`.
 - A listagem de salas usa duas colunas assimétricas no desktop, primeira sala em destaque, fotos dominantes, galeria própria com setas, contador e indicadores, informações compactas e CTA solar com preço por hora; no celular retorna a uma coluna e a tela de agendamento mantém galeria ampliada.
 - A seleção de unidades combina cartões horizontais e mapa lateral sticky; o mapa respeita os dois temas, mantém atribuição do provedor e solicita localização somente após ação explícita do usuário.
 - O seletor de agendamento apresenta limites de início e término, explica a duração com um exemplo e usa o estado cinza para intervalos ocupados ou já iniciados.
+- A tela de agendamento organiza galeria e detalhes da sala, três etapas visuais, calendário e horários lado a lado no desktop e resumo sticky; em telas menores o fluxo se torna vertical.
 - No tema claro, calendário e horários usam superfícies frias de alto contraste; amarelo identifica seleção, contorno identifica o dia atual e cinza sólido identifica indisponibilidade.
 - Gestão de agendamentos abre filtrada no dia atual, destaca pendências por fundo e mantém busca, status, unidade e datas em uma barra operacional compacta.
 - O Painel do Dia é uma tela operacional independente da listagem histórica e organiza o trabalho por urgência: faixa de ocupação, pagamentos, check-ins e próxima chegada; agenda cronológica em tabela; pendências acionáveis e horizonte dos próximos sete dias.

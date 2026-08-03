@@ -934,3 +934,93 @@ body {
   .room-gallery__arrow--next { right: var(--space-3); }
 }
 .booking-plan-summary{display:flex;flex-direction:column;gap:4px;margin:var(--space-3) 0;padding:var(--space-3);border:1px solid color-mix(in srgb,var(--color-success) 35%,var(--color-border));border-radius:var(--radius-sm);color:var(--color-success)}.booking-plan-summary span{color:var(--color-text-secondary);font-size:.72rem;line-height:1.45}.booking-plan-summary.is-expired{border-color:color-mix(in srgb,var(--color-accent) 45%,var(--color-border));color:var(--color-accent)}
+
+/* Composição 2026: galeria, seleção guiada e resumo lateral. */
+.booking-page { width: 100%; max-width: none; padding: 92px clamp(24px, 2vw, 36px) var(--space-7); }
+.booking-layout { grid-template-columns: minmax(0, 1fr) 380px; gap: var(--space-6); }
+.booking-content { gap: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.room-details { border: 0; border-radius: 0; background: transparent; }
+.room-gallery { height: clamp(300px, 20vw, 360px); min-height: 0; aspect-ratio: auto; border-bottom: 1px solid var(--color-border); }
+.room-details__body { display: grid; grid-template-columns: minmax(250px, .75fr) minmax(0, 1.25fr) auto; align-items: center; gap: var(--space-5); padding: var(--space-4) var(--space-5); }
+.room-details__heading { display: contents; }
+.room-details__heading > div { min-width: 0; }
+.room-details__heading h1 { font-size: 1.55rem; }
+.room-details__price { grid-column: 3; grid-row: 1; padding: 14px 18px; border-radius: var(--radius-sm); font-size: 1rem; }
+.room-amenities { grid-column: 2; grid-row: 1; align-items: center; justify-content: center; margin-top: 0; }
+.room-amenity { padding: 7px 10px; border: 0; border-radius: 0; background: transparent; color: var(--color-text-secondary); }
+.booking-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); list-style: none; }
+.booking-steps li { position: relative; display: flex; align-items: center; gap: var(--space-3); color: var(--color-text-tertiary); }
+.booking-steps li:not(:last-child)::after { content: ''; position: absolute; top: 21px; right: var(--space-2); left: 128px; height: 1px; background: var(--color-border); }
+.booking-steps li > span { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-surface-raised); color: var(--color-text-primary); font-weight: 700; }
+.booking-steps li.is-active > span, .booking-steps li.is-complete > span { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-text); }
+.booking-steps strong, .booking-steps small { display: block; }
+.booking-steps strong { color: var(--color-text-primary); font-size: .82rem; }
+.booking-steps small { margin-top: 2px; font-size: .7rem; }
+.booking-options { display: grid; grid-template-columns: minmax(320px, .7fr) minmax(480px, 1.3fr); gap: var(--space-4); padding: var(--space-4) var(--space-5) var(--space-5); }
+.booking-selection { padding: var(--space-4); border-radius: var(--radius-sm); background: transparent; }
+.booking-section-title { margin-bottom: var(--space-3); }
+.booking-section-title h2 { font-size: .9rem; }
+.calendar { padding: 0; background: transparent; }
+.calendar__header { min-height: 40px; }
+.calendar__days { gap: 3px; }
+.calendar__day { min-height: 34px; }
+.selected-date { margin-top: var(--space-3); padding: var(--space-2); font-size: .72rem; }
+.time-instruction { margin-bottom: var(--space-3); font-size: .72rem; }
+.time-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+.time-button { min-height: 46px; }
+.time-legend { margin-top: var(--space-4); }
+.booking-summary { position: sticky; top: 92px; padding: var(--space-6); border-radius: var(--radius-md); background: var(--color-surface); }
+.booking-summary__list { display: grid; gap: 0; }
+.booking-summary__row { min-height: 72px; align-items: center; border-bottom: 1px solid var(--color-border); }
+.booking-summary__total { margin-top: var(--space-4); padding: var(--space-4) 0; border-top: 1px solid var(--color-border); border-radius: 0; background: transparent; }
+.booking-summary__button { min-height: 56px; font-size: .95rem; }
+
+@media (max-width: 1220px) {
+  .booking-layout { grid-template-columns: 1fr; }
+  .booking-summary { position: static; }
+}
+
+@media (max-width: 900px) {
+  .booking-options { grid-template-columns: 1fr; }
+  .room-details__body { grid-template-columns: 1fr auto; }
+  .room-details__heading { display: flex; grid-column: 1 / -1; }
+  .room-amenities { grid-column: 1 / -1; grid-row: auto; justify-content: flex-start; }
+  .room-details__price { grid-column: 2; grid-row: 1; }
+}
+
+@media (max-width: 620px) {
+  .booking-page { padding-inline: var(--space-4); }
+  .room-gallery { height: auto; min-height: 220px; aspect-ratio: 4 / 3; }
+  .booking-steps { padding-inline: var(--space-4); }
+  .booking-steps li { align-items: flex-start; }
+  .booking-steps li:not(:last-child)::after, .booking-steps small { display: none; }
+  .booking-steps li > span { width: 36px; height: 36px; flex-basis: 36px; }
+  .booking-options { padding-inline: var(--space-4); }
+  .time-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .room-details__body { display: flex; align-items: stretch; flex-direction: column; }
+  .room-details__heading { display: flex; }
+  .room-details__price { align-self: flex-start; }
+}
+
+.booking-breadcrumb { display: flex; align-items: center; gap: var(--space-4); min-height: 44px; margin-bottom: var(--space-3); color: var(--color-text-tertiary); font-size: .82rem; }
+.booking-breadcrumb a { color: var(--color-text-primary); }
+.booking-breadcrumb a:hover { color: var(--color-accent); }
+.room-gallery__arrow, html[data-theme='light'] .room-gallery__arrow { border-color: rgb(255 255 255 / 78%); background: rgb(255 255 255 / 92%); color: #17191d; }
+.room-gallery__arrow:hover:not(:disabled), .room-gallery__arrow:focus-visible, html[data-theme='light'] .room-gallery__arrow:hover:not(:disabled), html[data-theme='light'] .room-gallery__arrow:focus-visible { border-color: var(--color-accent); background: #ffffff; color: #17191d; }
+.time-period + .time-period { margin-top: var(--space-4); }
+.time-period h3 { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); font-size: .8rem; }
+.booking-duration { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: .78rem; }
+.booking-duration strong { color: var(--color-text-primary); }
+.booking-summary__row { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: var(--space-4); min-height: 88px; padding: var(--space-4) 0; }
+.booking-summary__row dt { display: grid; width: 52px; height: 52px; place-items: center; border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); }
+.booking-summary__row dd { display: flex; min-width: 0; flex-direction: column; justify-content: center; gap: 4px; text-align: left; }
+.booking-summary__row dd strong { color: var(--color-text-primary); font-size: .95rem; font-weight: 500; }
+.booking-summary__row dd span { color: var(--color-text-secondary); font-size: .8rem; text-transform: capitalize; }
+.booking-summary__total > span { color: var(--color-text-primary); font-size: 1rem; font-weight: 650; }
+
+html[data-theme='light'] .booking-content,
+html[data-theme='light'] .booking-selection,
+html[data-theme='light'] .booking-summary { border-color: #c8ced8; background: #ffffff; }
+html[data-theme='light'] .calendar, html[data-theme='light'] .time-button { background: #ffffff; }
+html[data-theme='light'] .time-button.is-unavailable { background: #eef0f3; color: #8a919b; }
+html[data-theme='light'] .time-button.is-selected { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-text); }

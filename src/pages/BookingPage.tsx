@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { BackLink } from '../components/BackLink';
-import { ArrowLeftIcon, ArrowRightIcon } from '../components/icons';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeftIcon, ArrowRightIcon, CalendarIcon, ClockIcon, DoorIcon } from '../components/icons';
 import { services } from '../services';
 import { useAuth } from '../state/AuthContext';
 import type { Booking, Room, Unit, User } from '../types/domain';
@@ -80,18 +79,29 @@ export function BookingPage() {
     return index >= HOURS.length - 1 || hourUnavailable(index, source);
   }
 
-  function selectHour(index: number) {
+  function selectTimeSlot(index: number) {
     if (!selectedDate || unavailable(index)) return;
-    if (startIndex === null || endIndex !== null || index < startIndex) {
-      setStartIndex(index); setEndIndex(null); return;
+
+    const slotEndIndex = index + 1;
+    if (startIndex === null || endIndex === null || index < startIndex) {
+      setStartIndex(index);
+      setEndIndex(slotEndIndex);
+      return;
     }
-    if (index === startIndex) {
-      setStartIndex(null); setEndIndex(null); return;
+
+    if (index >= startIndex && index < endIndex) {
+      setStartIndex(index);
+      setEndIndex(slotEndIndex);
+      return;
     }
-    if (rangeHasUnavailable(startIndex, index)) {
-      setStartIndex(index); setEndIndex(null); return;
+
+    if (rangeHasUnavailable(startIndex, slotEndIndex)) {
+      setStartIndex(index);
+      setEndIndex(slotEndIndex);
+      return;
     }
-    setEndIndex(index);
+
+    setEndIndex(slotEndIndex);
   }
 
   async function continueToPayment() {
@@ -136,10 +146,15 @@ export function BookingPage() {
 
   const days = calendarDays(visibleMonth);
   const currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const timeButtons = HOURS.slice(0, -1).map((hour, index) => {
+    const isSelected = startIndex !== null && index >= startIndex && (endIndex === null ? index === startIndex : index < endIndex);
+    const isUnavailable = startIndex !== null && endIndex === null && index > startIndex ? rangeHasUnavailable(startIndex, index + 1) : unavailable(index);
+    return <button key={hour} type="button" className={`time-button${isSelected ? ' is-selected' : ''}${isUnavailable ? ' is-unavailable' : ''}`} disabled={isUnavailable} aria-pressed={isSelected} onClick={() => selectTimeSlot(index)}>{hour} – {HOURS[index + 1]}</button>;
+  });
 
   return (
     <main className="booking-page">
-      <BackLink to={`/salas?unidade=${encodeURIComponent(unit.id)}`} label="Voltar para salas" />
+      <nav className="booking-breadcrumb" aria-label="Navegação estrutural"><Link to={`/salas?unidade=${encodeURIComponent(unit.id)}`}>Salas</Link><span aria-hidden="true">/</span><span>{room.name}</span></nav>
       <div className="booking-layout">
         <section className="booking-content">
           <article className="room-details card">
@@ -150,19 +165,24 @@ export function BookingPage() {
             </div>
             <div className="room-details__body"><div className="room-details__heading"><div><h1>{room.name}</h1><div className="room-details__meta"><span>{unit.name}</span><span aria-hidden="true">•</span><span>{room.capacity === 1 ? '1 pessoa' : `${room.capacity} pessoas`}</span></div></div><span className="room-details__price">{currency.format(room.pricePerHour)}/hora</span></div><div className="room-amenities" aria-label="Comodidades da sala">{room.amenities.map((amenity) => <span className="room-amenity" key={amenity}>{amenity}</span>)}</div></div>
           </article>
+          <ol className="booking-steps" aria-label="Etapas do agendamento">
+            <li className={!selectedDate ? 'is-active' : 'is-complete'}><span>1</span><div><strong>Data</strong><small>Escolha o dia</small></div></li>
+            <li className={selectedDate && !selectedSlot ? 'is-active' : selectedSlot ? 'is-complete' : ''}><span>2</span><div><strong>Horário</strong><small>Selecione o período</small></div></li>
+            <li className={selectedSlot ? 'is-active' : ''}><span>3</span><div><strong>Confirmar</strong><small>Revise e confirme</small></div></li>
+          </ol>
           <section className="booking-options">
             <section className="booking-selection card"><div className="booking-section-title"><span aria-hidden="true">▣</span><h2>Selecione a Data</h2></div><div className="calendar"><div className="calendar__header"><button type="button" className="calendar__navigation" aria-label="Mês anterior" disabled={visibleMonth <= currentMonth} onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}>‹</button><h3>{visibleMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3><button type="button" className="calendar__navigation" aria-label="Próximo mês" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}>›</button></div><div className="calendar__weekdays" aria-hidden="true">{weekdays.map((day) => <span key={day}>{day}</span>)}</div><div className="calendar__days" role="grid" aria-label="Dias do mês">{days.map((date, index) => date ? <button key={formatStorageDate(date)} type="button" className={`calendar__day${isSameDate(date, new Date()) ? ' is-today' : ''}${selectedDate && isSameDate(date, selectedDate) ? ' is-selected' : ''}`} disabled={isPastDate(date)} aria-label={date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} aria-pressed={Boolean(selectedDate && isSameDate(date, selectedDate))} onClick={() => { setSelectedDate(date); setStartIndex(null); setEndIndex(null); setSubmitError(''); }}>{date.getDate()}</button> : <span key={`empty-${index}`} className="calendar__day calendar__day--empty" aria-hidden="true" />)}</div><p className="selected-date">Data selecionada: <strong>{selectedDate ? selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : 'nenhuma'}</strong></p></div></section>
-            <section className="booking-selection card"><div className="booking-section-title"><span aria-hidden="true">◷</span><h2>Selecione o Horário</h2></div><p className="time-instruction" id="time-instruction">Selecione o horário de início e depois o horário de término. Ex.: 08:00 até 09:00 corresponde a 1 hora.</p><div className="time-grid" aria-describedby="time-instruction" aria-label="Limites de horário disponíveis">{HOURS.map((hour, index) => { const isSelected = startIndex !== null && index >= startIndex && index <= (endIndex ?? startIndex); const isUnavailable = unavailable(index); return <button key={hour} type="button" className={`time-button${isSelected ? ' is-selected' : ''}${isUnavailable ? ' is-unavailable' : ''}`} disabled={isUnavailable} aria-pressed={isSelected} onClick={() => selectHour(index)}>{hour}</button>; })}</div><div className="time-legend"><span><i className="time-legend__box" />Disponível</span><span><i className="time-legend__box time-legend__box--selected" />Selecionado</span><span><i className="time-legend__box time-legend__box--unavailable" />Indisponível</span></div></section>
+            <section className="booking-selection card"><div className="booking-section-title"><ClockIcon width="20" height="20" /><h2>Selecione o Horário</h2></div><p className="time-instruction" id="time-instruction">Selecione um ou mais intervalos consecutivos.</p><div className="time-period"><h3>☀ Manhã</h3><div className="time-grid" aria-describedby="time-instruction">{timeButtons.slice(0, 4)}</div></div><div className="time-period"><h3>◒ Tarde</h3><div className="time-grid">{timeButtons.slice(4)}</div></div><div className="booking-duration"><ClockIcon width="20" height="20" /><span>Duração selecionada: <strong>{duration ? `${duration} ${duration === 1 ? 'hora' : 'horas'}` : 'nenhuma'}</strong></span></div></section>
           </section>
         </section>
-        <aside className="booking-summary card"><h2>Resumo do Agendamento</h2>{currentUser?.hasHoursPlan && <div className={`booking-plan-summary${isHoursPlanExpired(currentUser) ? ' is-expired' : ''}`}><strong>{duration > 0 && !isHoursPlanExpired(currentUser) ? `${projectedBalance}h restantes após esta reserva` : `${currentUser.hoursBalance}h disponíveis no plano`}</strong><span>{isHoursPlanExpired(currentUser) ? 'Seu plano aguarda renovação. Entre em contato com a recepção.' : planUsage && duration > 0 ? `${planUsage.hoursFromPlan}h serão consumidas · ${planUsage.hoursToPay}h a pagar` : 'O saldo será aplicado automaticamente.'}</span></div>}<dl className="booking-summary__list" aria-live="polite" aria-atomic="true"><SummaryRow label="Sala" value={room.name} /><SummaryRow label="Unidade" value={unit.name} /><SummaryRow label="Data" value={selectedDate?.toLocaleDateString('pt-BR') ?? '-'} /><SummaryRow label="Horário" value={selectedSlot || '-'} /><SummaryRow label="Duração" value={duration ? `${duration} ${duration === 1 ? 'hora' : 'horas'}` : '-'} /></dl><div className="booking-summary__total"><span>Valor a pagar</span><strong>{currency.format(planUsage?.amountToPay ?? room.pricePerHour * duration)}</strong></div>{submitError && <p className="booking-submit-error" role="alert">{submitError}</p>}<button type="button" className="btn btn-primary booking-summary__button" disabled={!selectedDate || startIndex === null || endIndex === null || isSaving} onClick={continueToPayment}>{isSaving ? 'Preparando...' : planUsage?.hoursFromPlan === duration && duration > 0 ? 'Confirmar com Plano' : 'Continuar para Pagamento'}</button><p className="booking-summary__notice">Cancelamento gratuito até 24 horas antes do horário agendado.</p></aside>
+        <aside className="booking-summary card"><h2>Resumo do Agendamento</h2><dl className="booking-summary__list" aria-live="polite" aria-atomic="true"><SummaryRow icon={<DoorIcon width="23" height="23" />} value={room.name} secondary={unit.name} /><SummaryRow icon={<CalendarIcon width="23" height="23" />} value={selectedDate?.toLocaleDateString('pt-BR') ?? 'Selecione uma data'} secondary={selectedDate?.toLocaleDateString('pt-BR', { weekday: 'long' })} /><SummaryRow icon={<ClockIcon width="23" height="23" />} value={selectedSlot || 'Selecione o horário'} secondary={duration ? `${duration} ${duration === 1 ? 'hora' : 'horas'}` : undefined} />{currentUser?.hasHoursPlan && <SummaryRow icon={<ClockIcon width="23" height="23" />} value={duration > 0 && !isHoursPlanExpired(currentUser) ? `${projectedBalance}h restantes` : `${currentUser.hoursBalance}h disponíveis`} secondary={isHoursPlanExpired(currentUser) ? 'Plano aguardando renovação' : 'após esta reserva'} />}</dl><div className="booking-summary__total"><span>Total</span><strong>{currency.format(planUsage?.amountToPay ?? room.pricePerHour * duration)}</strong></div>{submitError && <p className="booking-submit-error" role="alert">{submitError}</p>}<button type="button" className="btn btn-primary booking-summary__button" disabled={!selectedDate || startIndex === null || endIndex === null || isSaving} onClick={continueToPayment}>{isSaving ? 'Preparando...' : planUsage?.hoursFromPlan === duration && duration > 0 ? 'Confirmar com Plano' : 'Continuar para Pagamento'}</button><p className="booking-summary__notice">Sua reserva será confirmada após a conclusão desta etapa.</p></aside>
       </div>
     </main>
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return <div className="booking-summary__row"><dt>{label}</dt><dd>{value}</dd></div>;
+function SummaryRow({ icon, value, secondary }: { icon: ReactNode; value: string; secondary?: string }) {
+  return <div className="booking-summary__row"><dt aria-hidden="true">{icon}</dt><dd><strong>{value}</strong>{secondary && <span>{secondary}</span>}</dd></div>;
 }
 
 function calendarDays(month: Date) {

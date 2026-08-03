@@ -73,7 +73,7 @@
 ## Agendamentos
 
 - Calendário mensal e bloqueio de datas passadas: implementados.
-- Seleção de horários contínuos por limites de início e término: implementada; `08:00 - 09:00` corresponde a uma hora de uso e uma hora cobrada.
+- Seleção de horários contínuos por intervalos: implementada; cada botão já seleciona uma hora completa, e cliques posteriores podem ampliar o período consecutivo.
 - Bloqueio de horários ocupados e de intervalos já iniciados no dia atual: implementado (mock local).
 - Nova checagem de conflito antes da criação: implementada (mock local).
 - Cálculo de duração e valor: implementado.
