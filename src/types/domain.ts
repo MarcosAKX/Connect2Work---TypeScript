@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   active: boolean;
   createdAt: string;
+  updatedAt?: string;
   profession?: string;
   phone?: string;
   hasHoursPlan: boolean;
@@ -54,6 +55,8 @@ export interface Unit {
   availableRooms: number;
   imageUrl: string | null;
   description?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateUnitInput {
@@ -74,6 +77,8 @@ export interface Room {
   amenities: string[];
   imageUrl: string | null;
   imageUrls?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateRoomInput {
@@ -104,6 +109,7 @@ export interface Booking {
   total?: number;
   paymentStatus?: BookingPaymentStatus;
   createdAt: string;
+  updatedAt?: string;
   cancelledAt?: string;
   cancellationReason?: string;
   checkedInAt?: string;
@@ -167,3 +173,47 @@ export interface CreateTaskInput {
 }
 
 export type UpdateTaskInput = Pick<Task, 'title' | 'description' | 'assignedTo' | 'priority' | 'dueDate'>;
+
+export type AuditAction = 'create' | 'update' | 'delete' | 'cancel' | 'confirm' | 'check_in' | 'renew' | 'import';
+export type AuditEntity = 'user' | 'unit' | 'room' | 'booking' | 'task' | 'hours_plan' | 'backup';
+
+export interface AuditLog {
+  id: string;
+  actorUserId?: string;
+  action: AuditAction;
+  entity: AuditEntity;
+  entityId: string;
+  occurredAt: string;
+  actorName?: string;
+  details?: Record<string, string | number | boolean | null>;
+}
+
+export type HoursPlanTransactionType = 'credit' | 'debit' | 'refund' | 'adjustment';
+
+export interface HoursPlanTransaction {
+  id: string;
+  userId: string;
+  bookingId?: string;
+  type: HoursPlanTransactionType;
+  hours: number;
+  balanceAfter: number;
+  reason: string;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+}
+
+export interface BackupPayload {
+  schemaVersion: number;
+  exportedAt: string;
+  credentialsIncluded: false;
+  data: {
+    users: User[];
+    units: Unit[];
+    rooms: Room[];
+    bookings: Booking[];
+    tasks: Task[];
+    auditLogs: AuditLog[];
+    hoursPlanTransactions: HoursPlanTransaction[];
+  };
+}

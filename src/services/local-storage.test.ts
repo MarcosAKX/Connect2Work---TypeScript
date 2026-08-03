@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createLocalStorageServices } from './local-storage';
+import { isUuid } from './ids';
 
 describe('localStorage services', () => {
   beforeEach(() => {
@@ -31,7 +32,7 @@ describe('localStorage services', () => {
     expect(user).not.toHaveProperty('password');
   });
 
-  it('trata sessões antigas sem perfil como cliente', () => {
+  it('remove sessão órfã ou de usuário inexistente', () => {
     localStorage.setItem('c2w_mock_session', JSON.stringify({
       id: 'legacy-user',
       name: 'Usuário Antigo',
@@ -39,7 +40,8 @@ describe('localStorage services', () => {
       createdAt: '2025-01-01T00:00:00.000Z',
     }));
     const services = createLocalStorageServices();
-    expect(services.auth.getCurrentUser()?.role).toBe('client');
+    expect(services.auth.getCurrentUser()).toBeNull();
+    expect(localStorage.getItem('c2w_mock_session')).toBeNull();
   });
 
   it('mantém catálogo tipado por unidade', async () => {
@@ -164,7 +166,7 @@ describe('localStorage services', () => {
   it('persiste reserva vinculada ao usuário', async () => {
     const services = createLocalStorageServices();
     const booking = await services.bookings.create({ userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10', timeSlot: '09:00 - 11:00', status: 'upcoming' });
-    expect(booking.id).toMatch(/^booking-/);
+    expect(isUuid(booking.id)).toBe(true);
     await expect(services.bookings.getByUserAndStatus('user-1', 'upcoming')).resolves.toHaveLength(1);
   });
 
@@ -381,5 +383,52 @@ describe('localStorage services', () => {
     await services.users.updateUserHoursPlan('seed-usuario-teste', { hasHoursPlan: true, hoursPlanTotal: 10, hoursBalance: 1, hoursPlanRenewsOn: '2026-07-20' });
     await expect(services.bookings.create({ userId: 'seed-usuario-teste', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-09-11', timeSlot: '08:00 - 09:00', status: 'upcoming', hoursFromPlan: 1, total: 0 })).rejects.toThrow('não está disponível');
     await expect(services.users.confirmHoursPlanRenewal('seed-usuario-teste')).resolves.toMatchObject({ hoursBalance: 10, hoursPlanRenewsOn: '2026-09-01' });
+  });
+
+  it('registra extrato e auditoria do consumo do plano', async () => {
+    const services = createLocalStorageServices(() => new Date('2026-08-01T12:00:00.000Z'));
+    await services.auth.login('secretaria@connect2work.com', 'secretaria123');
+    await services.users.updateUserHoursPlan('seed-usuario-teste', { hasHoursPlan: true, hoursPlanTotal: 10, hoursBalance: 5, hoursPlanRenewsOn: '2026-08-20' });
+    const booking = await services.bookings.create({ userId: 'seed-usuario-teste', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-09-10', timeSlot: '08:00 - 10:00', status: 'upcoming', hoursFromPlan: 2, total: 0 });
+
+    const transactions = await services.audit.listHoursPlanTransactions('seed-usuario-teste', 'seed-secretaria');
+    expect(transactions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ bookingId: booking.id, type: 'debit', hours: -2, balanceAfter: 3, createdBy: 'seed-secretaria' }),
+      expect.objectContaining({ type: 'adjustment', hours: 5, balanceAfter: 5 }),
+    ]));
+    await expect(services.audit.listRecent('seed-secretaria')).resolves.toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: 'create', entity: 'booking', entityId: booking.id }),
+    ]));
+  });
+
+  it('exporta e restaura backup local versionado', async () => {
+    const services = createLocalStorageServices(() => new Date('2026-08-01T12:00:00.000Z'));
+    const admin = await services.auth.login('admin@connect2work.com', 'admin123');
+    const created = await services.catalog.createUnit({ name: 'Unidade Backup', address: 'Rua Backup, 10', imageUrl: null });
+    const backup = await services.backup.exportData(admin.id);
+    expect(backup).toMatchObject({ schemaVersion: 2, exportedAt: '2026-08-01T12:00:00.000Z', credentialsIncluded: false });
+    expect(backup.data.users.every((user) => !('password' in user))).toBe(true);
+    await expect(services.backup.getLastBackupAt(admin.id)).resolves.toBe(backup.exportedAt);
+
+    await services.catalog.updateUnit(created.id, { name: 'Nome alterado', address: 'Rua Backup, 10', imageUrl: null });
+    await services.backup.importData(backup, admin.id);
+    expect(services.auth.getCurrentUser()).toBeNull();
+    await expect(services.catalog.getUnitById(created.id)).resolves.toMatchObject({ name: 'Unidade Backup' });
+    await expect(services.audit.listRecent(admin.id)).resolves.toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: 'import', entity: 'backup', actorUserId: admin.id }),
+    ]));
+    await expect(services.auth.login('admin@connect2work.com', 'admin123')).resolves.toMatchObject({ id: admin.id });
+  });
+
+  it('rejeita backup incompatível', async () => {
+    const services = createLocalStorageServices();
+    const admin = await services.auth.login('admin@connect2work.com', 'admin123');
+    const backup = await services.backup.exportData(admin.id);
+    await expect(services.backup.importData({ ...backup, schemaVersion: 99 }, admin.id)).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('restringe gerenciamento de backup ao administrador', async () => {
+    const services = createLocalStorageServices();
+    await expect(services.backup.exportData('seed-secretaria')).rejects.toThrow('Somente administradores');
   });
 });

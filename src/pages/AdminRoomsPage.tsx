@@ -3,21 +3,12 @@ import { BackLink } from '../components/BackLink';
 import { CloseIcon, DoorIcon, ImageIcon, PencilIcon, PlusIcon, TrashIcon, UploadIcon, UsersIcon } from '../components/icons';
 import { useAdminRooms } from '../hooks/useAdminRooms';
 import type { CreateRoomInput, Room, Unit } from '../types/domain';
+import { prepareImageUpload } from '../utils/image-upload';
 import '../assets/css/pages/admin-rooms.css';
 
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
 const MAX_IMAGES = 6;
 const AMENITY_SUGGESTIONS = ['Wi-Fi', 'Ar Condicionado', 'TV', 'Projetor', 'Quadro Branco', 'Videoconferência', 'Café', 'Copa'];
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-
-function readImage(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Não foi possível ler a imagem.'));
-    reader.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 interface RoomFormDialogProps {
   room: Room | null;
@@ -62,14 +53,8 @@ function RoomFormDialog({ room, units, isSaving, gatewayError, onCancel, onSave 
       event.target.value = '';
       return;
     }
-    const invalid = files.find((file) => !file.type.startsWith('image/') || file.size > MAX_IMAGE_SIZE);
-    if (invalid) {
-      setValidationError('Cada arquivo deve ser uma imagem de até 2 MB.');
-      event.target.value = '';
-      return;
-    }
     try {
-      const uploadedImages = await Promise.all(files.map(readImage));
+      const uploadedImages = await Promise.all(files.map((file) => prepareImageUpload(file)));
       setImages((current) => [...current, ...uploadedImages]);
       setValidationError('');
     } catch (caughtError) {

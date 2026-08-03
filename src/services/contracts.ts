@@ -1,4 +1,4 @@
-import type { Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, RegisterInput, Room, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, UpdateUserHoursPlanInput, User, UserRole } from '../types/domain';
+import type { AuditLog, BackupPayload, Booking, BookingCounts, BookingStatus, CheckoutDraft, ClientSummary, CreateBookingInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, HoursPlanTransaction, RegisterInput, Room, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, UpdateUserHoursPlanInput, User, UserRole } from '../types/domain';
 
 export interface AuthGateway {
   getCurrentUser(): User | null;
@@ -61,6 +61,17 @@ export interface TaskGateway {
   deleteTask(id: string, actorUserId: string): Promise<void>;
 }
 
+export interface AuditGateway {
+  listRecent(actorUserId: string, limit?: number): Promise<AuditLog[]>;
+  listHoursPlanTransactions(userId: string, actorUserId: string): Promise<HoursPlanTransaction[]>;
+}
+
+export interface BackupGateway {
+  exportData(actorUserId: string): Promise<BackupPayload>;
+  importData(payload: BackupPayload, actorUserId: string): Promise<void>;
+  getLastBackupAt(actorUserId: string): Promise<string | null>;
+}
+
 export interface AppServices {
   auth: AuthGateway;
   users: UserManagementGateway;
@@ -68,4 +79,6 @@ export interface AppServices {
   bookings: BookingGateway;
   checkout: CheckoutGateway;
   tasks: TaskGateway;
+  audit: AuditGateway;
+  backup: BackupGateway;
 }

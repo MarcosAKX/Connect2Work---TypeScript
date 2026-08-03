@@ -11,6 +11,7 @@
 @import './assets/css/pages/meus-agendamentos.css';
 @import './assets/css/pages/servicos.css';
 @import './assets/css/theme.css';
+@import './assets/css/pages/admin-operations-polish.css';
 
 .migration-form-error,
 .auth-form-error {

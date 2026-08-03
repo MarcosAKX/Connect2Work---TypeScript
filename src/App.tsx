@@ -19,6 +19,9 @@ import { RegisterPage } from './pages/RegisterPage';
 import { RoomsPage } from './pages/RoomsPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { UnitsPage } from './pages/UnitsPage';
+import { AdminActivityPage } from './pages/AdminActivityPage';
+import { AdminBackupPage } from './pages/AdminBackupPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 export function App() {
   return (
@@ -41,6 +44,8 @@ export function App() {
         <Route path="/admin/unidades" element={<AdminUnitsPage />} />
         <Route path="/admin/salas" element={<AdminRoomsPage />} />
         <Route path="/admin/usuarios" element={<AdminUsersPage />} />
+        <Route path="/admin/atividades" element={<AdminActivityPage />} />
+        <Route path="/admin/backup" element={<AdminBackupPage />} />
       </Route>
       <Route element={<AdminRoute allowedRoles={['admin', 'secretaria']} />}>
         <Route path="/admin/painel-do-dia" element={<AdminDailyPanelPage />} />
@@ -49,7 +54,7 @@ export function App() {
         <Route path="/admin/planos-horas" element={<AdminHoursPlanPage />} />
       </Route>
       <Route path="/" element={<Navigate to="/unidades" replace />} />
-      <Route path="*" element={<Navigate to="/unidades" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

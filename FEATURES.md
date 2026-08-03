@@ -88,6 +88,10 @@
 
 ## Próxima etapa de backend
 
+- Fundação Supabase preparada: UUID em novos registros, mapeadores `snake_case`/domínio, schema SQL inicial com RLS habilitado, backup versionado, auditoria e extrato de horas no adaptador local.
+- Backup e auditoria já existem nos gateways, ainda sem tela administrativa própria.
+- IDs seed antigos permanecem durante fase local para preservar referências; importação futura deverá gerar mapa de IDs UUID.
+
 - Revalidar no servidor a identidade do proprietário e a janela exata de 24 horas.
 - Impedir reservas concorrentes com transação/constraint no banco.
 - Aplicar políticas de acesso por usuário (RLS no Supabase ou Security Rules no Firebase).
@@ -115,3 +119,12 @@
 - Aviso transparente sobre futuras confirmações por e-mail e WhatsApp: implementado.
 - Gateway de pagamento e cobrança real: planejados.
 - Envio real de confirmação por e-mail e WhatsApp: planejado.
+## Governança local e preparação para backend
+
+- O administrador pode exportar e restaurar um backup JSON versionado em `/admin/backup`.
+- A restauração valida o arquivo, usa rollback em caso de falha e encerra a sessão ao concluir.
+- A tela `/admin/atividades` apresenta auditoria das operações e extrato do plano de horas.
+- Sessões de usuários removidos ou inativos são invalidadas automaticamente.
+- Uploads administrativos aceitam apenas JPEG, PNG e WebP, com limite de 2 MB e normalização WebP.
+- A aplicação possui tela 404 e limite global para falhas inesperadas da interface.
+- O backup operacional usa schema 2 e não exporta senhas, tokens ou sessões; autenticação fica separada para a futura adoção do Supabase Auth.

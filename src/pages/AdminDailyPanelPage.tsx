@@ -5,6 +5,7 @@ import { useAdminBookings, type AdminBookingRow } from '../hooks/useAdminBooking
 import { useAuth } from '../state/AuthContext';
 import '../assets/css/pages/admin-bookings.css';
 import '../assets/css/pages/admin-daily-panel.css';
+import '../assets/css/pages/admin-operations-polish.css';
 
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const statusLabels = { confirmed: 'Confirmado', pending: 'Pendente', cancelled: 'Cancelado' } as const;
@@ -103,7 +104,7 @@ export function AdminDailyPanelPage() {
     {data.error && <div className="admin-bookings-page__error" role="alert"><span>{data.error}</span><button type="button" onClick={() => void data.reload()}>Tentar novamente</button></div>}
     {data.mutationError && !confirmingPayment && <div className="admin-bookings-page__error" role="alert"><span>{data.mutationError}</span><button type="button" onClick={data.clearMutationError}>Fechar</button></div>}
     <section className="admin-day-panel" aria-labelledby="admin-day-title" aria-busy={data.isLoading}>
-      <header className="admin-day-panel__header"><div><h2 id="admin-day-title">Visão operacional</h2><p>{formatLongDate(data.today)}</p></div><span className="admin-daily-live"><i />Atualização em tempo real</span></header>
+      <header className="admin-day-panel__header"><div><h2 id="admin-day-title">Visão operacional</h2><p>{formatLongDate(data.today)}</p></div><span className="admin-daily-live"><i />Atualização local</span></header>
       <div className="admin-day-metrics">
         <article><span className="tone-accent"><ClockIcon width="18" height="18" /></span><div><strong>{data.dayPanel.waitingArrival.length}</strong><p>Aguardando chegada</p></div></article>
         <article><span className="tone-success"><UserIcon width="18" height="18" /></span><div><strong>{data.dayPanel.presentNow.length}</strong><p>Presentes agora</p></div></article>
@@ -112,10 +113,10 @@ export function AdminDailyPanelPage() {
       </div>
       <div className="admin-day-now"><span>Agora · {currentTime}</span>{data.dayPanel.nextArrival ? <p>Próxima chegada: <strong>{data.dayPanel.nextArrival.clientName}</strong>, às {getStartTime(data.dayPanel.nextArrival.booking.timeSlot)} · {data.dayPanel.nextArrival.roomName}</p> : <p>Nenhuma chegada futura aguardando check-in hoje.</p>}</div>
       <div className="admin-daily-filters" role="search" aria-label="Filtrar agenda de hoje">
-        <label className="admin-daily-filters__search"><span className="sr-only">Buscar cliente ou sala</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar cliente ou sala..." /></label>
-        <label><span className="sr-only">Filtrar por unidade</span><select value={unitId} onChange={(event) => setUnitId(event.target.value)}><option value="">Todas as unidades</option>{data.units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
-        <label><span className="sr-only">Filtrar por situação operacional</span><select value={operationalFilter} onChange={(event) => setOperationalFilter(event.target.value as OperationalFilter)}><option value="all">Todas as situações</option><option value="waiting">Aguardando chegada</option><option value="present">Presentes agora</option><option value="payment">Pagamento pendente</option><option value="checked-in">Check-in realizado</option><option value="cancelled">Cancelados</option></select></label>
-        <label><span className="sr-only">Filtrar por período</span><select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value as PeriodFilter)}><option value="all">Dia inteiro</option><option value="morning">Manhã</option><option value="afternoon">Tarde</option><option value="next">Próximas 3 horas</option></select></label>
+        <label className="admin-daily-filters__search"><span className="admin-filter-label">Buscar</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cliente ou sala" /></label>
+        <label><span className="admin-filter-label">Unidade</span><select value={unitId} onChange={(event) => setUnitId(event.target.value)}><option value="">Todas as unidades</option>{data.units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
+        <label><span className="admin-filter-label">Situação</span><select value={operationalFilter} onChange={(event) => setOperationalFilter(event.target.value as OperationalFilter)}><option value="all">Todas as situações</option><option value="waiting">Aguardando chegada</option><option value="present">Presentes agora</option><option value="payment">Pagamento pendente</option><option value="checked-in">Check-in realizado</option><option value="cancelled">Cancelados</option></select></label>
+        <label><span className="admin-filter-label">Período</span><select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value as PeriodFilter)}><option value="all">Dia inteiro</option><option value="morning">Manhã</option><option value="afternoon">Tarde</option><option value="next">Próximas 3 horas</option></select></label>
         {hasActiveFilters && <button type="button" onClick={clearFilters}>Limpar filtros</button>}
       </div>
       <div className="admin-day-workspace">

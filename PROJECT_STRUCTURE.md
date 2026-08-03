@@ -48,6 +48,11 @@
 - `src/services/contracts.ts` — contratos independentes do backend.
 - `src/services/index.ts` — composição dos serviços ativos.
 - `src/services/local-storage.ts` — adaptador local provisório.
+- `src/services/errors.ts` — erros de domínio estáveis entre adaptadores.
+- `src/services/ids.ts` — geração e validação de UUID para novos registros.
+- `src/services/supabase/mappers.ts` — fronteira entre linhas `snake_case` e domínio TypeScript.
+- `supabase/migrations/` — schema PostgreSQL inicial, índices e RLS habilitado.
+- `supabase/seed.sql` — ponto seguro para seeds futuros, sem senhas do mock.
 - `CheckoutGateway` — rascunho temporário entre agendamento e pagamento.
 - `src/services/mock-data.ts` — unidades e salas locais.
 - `src/state/AuthContext.tsx` — estado da sessão para React.
@@ -80,6 +85,7 @@
 - `src/assets/css/pages/admin-bookings.css` — painel diário, filtros, tabela e modal da gestão de agendamentos.
 - `src/assets/css/pages/admin-users.css` — painel responsivo de usuários, filtros, tabela e modais.
 - `src/assets/css/pages/admin-hours-plan.css` — gestão responsiva de saldo, ciclos e renovação dos planos.
+- `src/assets/css/pages/admin-operations-polish.css` — acabamento compartilhado das três telas operacionais críticas.
 - `src/assets/css/pages/admin-tasks.css` — quadro Kanban, cards, estados de prazo e modais de tarefas.
 - `src/assets/css/admin-sidebar.css` — drawer administrativo, overlay e estados ativos.
 - `src/assets/img/` — imagens próprias da aplicação, incluindo a logo compacta `cwlogo.ico`.
@@ -87,6 +93,7 @@
 ## Testes
 
 - `src/services/local-storage.test.ts` — autenticação, persistência, propriedade e cancelamento.
+- `src/services/supabase/mappers.test.ts` — conversão tipada entre Supabase e domínio.
 - `src/utils/booking.test.ts` — conflito, horário, status e limite exato de 24 horas.
 
 ## Contexto para agentes
@@ -96,3 +103,10 @@
 - `.agents/skills/` — skills locais instaladas.
 - `PRODUCT.md` e `DESIGN.md` — produto e sistema visual.
 - `FEATURES.md`, `MOCK_DATABASE.md` e `MIGRATION.md` — estado funcional e técnico.
+### Governança e resiliência
+
+- `src/pages/AdminBackupPage.tsx`: exportação e restauração administrativa do mock local.
+- `src/pages/AdminActivityPage.tsx`: auditoria e extrato de movimentações do plano de horas.
+- `src/components/ErrorBoundary.tsx`: recuperação global de falhas de renderização.
+- `src/pages/NotFoundPage.tsx`: destino explícito para rotas inexistentes.
+- `src/utils/image-upload.ts`: validação, redimensionamento e normalização dos uploads locais.

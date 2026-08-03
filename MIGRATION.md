@@ -20,11 +20,24 @@ como backup externo a esta pasta.
 
 ## Próximos passos
 
-1. Escolher Firebase ou Supabase.
-2. Implementar adaptador dos contratos em `src/services/contracts.ts`.
-3. Mover criação e cancelamento para operações seguras no backend, usando hora do servidor.
-4. Validar propriedade, janela de 24 horas e disponibilidade de forma transacional.
-5. Configurar RLS/Security Rules para impedir acesso às reservas de outro usuário.
-6. Substituir pagamento demonstrativo por gateway real, reembolso e confirmação via webhook idempotente.
-7. Integrar provedor de e-mail e WhatsApp para enviar confirmação após webhook aprovado.
-8. Ampliar testes de integração, concorrência e end-to-end.
+1. Criar projeto Supabase e aplicar migrations versionadas de `supabase/migrations/`.
+2. Adicionar migration de funções de papel e policies RLS; tabelas já nascem com RLS habilitado e não devem ser expostas antes disso.
+3. Gerar tipos TypeScript pelo Supabase CLI e implementar adaptadores dos contratos existentes.
+4. Migrar Auth; criar `profiles` usando o UUID correspondente de `auth.users`.
+5. Importar dados locais com mapa entre IDs seed legados e novos UUIDs, preservando todas as chaves estrangeiras.
+6. Mover criação/cancelamento de reserva e débito/estorno de horas para funções PostgreSQL transacionais usando hora do servidor.
+7. Migrar imagens base64 para Storage, atualizando apenas caminhos via `FileStorageGateway` futuro.
+8. Executar reconciliação: contagem, totais, vínculos, saldos e auditoria antes de trocar adaptador ativo.
+9. Substituir pagamento demonstrativo por gateway real e webhook idempotente quando decisão financeira existir.
+
+## Preparação concluída no mock
+
+- Novos registros recebem UUID sem prefixo; IDs seed antigos continuam válidos localmente.
+- `AuditGateway`, `BackupGateway` e extrato de horas existem sem dependência da UI.
+- Mapeadores impedem nomes `snake_case` do banco de vazarem para páginas e hooks.
+- Backup usa versão explícita e rejeita formatos incompatíveis.
+## Backup independente da autenticação
+
+- O schema 2 exporta somente dados de domínio e informa `credentialsIncluded: false`.
+- Senhas, tokens e sessões permanecem fora do `BackupGateway`.
+- No Supabase, contas serão administradas pelo Supabase Auth; exportação e restauração das tabelas de negócio poderão manter o mesmo envelope versionado.

@@ -6,6 +6,7 @@ import { useAuth } from '../state/AuthContext';
 import type { User } from '../types/domain';
 import { isHoursPlanExpired } from '../utils/booking';
 import '../assets/css/pages/admin-hours-plan.css';
+import '../assets/css/pages/admin-operations-polish.css';
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' });
 type PlanForm = { enabled: boolean; total: string; balance: string; renewal: string };

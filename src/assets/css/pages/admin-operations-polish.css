@@ -1,0 +1,240 @@
+/* Vocabulário operacional compartilhado: agenda, painel do dia e planos. */
+.admin-bookings-page,
+.admin-daily-page,
+.hours-plan-page {
+  --admin-control-height: 44px;
+  --admin-row-height: 58px;
+  padding-top: 136px;
+}
+
+.admin-bookings-page__intro h1,
+.admin-daily-page__intro h1,
+.hours-plan-intro h1 {
+  font-size: 1.875rem;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+
+.admin-filter-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-text-secondary);
+  font-size: .6875rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.admin-bookings-filters > label,
+.admin-daily-filters > label,
+.hours-plan-filters > label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.hours-plan-filters > label::before {
+  margin-bottom: 6px;
+  color: var(--color-text-secondary);
+  font-size: .6875rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.hours-plan-filters > label:first-child::before { content: 'Buscar'; }
+.hours-plan-filters > label:last-child::before { content: 'Situação'; }
+
+.admin-bookings-filters,
+.admin-daily-filters {
+  align-items: end;
+  background: color-mix(in srgb, var(--color-surface-raised) 62%, var(--color-bg));
+}
+
+.admin-bookings-filters input,
+.admin-bookings-filters select,
+.admin-daily-filters input,
+.admin-daily-filters select,
+.hours-plan-filters input,
+.hours-plan-filters select {
+  min-height: var(--admin-control-height);
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: .8125rem;
+  transition: border-color var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.admin-bookings-filters input::placeholder,
+.admin-daily-filters input::placeholder,
+.hours-plan-filters input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+
+.admin-bookings-filters :is(input, select):hover,
+.admin-daily-filters :is(input, select):hover,
+.hours-plan-filters :is(input, select):hover {
+  border-color: var(--color-border-hover);
+}
+
+.admin-bookings-filters :is(input, select):focus,
+.admin-daily-filters :is(input, select):focus,
+.hours-plan-filters :is(input, select):focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.admin-bookings-stat,
+.hours-plan-stats article {
+  min-height: 104px;
+  background: var(--color-surface);
+  transition: border-color var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+button.admin-bookings-stat:hover {
+  transform: translateY(-1px);
+}
+
+.admin-bookings-list,
+.admin-day-panel,
+.hours-plan-list {
+  background: var(--color-surface);
+}
+
+/* Totais já vivem nos cards; repetir no cabeçalho da lista cria conflito com filtros. */
+.admin-bookings-list-summary {
+  display: none;
+}
+
+.admin-bookings-table th,
+.hours-plan-table th {
+  height: 42px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: .6875rem;
+  font-weight: 650;
+}
+
+.admin-bookings-table td,
+.hours-plan-table td {
+  height: var(--admin-row-height);
+  font-size: .8125rem;
+}
+
+.admin-bookings-table tbody tr,
+.hours-plan-table tbody tr {
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.admin-bookings-table tbody tr:hover,
+.hours-plan-table tbody tr:hover {
+  background: var(--color-surface-raised);
+}
+
+.admin-bookings-table-wrap,
+.hours-plan-table-wrap {
+  overscroll-behavior-inline: contain;
+}
+
+.admin-day-agenda__list > article,
+.admin-day-upcoming__list > article {
+  min-height: 72px;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.admin-day-agenda__list > article:hover,
+.admin-day-upcoming__list > article:hover {
+  background: color-mix(in srgb, var(--color-surface-raised) 72%, transparent);
+}
+
+.admin-day-person strong,
+.admin-day-room strong,
+.admin-day-upcoming__list article > div strong {
+  font-size: .8125rem;
+}
+
+.admin-day-person span,
+.admin-day-room span,
+.admin-day-upcoming__list article > div span {
+  font-size: .7rem;
+}
+
+.admin-bookings-actions button,
+.admin-bookings-checkin,
+.admin-bookings-payment.is-action,
+.admin-day-action button,
+.hours-plan-actions button {
+  min-height: 38px;
+}
+
+.admin-bookings-empty,
+.admin-day-empty,
+.admin-day-upcoming__empty {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme='light'] .admin-bookings-filters,
+html[data-theme='light'] .admin-daily-filters {
+  background: var(--color-surface-raised);
+}
+
+html[data-theme='light'] .admin-bookings-stat,
+html[data-theme='light'] .admin-bookings-list,
+html[data-theme='light'] .admin-day-panel,
+html[data-theme='light'] .hours-plan-list,
+html[data-theme='light'] .hours-plan-stats article {
+  background: var(--color-surface);
+}
+
+@media (max-width: 1320px) {
+  .admin-bookings-page,
+  .admin-daily-page,
+  .hours-plan-page {
+    padding-top: 152px;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-bookings-page,
+  .admin-daily-page,
+  .hours-plan-page {
+    padding: 152px var(--space-4) var(--space-7);
+  }
+
+  .admin-bookings-page__intro h1,
+  .admin-daily-page__intro h1,
+  .hours-plan-intro h1 {
+    font-size: 1.5rem;
+  }
+
+  .admin-bookings-list,
+  .hours-plan-list {
+    border-radius: var(--radius-md);
+  }
+
+  .admin-bookings-table tr,
+  .hours-plan-table tr {
+    gap: var(--space-4);
+  }
+
+  .admin-bookings-table td,
+  .hours-plan-table td {
+    min-height: 0;
+    height: auto;
+    font-size: .8125rem;
+  }
+
+  .admin-filter-label {
+    font-size: .75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-bookings-stat,
+  .admin-bookings-table tbody tr,
+  .hours-plan-table tbody tr,
+  .admin-day-agenda__list > article,
+  .admin-day-upcoming__list > article {
+    transition: none;
+  }
+}

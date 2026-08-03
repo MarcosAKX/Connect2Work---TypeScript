@@ -3,20 +3,8 @@ import { BackLink } from '../components/BackLink';
 import { BuildingIcon, DoorIcon, PencilIcon, PlusIcon, TrashIcon, UploadIcon } from '../components/icons';
 import { useAdminUnits } from '../hooks/useAdminUnits';
 import type { CreateUnitInput, Unit } from '../types/domain';
+import { prepareImageUpload } from '../utils/image-upload';
 import '../assets/css/pages/admin-units.css';
-
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
-
-function readImage(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => typeof reader.result === 'string'
-      ? resolve(reader.result)
-      : reject(new Error('Não foi possível ler a imagem.'));
-    reader.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 interface UnitFormDialogProps {
   unit: Unit | null;
@@ -44,21 +32,12 @@ function UnitFormDialog({ unit, isSaving, gatewayError, onCancel, onSave }: Unit
     const file = event.target.files?.[0];
     if (!file) return;
     setValidationError('');
-    if (!file.type.startsWith('image/')) {
-      setValidationError('Selecione um arquivo de imagem válido.');
-      event.target.value = '';
-      return;
-    }
-    if (file.size > MAX_IMAGE_SIZE) {
-      setValidationError('A imagem deve ter no máximo 2 MB.');
-      event.target.value = '';
-      return;
-    }
     try {
-      setImageUrl(await readImage(file));
+      setImageUrl(await prepareImageUpload(file));
     } catch (caughtError) {
       setValidationError(caughtError instanceof Error ? caughtError.message : 'Não foi possível ler a imagem.');
     }
+    event.target.value = '';
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

@@ -59,6 +59,7 @@ Fonte: `src/assets/css/base.css`.
 - Pagamentos pendentes são ações clicáveis e pedem confirmação antes de mudar para concluído.
 - Plano de horas usa resumo contextual na etapa de agendamento, badge discreto no histórico e estado vencido com orientação acionável; o saldo não é repetido em outras telas do cliente.
 - A gestão de planos é uma ferramenta operacional própria no menu lateral, com métricas compactas, tabela de todos os usuários e ações progressivas; não replica permissões nem status de conta.
+- Agendamentos, Painel do Dia e Planos de Horas compartilham ritmo, superfícies, densidade de tabela, controles de 44px e rótulos visíveis nos filtros; métricas não são repetidas no cabeçalho da lista.
 - Check-in usa ação direta sem modal; chegadas concluídas ficam verdes e esperados de hoje recebem indicador azul discreto.
 
 ## Acessibilidade

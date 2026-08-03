@@ -41,6 +41,7 @@ destaque dourado reservado para marca, foco, seleção e ações principais.
 
 - Frontend React completo.
 - Persistência local provisória.
+- Persistência local possui schema versionado, backup tipado, auditoria e extrato de plano; contratos e migration SQL preparam troca futura para Supabase.
 - Checkout e pagamento demonstrativo implementados; gateway real ainda pendente.
 - Login Google aguarda escolha do backend.
 - Administração de unidades, salas e imagens locais implementada.

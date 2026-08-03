@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ClockIcon, CloseIcon, TaskIcon, UsersIcon } from './icons';
+import { ClockIcon, CloseIcon, DashboardIcon, TaskIcon, UsersIcon } from './icons';
 import '../assets/css/admin-sidebar.css';
 import type { UserRole } from '../types/domain';
 
 const administrativeTools = [
+  { to: '/admin/atividades', label: 'Atividades', icon: DashboardIcon, roles: ['admin'] },
+  { to: '/admin/backup', label: 'Backup', icon: DashboardIcon, roles: ['admin'] },
   { to: '/admin/usuarios', label: 'Gerenciar Usuários', icon: UsersIcon, roles: ['admin'] },
   { to: '/admin/planos-horas', label: 'Planos de Horas', icon: ClockIcon, roles: ['admin', 'secretaria'] },
   { to: '/admin/tarefas', label: 'Tarefas', icon: TaskIcon, roles: ['admin', 'secretaria'] },

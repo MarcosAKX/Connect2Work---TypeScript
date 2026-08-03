@@ -13,6 +13,9 @@ Persistência provisória no `localStorage`. Implementação em
 - `c2w_mock_password_resets` — solicitações simuladas de redefinição.
 - `c2w_checkout_draft` — rascunho do checkout no `sessionStorage`.
 - `c2w_mock_tasks` — quadro compartilhado de tarefas administrativas.
+- `c2w_mock_audit_logs` — últimas ações relevantes, limitado a 5.000 registros.
+- `c2w_mock_hours_plan_transactions` — créditos, débitos, estornos e ajustes do plano.
+- `c2w_mock_schema_version` — versão do formato persistido, atualmente `1`.
 
 ## Entidades
 
@@ -74,6 +77,22 @@ Persistência provisória no `localStorage`. Implementação em
 - O quadro é compartilhado entre toda a equipe; “Minhas tarefas” é apenas um filtro local pelo usuário autenticado.
 - Os seeds incluem tarefas vencida, vencendo hoje, futura e concluída para validação dos estados visuais.
 
+### AuditLog
+
+- `id`, `actorUserId?`, `action`, `entity`, `entityId`, `occurredAt`, `details?`.
+- Novos registros usam UUID e guardam somente metadados operacionais; senhas nunca entram na auditoria.
+
+### HoursPlanTransaction
+
+- `id`, `userId`, `bookingId?`, `type`, `hours`, `balanceAfter`, `reason`, `createdAt`, `createdBy?`.
+- Débitos usam horas negativas; créditos, estornos e aumentos usam horas positivas.
+
+### BackupPayload
+
+- Envelope com `schemaVersion`, `exportedAt` e coleções persistidas.
+- Importação rejeita versão incompatível e exige usuário da equipe válido.
+- Enquanto autenticação for mock, backup contém `StoredUser` e portanto credenciais locais; arquivo deve ser tratado como sensível e nunca enviado ao repositório. Na migração, Supabase Auth elimina esse campo do backup da aplicação.
+
 ## Usuários seed
 
 - Perfil cliente:
@@ -97,6 +116,8 @@ Persistência provisória no `localStorage`. Implementação em
 - `BookingGateway` — consulta, contagem, criação com rejeição de intervalos sobrepostos, confirmação administrativa e cancelamento de cliente ou administrador.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
 - `TaskGateway` — listagem, criação e movimentação compartilhada; administrador edita/exclui qualquer tarefa, enquanto secretária edita/exclui somente as próprias e não pode alterar a data estimada depois da criação.
+- `AuditGateway` — consulta de ações recentes e extrato do plano por usuário.
+- `BackupGateway` — exportação e importação validada do estado local, restritas ao administrador.
 
 Firebase ou Supabase deve implementar esses contratos. Componentes não devem
 acessar SDK, banco ou `localStorage` diretamente.
@@ -117,3 +138,12 @@ O backend deve repetir todas as validações, mesmo que a interface já as faça
 proprietário autenticado, antecedência de 24 horas, status atual, conflito de
 horário e confirmação do pagamento. A hora oficial deve vir do servidor. Use
 operação atômica para evitar dois usuários reservando o mesmo intervalo.
+## Segurança e recuperação local
+
+- `c2w_mock_last_backup_at`: instante ISO do último backup exportado.
+- Valores JSON corrompidos são preservados em chaves iniciadas por `c2w_mock_corrupted_` antes do fallback.
+- A restauração de backup é validada, possui rollback local e encerra a sessão ativa.
+- O backup do mock inclui `StoredUser`, portanto contém senhas de desenvolvimento em texto simples. Deve ser guardado como dado sensível e esse formato não será usado no backend real.
+- Registros de auditoria podem armazenar `actorName` como fotografia do nome exibido no momento da operação.
+- Backups novos usam schema 2 e `credentialsIncluded: false`. Usuários são exportados sem `password`, tokens ou sessão.
+- Ao restaurar no mock, credenciais de contas já presentes são preservadas. Contas desconhecidas importadas ficam inativas até revisão do administrador.

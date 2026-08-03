@@ -1,8 +1,12 @@
 import type { AppServices } from './contracts';
 import { rooms as seedRooms, units as seedUnits } from './mock-data';
-import type { Booking, BookingStatus, CheckoutDraft, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, Room, StoredUser, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateTaskInput, User, UserRole } from '../types/domain';
+import type { AuditAction, AuditEntity, AuditLog, BackupPayload, Booking, BookingStatus, CheckoutDraft, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, HoursPlanTransaction, Room, StoredUser, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateTaskInput, User, UserRole } from '../types/domain';
 import { bookingHasConflict, canCancelBooking, formatStorageDate, getEffectiveBookingStatus, isHoursPlanExpired, parseTimeSlot } from '../utils/booking';
 import { TASKS_CHANGED_EVENT } from '../utils/tasks';
+import { createEntityId } from './ids';
+import { ValidationError } from './errors';
+
+const STORAGE_SCHEMA_VERSION = 2;
 
 const KEYS = {
   users: 'c2w_mock_users',
@@ -13,6 +17,10 @@ const KEYS = {
   resets: 'c2w_mock_password_resets',
   checkout: 'c2w_checkout_draft',
   tasks: 'c2w_mock_tasks',
+  auditLogs: 'c2w_mock_audit_logs',
+  hoursPlanTransactions: 'c2w_mock_hours_plan_transactions',
+  schemaVersion: 'c2w_mock_schema_version',
+  lastBackupAt: 'c2w_mock_last_backup_at',
 } as const;
 
 const seedUser: StoredUser = {
@@ -53,9 +61,11 @@ const seedSecretary: StoredUser = {
 
 function readArray<T>(key: string): T[] {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(key) ?? '[]');
+    const raw = localStorage.getItem(key);
+    const value: unknown = JSON.parse(raw ?? '[]');
     return Array.isArray(value) ? (value as T[]) : [];
   } catch {
+    preserveCorruptedValue(key);
     return [];
   }
 }
@@ -65,7 +75,53 @@ function readObject<T>(key: string): T | null {
     const raw = localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
+    preserveCorruptedValue(key);
     return null;
+  }
+}
+
+function preserveCorruptedValue(key: string) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return;
+  try {
+    localStorage.setItem(`c2w_mock_corrupted_${key}_${Date.now()}`, raw);
+  } catch {
+    // O dado original permanece intacto quando nem a cópia de segurança cabe no navegador.
+  }
+}
+
+function writeArray<T>(key: string, value: T[]) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function currentActorId() {
+  return readObject<User>(KEYS.session)?.id;
+}
+
+function appendAudit(now: () => Date, action: AuditAction, entity: AuditEntity, entityId: string, details?: AuditLog['details'], actorUserId = currentActorId()) {
+  try {
+    const logs = readArray<AuditLog>(KEYS.auditLogs);
+    const actorName = actorUserId ? readArray<StoredUser>(KEYS.users).find(({ id }) => id === actorUserId)?.name : undefined;
+    const entry: AuditLog = { id: createEntityId(), actorUserId, actorName, action, entity, entityId, occurredAt: now().toISOString(), details };
+    writeArray(KEYS.auditLogs, [entry, ...logs].slice(0, 5000));
+  } catch {
+    // Auditoria local não pode invalidar uma operação principal já concluída.
+  }
+}
+
+function appendHoursTransaction(now: () => Date, input: Omit<HoursPlanTransaction, 'id' | 'createdAt'>) {
+  const transactions = readArray<HoursPlanTransaction>(KEYS.hoursPlanTransactions);
+  const entry: HoursPlanTransaction = { id: createEntityId(), createdAt: now().toISOString(), ...input };
+  writeArray(KEYS.hoursPlanTransactions, [entry, ...transactions]);
+}
+
+function validateBackup(payload: BackupPayload) {
+  if (!payload || ![1, STORAGE_SCHEMA_VERSION].includes(payload.schemaVersion) || !payload.data) {
+    throw new ValidationError('Backup incompatível com esta versão da aplicação.');
+  }
+  const collections: Array<keyof BackupPayload['data']> = ['users', 'units', 'rooms', 'bookings', 'tasks', 'auditLogs', 'hoursPlanTransactions'];
+  if (collections.some((key) => !Array.isArray(payload.data[key]))) {
+    throw new ValidationError('Backup inválido ou incompleto.');
   }
 }
 
@@ -175,7 +231,7 @@ function sanitizeUser({ password: _password, ...user }: StoredUser): User {
   };
 }
 
-function refundPlanHours(booking: Booking) {
+function refundPlanHours(booking: Booking, now: () => Date) {
   if (!booking.hoursFromPlan || booking.hoursFromPlan <= 0) return;
   const users = readArray<StoredUser>(KEYS.users);
   const index = users.findIndex((user) => user.id === booking.userId);
@@ -184,6 +240,13 @@ function refundPlanHours(booking: Booking) {
   // Decisão: saldo já pertencente ao cliente é devolvido mesmo com plano vencido.
   users[index] = { ...user, hoursBalance: Math.max(0, Number(user.hoursBalance) || 0) + booking.hoursFromPlan };
   localStorage.setItem(KEYS.users, JSON.stringify(users));
+  appendHoursTransaction(now, { userId: booking.userId, bookingId: booking.id, type: 'refund', hours: booking.hoursFromPlan, balanceAfter: users[index].hoursBalance, reason: 'Estorno por cancelamento elegível', createdBy: currentActorId() });
+}
+
+function getAdminUser(userId: string) {
+  const user = getStaffUser(userId);
+  if (user.role !== 'admin') throw new Error('Somente administradores podem gerenciar backups.');
+  return user;
 }
 
 function normalizeManagedUserInput(input: CreateManagedUserInput | UpdateManagedUserInput) {
@@ -207,6 +270,9 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
   ensureSeedUnits();
   ensureSeedRooms();
   ensureSeedTasks(now());
+  if (localStorage.getItem(KEYS.auditLogs) === null) writeArray(KEYS.auditLogs, []);
+  if (localStorage.getItem(KEYS.hoursPlanTransactions) === null) writeArray(KEYS.hoursPlanTransactions, []);
+  localStorage.setItem(KEYS.schemaVersion, String(STORAGE_SCHEMA_VERSION));
 
   return {
     auth: {
@@ -214,15 +280,11 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const session = readObject<User>(KEYS.session);
         if (!session) return null;
         const storedUser = readArray<StoredUser>(KEYS.users).find(({ id }) => id === session.id);
-        if (storedUser?.active === false) {
+        if (!storedUser || !storedUser.active) {
           localStorage.removeItem(KEYS.session);
           return null;
         }
-        return {
-          ...session,
-          role: normalizeUserRole(session.role),
-          active: session.active !== false,
-        };
+        return sanitizeUser({ ...storedUser, role: normalizeUserRole(storedUser.role) });
       },
       async getUserById(id) {
         const user = readArray<StoredUser>(KEYS.users).find((candidate) => candidate.id === id);
@@ -255,7 +317,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         }
 
         const storedUser: StoredUser = {
-          id: crypto.randomUUID(),
+          id: createEntityId(),
           name: input.name.trim().replace(/\s+/g, ' '),
           email: normalizedEmail,
           profession: input.profession.trim(),
@@ -269,6 +331,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         };
 
         localStorage.setItem(KEYS.users, JSON.stringify([...storedUsers, storedUser]));
+        appendAudit(now, 'create', 'user', storedUser.id, { source: 'self_registration' }, storedUser.id);
         return sanitizeUser(storedUser);
       },
       async resetPassword(email) {
@@ -300,7 +363,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         if (!input.password) throw new Error('Informe uma senha.');
         if (users.some((user) => user.email.toLowerCase() === normalized.email)) throw new Error('Este e-mail já está cadastrado.');
         const created: StoredUser = {
-          id: `user-${crypto.randomUUID()}`,
+          id: createEntityId(),
           ...normalized,
           password: input.password,
           hasHoursPlan: false,
@@ -308,6 +371,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           createdAt: now().toISOString(),
         };
         localStorage.setItem(KEYS.users, JSON.stringify([...users, created]));
+        appendAudit(now, 'create', 'user', created.id, { role: created.role, active: created.active });
         return sanitizeUser(created);
       },
       async updateUser(id, input) {
@@ -328,6 +392,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         users[index] = updated;
         localStorage.setItem(KEYS.users, JSON.stringify(users));
         if (session?.id === id) localStorage.setItem(KEYS.session, JSON.stringify(sanitizeUser(updated)));
+        appendAudit(now, 'update', 'user', id, { role: updated.role, active: updated.active });
         return sanitizeUser(updated);
       },
       async updateUserRole(id, role) {
@@ -342,6 +407,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const updated: StoredUser = { ...current, role };
         users[index] = updated;
         localStorage.setItem(KEYS.users, JSON.stringify(users));
+        appendAudit(now, 'update', 'user', id, { role });
         return sanitizeUser(updated);
       },
       async updateUserStatus(id, active) {
@@ -356,6 +422,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const updated: StoredUser = { ...current, active };
         users[index] = updated;
         localStorage.setItem(KEYS.users, JSON.stringify(users));
+        appendAudit(now, 'update', 'user', id, { active });
         return sanitizeUser(updated);
       },
       async searchClients(query) {
@@ -374,16 +441,21 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         if (!current) throw new Error('Usuário não encontrado.');
         if (!Number.isFinite(input.hoursBalance) || input.hoursBalance < 0) throw new Error('O saldo de horas não pode ser negativo.');
         if (input.hoursPlanTotal !== undefined && (!Number.isFinite(input.hoursPlanTotal) || input.hoursPlanTotal <= 0)) throw new Error('O total do plano deve ser maior que zero.');
+        const previousBalance = Math.max(0, Number(current.hoursBalance) || 0);
+        const nextBalance = input.hasHoursPlan ? input.hoursBalance : 0;
         const updated: StoredUser = {
           ...current,
           hasHoursPlan: input.hasHoursPlan,
-          hoursBalance: input.hasHoursPlan ? input.hoursBalance : 0,
+          hoursBalance: nextBalance,
           hoursPlanTotal: input.hasHoursPlan ? input.hoursPlanTotal : undefined,
           hoursPlanRenewsOn: input.hasHoursPlan ? input.hoursPlanRenewsOn : undefined,
           hoursPlanPaymentConfirmed: input.hasHoursPlan ? (current.hoursPlanPaymentConfirmed ?? true) : undefined,
         };
         users[index] = updated;
         localStorage.setItem(KEYS.users, JSON.stringify(users));
+        const difference = nextBalance - previousBalance;
+        if (difference !== 0) appendHoursTransaction(now, { userId, type: 'adjustment', hours: difference, balanceAfter: nextBalance, reason: input.hasHoursPlan ? 'Ajuste manual do plano' : 'Desativação do plano', createdBy: currentActorId() });
+        appendAudit(now, 'update', 'hours_plan', userId, { enabled: input.hasHoursPlan, previousBalance, balanceAfter: nextBalance });
         return sanitizeUser(updated);
       },
       async confirmHoursPlanRenewal(userId) {
@@ -398,6 +470,8 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const updated: StoredUser = { ...current, hoursBalance: current.hoursPlanTotal, hoursPlanPaymentConfirmed: true, hoursPlanLastRenewalAt: now().toISOString(), hoursPlanRenewsOn: formatStorageDate(renewalDate) };
         users[index] = updated;
         localStorage.setItem(KEYS.users, JSON.stringify(users));
+        appendHoursTransaction(now, { userId, type: 'credit', hours: current.hoursPlanTotal, balanceAfter: current.hoursPlanTotal, reason: 'Renovação do plano', createdBy: currentActorId() });
+        appendAudit(now, 'renew', 'hours_plan', userId, { hours: current.hoursPlanTotal });
         return sanitizeUser(updated);
       },
     },
@@ -411,7 +485,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
       async createUnit(input) {
         const existing = readArray<Unit>(KEYS.units);
         const unit: Unit = {
-          id: `unit-${Date.now()}-${crypto.randomUUID()}`,
+          id: createEntityId(),
           name: input.name.trim(),
           address: input.address.trim(),
           description: input.description?.trim() || undefined,
@@ -419,6 +493,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           availableRooms: 0,
         };
         localStorage.setItem(KEYS.units, JSON.stringify([...existing, unit]));
+        appendAudit(now, 'create', 'unit', unit.id, { name: unit.name });
         return unit;
       },
       async updateUnit(id, input) {
@@ -435,6 +510,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         };
         existing[index] = updated;
         localStorage.setItem(KEYS.units, JSON.stringify(existing));
+        appendAudit(now, 'update', 'unit', id, { name: updated.name });
         return updated;
       },
       async deleteUnit(id) {
@@ -450,6 +526,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         }
 
         localStorage.setItem(KEYS.units, JSON.stringify(existing.filter((candidate) => candidate.id !== id)));
+        appendAudit(now, 'delete', 'unit', id, { name: unit.name });
       },
       async getRoomsByUnitId(unitId) {
         return readArray<Room>(KEYS.rooms).filter((room) => room.unitId === unitId);
@@ -462,10 +539,11 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         if (!units.some((unit) => unit.id === input.unitId)) throw new Error('Unidade não encontrada.');
         const existing = readArray<Room>(KEYS.rooms);
         const room: Room = {
-          id: `room-${Date.now()}-${crypto.randomUUID()}`,
+          id: createEntityId(),
           ...normalizeRoomInput(input),
         };
         localStorage.setItem(KEYS.rooms, JSON.stringify([...existing, room]));
+        appendAudit(now, 'create', 'room', room.id, { unitId: room.unitId, name: room.name });
         return room;
       },
       async updateRoom(id, input) {
@@ -479,6 +557,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const updated: Room = { ...current, ...normalizeRoomInput(input) };
         existing[index] = updated;
         localStorage.setItem(KEYS.rooms, JSON.stringify(existing));
+        appendAudit(now, 'update', 'room', id, { unitId: updated.unitId, name: updated.name });
         return updated;
       },
       async deleteRoom(id) {
@@ -492,6 +571,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           throw new Error(`Não é possível excluir ${room.name} enquanto houver agendamentos vinculados.`);
         }
         localStorage.setItem(KEYS.rooms, JSON.stringify(existing.filter((candidate) => candidate.id !== id)));
+        appendAudit(now, 'delete', 'room', id, { name: room.name });
       },
     },
     bookings: {
@@ -539,10 +619,15 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const booking: Booking = {
           ...input,
           adminStatus: input.adminStatus ?? (input.status === 'cancelled' ? 'cancelled' : 'confirmed'),
-          id: `booking-${Date.now()}-${crypto.randomUUID()}`,
+          id: createEntityId(),
           createdAt: now().toISOString(),
         };
         localStorage.setItem(KEYS.bookings, JSON.stringify([booking, ...existing]));
+        if (booking.hoursFromPlan && booking.hoursFromPlan > 0) {
+          const balanceAfter = readArray<StoredUser>(KEYS.users).find((user) => user.id === booking.userId)?.hoursBalance ?? 0;
+          appendHoursTransaction(now, { userId: booking.userId, bookingId: booking.id, type: 'debit', hours: -booking.hoursFromPlan, balanceAfter, reason: 'Consumo em agendamento', createdBy: currentActorId() ?? booking.userId });
+        }
+        appendAudit(now, 'create', 'booking', booking.id, { userId: booking.userId, roomId: booking.roomId, date: booking.date });
         return booking;
       },
       async cancel(bookingId, userId) {
@@ -559,7 +644,8 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const cancelled: Booking = { ...booking, status: 'cancelled', adminStatus: 'cancelled', cancelledAt: current.toISOString() };
         existing[index] = cancelled;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
-        refundPlanHours(booking);
+        refundPlanHours(booking, now);
+        appendAudit(now, 'cancel', 'booking', bookingId, { source: 'client' }, userId);
         return cancelled;
       },
       async confirmBooking(bookingId) {
@@ -573,6 +659,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const confirmed: Booking = { ...booking, adminStatus: 'confirmed' };
         existing[index] = confirmed;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        appendAudit(now, 'confirm', 'booking', bookingId, { kind: 'booking' });
         return confirmed;
       },
       async confirmPayment(bookingId) {
@@ -589,6 +676,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const paid: Booking = { ...booking, paymentStatus: 'completed' };
         existing[index] = paid;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        appendAudit(now, 'confirm', 'booking', bookingId, { kind: 'payment' });
         return paid;
       },
       async checkInBooking(bookingId, staffUserId) {
@@ -612,6 +700,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         };
         existing[index] = checkedIn;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
+        appendAudit(now, 'check_in', 'booking', bookingId, undefined, staffUserId);
         return checkedIn;
       },
       async cancelBookingAsAdmin(bookingId, reason) {
@@ -627,7 +716,8 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const cancelled: Booking = { ...booking, status: 'cancelled', adminStatus: 'cancelled', cancelledAt: now().toISOString(), cancellationReason: normalizedReason };
         existing[index] = cancelled;
         localStorage.setItem(KEYS.bookings, JSON.stringify(existing));
-        if (canCancelBooking(booking, now())) refundPlanHours(booking);
+        if (canCancelBooking(booking, now())) refundPlanHours(booking, now);
+        appendAudit(now, 'cancel', 'booking', bookingId, { source: 'staff', reason: normalizedReason });
         return cancelled;
       },
     },
@@ -649,7 +739,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const normalized = normalizeTaskInput(input);
         const timestamp = now().toISOString();
         const task: Task = {
-          id: `task-${crypto.randomUUID()}`,
+          id: createEntityId(),
           ...normalized,
           status: input.status ?? 'todo',
           createdBy: input.createdBy,
@@ -657,6 +747,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           updatedAt: timestamp,
         };
         localStorage.setItem(KEYS.tasks, JSON.stringify([task, ...readArray<Task>(KEYS.tasks)]));
+        appendAudit(now, 'create', 'task', task.id, { status: task.status }, input.createdBy);
         notifyTasksChanged();
         return task;
       },
@@ -678,6 +769,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const updated: Task = { ...current, ...normalized, updatedAt: now().toISOString() };
         tasks[index] = updated;
         localStorage.setItem(KEYS.tasks, JSON.stringify(tasks));
+        appendAudit(now, 'update', 'task', id, { status: updated.status }, actorUserId);
         notifyTasksChanged();
         return updated;
       },
@@ -690,6 +782,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const updated: Task = { ...current, status, updatedAt: now().toISOString() };
         tasks[index] = updated;
         localStorage.setItem(KEYS.tasks, JSON.stringify(tasks));
+        appendAudit(now, 'update', 'task', id, { status }, actorUserId);
         notifyTasksChanged();
         return updated;
       },
@@ -702,7 +795,91 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
           throw new Error('Somente quem criou a tarefa pode excluí-la.');
         }
         localStorage.setItem(KEYS.tasks, JSON.stringify(tasks.filter((task) => task.id !== id)));
+        appendAudit(now, 'delete', 'task', id, undefined, actorUserId);
         notifyTasksChanged();
+      },
+    },
+    audit: {
+      async listRecent(actorUserId, limit = 100) {
+        getStaffUser(actorUserId);
+        const safeLimit = Math.max(1, Math.min(500, Math.trunc(limit)));
+        return readArray<AuditLog>(KEYS.auditLogs).slice(0, safeLimit);
+      },
+      async listHoursPlanTransactions(userId, actorUserId) {
+        getStaffUser(actorUserId);
+        return readArray<HoursPlanTransaction>(KEYS.hoursPlanTransactions)
+          .filter((transaction) => transaction.userId === userId)
+          .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+      },
+    },
+    backup: {
+      async exportData(actorUserId) {
+        getAdminUser(actorUserId);
+        const exportedAt = now().toISOString();
+        const payload = {
+          schemaVersion: STORAGE_SCHEMA_VERSION,
+          exportedAt,
+          credentialsIncluded: false,
+          data: {
+            users: readArray<StoredUser>(KEYS.users).map(sanitizeUser),
+            units: readArray<Unit>(KEYS.units),
+            rooms: readArray<Room>(KEYS.rooms),
+            bookings: readArray<Booking>(KEYS.bookings),
+            tasks: readArray<Task>(KEYS.tasks),
+            auditLogs: readArray<AuditLog>(KEYS.auditLogs),
+            hoursPlanTransactions: readArray<HoursPlanTransaction>(KEYS.hoursPlanTransactions),
+          },
+        } satisfies BackupPayload;
+        localStorage.setItem(KEYS.lastBackupAt, exportedAt);
+        return payload;
+      },
+      async importData(payload, actorUserId) {
+        getAdminUser(actorUserId);
+        validateBackup(payload);
+        const rollback = {
+          users: readArray<StoredUser>(KEYS.users),
+          units: readArray<Unit>(KEYS.units),
+          rooms: readArray<Room>(KEYS.rooms),
+          bookings: readArray<Booking>(KEYS.bookings),
+          tasks: readArray<Task>(KEYS.tasks),
+          auditLogs: readArray<AuditLog>(KEYS.auditLogs),
+          hoursPlanTransactions: readArray<HoursPlanTransaction>(KEYS.hoursPlanTransactions),
+        };
+        try {
+          const currentUsers = readArray<StoredUser>(KEYS.users);
+          const restoredUsers: StoredUser[] = payload.data.users.map((restoredUser) => {
+            const current = currentUsers.find(({ id, email }) => id === restoredUser.id || email.toLowerCase() === restoredUser.email.toLowerCase());
+            return {
+              ...restoredUser,
+              password: current?.password ?? createEntityId(),
+              active: current ? restoredUser.active : false,
+            };
+          });
+          writeArray(KEYS.users, restoredUsers);
+          writeArray(KEYS.units, payload.data.units);
+          writeArray(KEYS.rooms, payload.data.rooms);
+          writeArray(KEYS.bookings, payload.data.bookings);
+          writeArray(KEYS.tasks, payload.data.tasks);
+          writeArray(KEYS.auditLogs, payload.data.auditLogs);
+          writeArray(KEYS.hoursPlanTransactions, payload.data.hoursPlanTransactions);
+          localStorage.setItem(KEYS.schemaVersion, String(STORAGE_SCHEMA_VERSION));
+          appendAudit(now, 'import', 'backup', `schema-${payload.schemaVersion}`, { exportedAt: payload.exportedAt }, actorUserId);
+          localStorage.removeItem(KEYS.session);
+          notifyTasksChanged();
+        } catch (error) {
+          writeArray(KEYS.users, rollback.users);
+          writeArray(KEYS.units, rollback.units);
+          writeArray(KEYS.rooms, rollback.rooms);
+          writeArray(KEYS.bookings, rollback.bookings);
+          writeArray(KEYS.tasks, rollback.tasks);
+          writeArray(KEYS.auditLogs, rollback.auditLogs);
+          writeArray(KEYS.hoursPlanTransactions, rollback.hoursPlanTransactions);
+          throw error;
+        }
+      },
+      async getLastBackupAt(actorUserId) {
+        getAdminUser(actorUserId);
+        return localStorage.getItem(KEYS.lastBackupAt);
       },
     },
   };
