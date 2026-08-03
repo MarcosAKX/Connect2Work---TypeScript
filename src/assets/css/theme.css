@@ -126,6 +126,111 @@ html[data-theme='light'] .admin-brand__badge {
   color: #774d00;
 }
 
+/* Agendamento: estados claros sem herdar as sobreposições escuras da página. */
+html[data-theme='light'] .booking-selection {
+  background: #ffffff;
+}
+
+html[data-theme='light'] .calendar {
+  border-color: #d7dde6;
+  background: #f6f8fb;
+}
+
+html[data-theme='light'] .calendar__navigation {
+  border-color: #c4ccd7;
+  background: #ffffff;
+  color: #273142;
+}
+
+html[data-theme='light'] .calendar__navigation:hover:not(:disabled) {
+  border-color: #b47a00;
+  background: #fff8dc;
+  color: #704900;
+}
+
+html[data-theme='light'] .calendar__weekdays span {
+  color: #465267;
+}
+
+html[data-theme='light'] .calendar__day {
+  color: #202938;
+}
+
+html[data-theme='light'] .calendar__day:hover:not(:disabled) {
+  border-color: #c58a00;
+  background: #fff8dc;
+  color: #624000;
+}
+
+html[data-theme='light'] .calendar__day.is-today:not(.is-selected) {
+  border-color: #bd7f00;
+  background: #fff4c2;
+  color: #513600;
+}
+
+html[data-theme='light'] .calendar__day.is-selected {
+  border-color: #bd7f00;
+  background: #fbbf24;
+  color: #1a1400;
+  box-shadow: none;
+}
+
+html[data-theme='light'] .calendar__day:disabled {
+  color: #9aa3b1;
+  opacity: 1;
+}
+
+html[data-theme='light'] .selected-date {
+  background: #fff8dc;
+  color: #465267;
+}
+
+html[data-theme='light'] .selected-date strong {
+  color: #704900;
+}
+
+html[data-theme='light'] .time-button {
+  border-color: #cbd2dc;
+  background: #ffffff;
+  color: #202938;
+}
+
+html[data-theme='light'] .time-button:hover:not(:disabled) {
+  border-color: #c58a00;
+  background: #fff8dc;
+  color: #624000;
+}
+
+html[data-theme='light'] .time-button.is-selected {
+  border-color: #bd7f00;
+  background: #fbbf24;
+  color: #1a1400;
+  box-shadow: none;
+}
+
+html[data-theme='light'] .time-button.is-unavailable {
+  border-color: #d7dde6;
+  background: #e7ebf0;
+  color: #737e8e;
+  opacity: 1;
+}
+
+html[data-theme='light'] .time-legend__box {
+  border-color: #cbd2dc;
+  background: #ffffff;
+}
+
+html[data-theme='light'] .time-legend__box--selected {
+  border-color: #bd7f00;
+  background: #fbbf24;
+}
+
+html[data-theme='light'] .time-legend__box--unavailable {
+  border-color: #d7dde6;
+  background: #e7ebf0;
+  opacity: 1;
+}
+
 /* O login preserva sua assinatura escura mesmo quando o restante do sistema está claro. */
 html[data-theme='light'] .login-page {
   --color-bg: #0a0a0a;

@@ -1,7 +1,7 @@
 import type { AppServices } from './contracts';
 import { rooms as seedRooms, units as seedUnits } from './mock-data';
 import type { Booking, BookingStatus, CheckoutDraft, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, Room, StoredUser, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateTaskInput, User, UserRole } from '../types/domain';
-import { canCancelBooking, getEffectiveBookingStatus } from '../utils/booking';
+import { bookingHasConflict, canCancelBooking, getEffectiveBookingStatus, parseTimeSlot } from '../utils/booking';
 import { TASKS_CHANGED_EVENT } from '../utils/tasks';
 
 const KEYS = {
@@ -112,10 +112,15 @@ function notifyTasksChanged() {
 
 function assertStaffUser(userId: string | undefined) {
   if (!userId) return;
+  getStaffUser(userId);
+}
+
+function getStaffUser(userId: string) {
   const user = readArray<StoredUser>(KEYS.users).find((candidate) => candidate.id === userId);
   if (!user || !user.active || (user.role !== 'admin' && user.role !== 'secretaria')) {
     throw new Error('Responsável inválido para esta tarefa.');
   }
+  return user;
 }
 
 function normalizeTaskInput(input: CreateTaskInput | UpdateTaskInput) {
@@ -454,6 +459,11 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
       },
       async create(input) {
         const existing = readArray<Booking>(KEYS.bookings);
+        const range = parseTimeSlot(input.timeSlot);
+        if (!range || range.end <= range.start) throw new Error('O período do agendamento é inválido.');
+        if (bookingHasConflict(existing, input.roomId, input.date, input.timeSlot)) {
+          throw new Error('Este horário já está ocupado para a sala selecionada.');
+        }
         const booking: Booking = {
           ...input,
           adminStatus: input.adminStatus ?? (input.status === 'cancelled' ? 'cancelled' : 'confirmed'),
@@ -576,31 +586,47 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         notifyTasksChanged();
         return task;
       },
-      async updateTask(id, input) {
+      async updateTask(id, input, actorUserId) {
         const tasks = readArray<Task>(KEYS.tasks);
         const index = tasks.findIndex((task) => task.id === id);
         const current = tasks[index];
         if (!current) throw new Error('Tarefa não encontrada.');
-        const updated: Task = { ...current, ...normalizeTaskInput(input), updatedAt: now().toISOString() };
+        const actor = getStaffUser(actorUserId);
+        const normalized = normalizeTaskInput(input);
+        if (actor.role === 'secretaria') {
+          if (current.createdBy !== actorUserId) {
+            throw new Error('A secretária pode editar somente as tarefas que criou.');
+          }
+          if (normalized.dueDate !== current.dueDate) {
+            throw new Error('A data estimada só pode ser definida durante a criação da tarefa.');
+          }
+        }
+        const updated: Task = { ...current, ...normalized, updatedAt: now().toISOString() };
         tasks[index] = updated;
         localStorage.setItem(KEYS.tasks, JSON.stringify(tasks));
         notifyTasksChanged();
         return updated;
       },
-      async updateTaskStatus(id, status: TaskStatus) {
+      async updateTaskStatus(id, status: TaskStatus, actorUserId) {
         const tasks = readArray<Task>(KEYS.tasks);
         const index = tasks.findIndex((task) => task.id === id);
         const current = tasks[index];
         if (!current) throw new Error('Tarefa não encontrada.');
+        getStaffUser(actorUserId);
         const updated: Task = { ...current, status, updatedAt: now().toISOString() };
         tasks[index] = updated;
         localStorage.setItem(KEYS.tasks, JSON.stringify(tasks));
         notifyTasksChanged();
         return updated;
       },
-      async deleteTask(id) {
+      async deleteTask(id, actorUserId) {
         const tasks = readArray<Task>(KEYS.tasks);
-        if (!tasks.some((task) => task.id === id)) throw new Error('Tarefa não encontrada.');
+        const current = tasks.find((task) => task.id === id);
+        if (!current) throw new Error('Tarefa não encontrada.');
+        const actor = getStaffUser(actorUserId);
+        if (actor.role !== 'admin' && current.createdBy !== actorUserId) {
+          throw new Error('Somente quem criou a tarefa pode excluí-la.');
+        }
         localStorage.setItem(KEYS.tasks, JSON.stringify(tasks.filter((task) => task.id !== id)));
         notifyTasksChanged();
       },

@@ -42,6 +42,7 @@
 - Gestão de usuários: implementada em `/admin/usuarios`, com busca, filtros, estatísticas, cadastro e edição completa de dados, permissão, senha e status.
 - Papéis disponíveis: `client`, `admin` e `secretaria`; secretaria acessa exclusivamente `/admin/agendamentos`.
 - Secretaria possui navegação reduzida e é redirecionada ao tentar acessar dashboard, unidades, salas ou usuários.
+- Na gestão de agendamentos, a receita total é exibida somente ao administrador; a secretária mantém os valores e pagamentos individuais necessários à operação.
 - Cancelamento administrativo exige motivo, persistido e consultável na tabela.
 - Admin e secretaria podem criar agendamentos confirmados para clientes ativos, com busca segura, conflito de horário e valor ajustável.
 - Criação administrativa permite registrar pagamento `pending` ou `completed`; reservas do checkout nascem concluídas.
@@ -49,6 +50,7 @@
 - Admin e secretaria podem realizar check-in rápido em reservas confirmadas; horário e responsável ficam registrados.
 - Admin e secretaria possuem `/admin/painel-do-dia`, com nomes dos clientes, agenda cronológica, próxima chegada, presença atual e pendências de check-in/pagamento. A agenda diária pode ser filtrada por busca, unidade, situação operacional e período do dia. Esta é a tela inicial da secretaria.
 - Admin e secretaria compartilham o quadro `/admin/tarefas`, com três etapas fixas, responsáveis da equipe, prioridades, prazos, filtro pessoal e movimentação por drag-and-drop.
+- Administradores podem editar e excluir qualquer tarefa. Secretárias editam e excluem somente as próprias tarefas; após a criação, a data estimada não pode ser alterada por secretárias. A movimentação entre etapas permanece compartilhada.
 - Os menus administrativos exibem a contagem de tarefas vencidas ou vencendo hoje.
 - Lista destaca reservas confirmadas de hoje ainda aguardando chegada e mostra a métrica “Check-ins Hoje”.
 - O administrador autenticado não pode remover a própria permissão nem desativar a própria conta.
@@ -67,8 +69,8 @@
 ## Agendamentos
 
 - Calendário mensal e bloqueio de datas passadas: implementados.
-- Seleção de horários contínuos: implementada.
-- Bloqueio de horários ocupados: implementado (mock local).
+- Seleção de horários contínuos por limites de início e término: implementada; `08:00 - 09:00` corresponde a uma hora de uso e uma hora cobrada.
+- Bloqueio de horários ocupados e de intervalos já iniciados no dia atual: implementado (mock local).
 - Nova checagem de conflito antes da criação: implementada (mock local).
 - Cálculo de duração e valor: implementado.
 - Criação e persistência: implementadas (mock local).

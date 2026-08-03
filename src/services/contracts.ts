@@ -53,9 +53,9 @@ export interface CheckoutGateway {
 export interface TaskGateway {
   listTasks(): Promise<Task[]>;
   createTask(input: CreateTaskInput): Promise<Task>;
-  updateTask(id: string, input: UpdateTaskInput): Promise<Task>;
-  updateTaskStatus(id: string, status: TaskStatus): Promise<Task>;
-  deleteTask(id: string): Promise<void>;
+  updateTask(id: string, input: UpdateTaskInput, actorUserId: string): Promise<Task>;
+  updateTaskStatus(id: string, status: TaskStatus, actorUserId: string): Promise<Task>;
+  deleteTask(id: string, actorUserId: string): Promise<void>;
 }
 
 export interface AppServices {

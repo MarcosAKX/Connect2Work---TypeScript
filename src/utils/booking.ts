@@ -21,12 +21,23 @@ export function parseTimeSlot(slot: string) {
   return match?.[1] && match[2] ? { start: timeToMinutes(match[1]), end: timeToMinutes(match[2]) } : null;
 }
 
-export function hourIsUnavailable(bookings: Booking[], roomId: string, date: Date, hourIndex: number) {
+export function hourIsUnavailable(
+  bookings: Booking[],
+  roomId: string,
+  date: Date,
+  hourIndex: number,
+  now = new Date(),
+) {
   const hour = HOURS[hourIndex];
   if (!hour) return true;
   const start = timeToMinutes(hour);
   const end = start + 60;
   const dateValue = formatStorageDate(date);
+  const todayValue = formatStorageDate(now);
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  if (dateValue < todayValue || (dateValue === todayValue && start <= currentMinutes)) return true;
+
   return bookings.some((booking) => {
     if (booking.roomId !== roomId || booking.date !== dateValue || booking.status === 'cancelled') return false;
     const range = parseTimeSlot(booking.timeSlot);

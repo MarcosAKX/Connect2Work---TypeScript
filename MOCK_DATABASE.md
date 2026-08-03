@@ -91,9 +91,9 @@ Persistência provisória no `localStorage`. Implementação em
 - `AuthGateway` — sessão, consulta segura de usuário por ID, login, Google, cadastro, reset e logout.
 - `UserManagementGateway` — listagem segura, cadastro e edição de dados, papel/status e redefinição opcional de senha, sem exposição da senha armazenada.
 - `CatalogGateway` — leitura e CRUD de unidades e salas, com exclusões protegidas por vínculos.
-- `BookingGateway` — consulta, contagem, criação, confirmação administrativa e cancelamento de cliente ou administrador.
+- `BookingGateway` — consulta, contagem, criação com rejeição de intervalos sobrepostos, confirmação administrativa e cancelamento de cliente ou administrador.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
-- `TaskGateway` — listagem, criação, edição, movimentação entre etapas e exclusão de tarefas.
+- `TaskGateway` — listagem, criação e movimentação compartilhada; administrador edita/exclui qualquer tarefa, enquanto secretária edita/exclui somente as próprias e não pode alterar a data estimada depois da criação.
 
 Firebase ou Supabase deve implementar esses contratos. Componentes não devem
 acessar SDK, banco ou `localStorage` diretamente.

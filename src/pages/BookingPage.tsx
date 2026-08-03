@@ -4,7 +4,7 @@ import { BackLink } from '../components/BackLink';
 import { services } from '../services';
 import { useAuth } from '../state/AuthContext';
 import type { Booking, Room, Unit } from '../types/domain';
-import { addHours, formatStorageDate, hourIsUnavailable, HOURS, isPastDate, isSameDate } from '../utils/booking';
+import { formatStorageDate, hourIsUnavailable, HOURS, isPastDate, isSameDate } from '../utils/booking';
 import { getRoomImages } from '../utils/room-images';
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -44,22 +44,31 @@ export function BookingPage() {
   useEffect(() => {
     setImageIndex(0);
   }, [roomId]);
-  const finalIndex = endIndex ?? startIndex;
-  const duration = startIndex === null || finalIndex === null ? 0 : finalIndex - startIndex + 1;
-  const selectedSlot = startIndex === null || finalIndex === null || !HOURS[startIndex] || !HOURS[finalIndex] ? '' : `${HOURS[startIndex]} - ${addHours(HOURS[finalIndex], 1)}`;
+  const duration = startIndex === null || endIndex === null ? 0 : endIndex - startIndex;
+  const selectedSlot = startIndex === null || endIndex === null || !HOURS[startIndex] || !HOURS[endIndex]
+    ? ''
+    : `${HOURS[startIndex]} - ${HOURS[endIndex]}`;
 
   if (room === null || unit === null) return <Navigate to="/unidades" replace />;
   if (!room || !unit) return <main className="booking-page"><p>Carregando agendamento...</p></main>;
   const activeRoom = room;
   const activeUnit = unit;
 
-  function unavailable(index: number, source = bookings) {
+  function hourUnavailable(index: number, source = bookings) {
     return !selectedDate || hourIsUnavailable(source, activeRoom.id, selectedDate, index);
   }
 
   function rangeHasUnavailable(start: number, end: number, source = bookings) {
-    for (let index = start; index <= end; index += 1) if (unavailable(index, source)) return true;
+    for (let index = start; index < end; index += 1) if (hourUnavailable(index, source)) return true;
     return false;
+  }
+
+  function unavailable(index: number, source = bookings) {
+    if (!selectedDate) return true;
+    if (startIndex !== null && endIndex === null && index > startIndex) {
+      return rangeHasUnavailable(startIndex, index, source);
+    }
+    return index >= HOURS.length - 1 || hourUnavailable(index, source);
   }
 
   function selectHour(index: number) {
@@ -77,12 +86,12 @@ export function BookingPage() {
   }
 
   async function continueToPayment() {
-    if (!user || !selectedDate || startIndex === null || finalIndex === null || !selectedSlot) return;
+    if (!user || !selectedDate || startIndex === null || endIndex === null || !selectedSlot) return;
     setIsSaving(true);
     setSubmitError('');
     try {
       const latestBookings = await services.bookings.getAll();
-      if (rangeHasUnavailable(startIndex, finalIndex, latestBookings)) {
+      if (rangeHasUnavailable(startIndex, endIndex, latestBookings)) {
         setBookings(latestBookings);
         setStartIndex(null);
         setEndIndex(null);
@@ -124,10 +133,10 @@ export function BookingPage() {
           </article>
           <section className="booking-options">
             <section className="booking-selection card"><div className="booking-section-title"><span aria-hidden="true">▣</span><h2>Selecione a Data</h2></div><div className="calendar"><div className="calendar__header"><button type="button" className="calendar__navigation" aria-label="Mês anterior" disabled={visibleMonth <= currentMonth} onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}>‹</button><h3>{visibleMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3><button type="button" className="calendar__navigation" aria-label="Próximo mês" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}>›</button></div><div className="calendar__weekdays" aria-hidden="true">{weekdays.map((day) => <span key={day}>{day}</span>)}</div><div className="calendar__days" role="grid" aria-label="Dias do mês">{days.map((date, index) => date ? <button key={formatStorageDate(date)} type="button" className={`calendar__day${isSameDate(date, new Date()) ? ' is-today' : ''}${selectedDate && isSameDate(date, selectedDate) ? ' is-selected' : ''}`} disabled={isPastDate(date)} aria-label={date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} aria-pressed={Boolean(selectedDate && isSameDate(date, selectedDate))} onClick={() => { setSelectedDate(date); setStartIndex(null); setEndIndex(null); setSubmitError(''); }}>{date.getDate()}</button> : <span key={`empty-${index}`} className="calendar__day calendar__day--empty" aria-hidden="true" />)}</div><p className="selected-date">Data selecionada: <strong>{selectedDate ? selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : 'nenhuma'}</strong></p></div></section>
-            <section className="booking-selection card"><div className="booking-section-title"><span aria-hidden="true">◷</span><h2>Selecione o Horário</h2></div><p className="time-instruction" id="time-instruction">Selecione o período desejado (horários contínuos).</p><div className="time-grid" aria-describedby="time-instruction" aria-label="Horários disponíveis">{HOURS.map((hour, index) => { const isSelected = startIndex !== null && finalIndex !== null && index >= startIndex && index <= finalIndex; const isUnavailable = unavailable(index); return <button key={hour} type="button" className={`time-button${isSelected ? ' is-selected' : ''}${isUnavailable ? ' is-unavailable' : ''}`} disabled={isUnavailable} aria-pressed={isSelected} onClick={() => selectHour(index)}>{hour}</button>; })}</div><div className="time-legend"><span><i className="time-legend__box" />Disponível</span><span><i className="time-legend__box time-legend__box--selected" />Selecionado</span><span><i className="time-legend__box time-legend__box--unavailable" />Indisponível</span></div></section>
+            <section className="booking-selection card"><div className="booking-section-title"><span aria-hidden="true">◷</span><h2>Selecione o Horário</h2></div><p className="time-instruction" id="time-instruction">Selecione o horário de início e depois o horário de término. Ex.: 08:00 até 09:00 corresponde a 1 hora.</p><div className="time-grid" aria-describedby="time-instruction" aria-label="Limites de horário disponíveis">{HOURS.map((hour, index) => { const isSelected = startIndex !== null && index >= startIndex && index <= (endIndex ?? startIndex); const isUnavailable = unavailable(index); return <button key={hour} type="button" className={`time-button${isSelected ? ' is-selected' : ''}${isUnavailable ? ' is-unavailable' : ''}`} disabled={isUnavailable} aria-pressed={isSelected} onClick={() => selectHour(index)}>{hour}</button>; })}</div><div className="time-legend"><span><i className="time-legend__box" />Disponível</span><span><i className="time-legend__box time-legend__box--selected" />Selecionado</span><span><i className="time-legend__box time-legend__box--unavailable" />Indisponível</span></div></section>
           </section>
         </section>
-        <aside className="booking-summary card"><h2>Resumo do Agendamento</h2><dl className="booking-summary__list" aria-live="polite" aria-atomic="true"><SummaryRow label="Sala" value={room.name} /><SummaryRow label="Unidade" value={unit.name} /><SummaryRow label="Data" value={selectedDate?.toLocaleDateString('pt-BR') ?? '-'} /><SummaryRow label="Horário" value={selectedSlot || '-'} /><SummaryRow label="Duração" value={duration ? `${duration} ${duration === 1 ? 'hora' : 'horas'}` : '-'} /></dl><div className="booking-summary__total"><span>Valor Total</span><strong>{currency.format(room.pricePerHour * duration)}</strong></div>{submitError && <p className="booking-submit-error" role="alert">{submitError}</p>}<button type="button" className="btn btn-primary booking-summary__button" disabled={!selectedDate || startIndex === null || isSaving} onClick={continueToPayment}>{isSaving ? 'Preparando...' : 'Continuar para Pagamento'}</button><p className="booking-summary__notice">Cancelamento gratuito até 24 horas antes do horário agendado.</p></aside>
+        <aside className="booking-summary card"><h2>Resumo do Agendamento</h2><dl className="booking-summary__list" aria-live="polite" aria-atomic="true"><SummaryRow label="Sala" value={room.name} /><SummaryRow label="Unidade" value={unit.name} /><SummaryRow label="Data" value={selectedDate?.toLocaleDateString('pt-BR') ?? '-'} /><SummaryRow label="Horário" value={selectedSlot || '-'} /><SummaryRow label="Duração" value={duration ? `${duration} ${duration === 1 ? 'hora' : 'horas'}` : '-'} /></dl><div className="booking-summary__total"><span>Valor Total</span><strong>{currency.format(room.pricePerHour * duration)}</strong></div>{submitError && <p className="booking-submit-error" role="alert">{submitError}</p>}<button type="button" className="btn btn-primary booking-summary__button" disabled={!selectedDate || startIndex === null || endIndex === null || isSaving} onClick={continueToPayment}>{isSaving ? 'Preparando...' : 'Continuar para Pagamento'}</button><p className="booking-summary__notice">Cancelamento gratuito até 24 horas antes do horário agendado.</p></aside>
       </div>
     </main>
   );

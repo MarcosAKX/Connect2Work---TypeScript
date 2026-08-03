@@ -66,7 +66,7 @@ export function useAdminTasks(currentUserId: string) {
     setSaving(true);
     setError('');
     try {
-      const updated = await services.tasks.updateTask(id, input);
+      const updated = await services.tasks.updateTask(id, input, currentUserId);
       setTasks((current) => current.map((task) => task.id === id ? updated : task));
       setNotice('Tarefa atualizada.');
       return true;
@@ -76,7 +76,7 @@ export function useAdminTasks(currentUserId: string) {
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [currentUserId]);
 
   const moveTask = useCallback(async (id: string, status: TaskStatus) => {
     const previous = tasks;
@@ -85,7 +85,7 @@ export function useAdminTasks(currentUserId: string) {
     setError('');
     setTasks((current) => current.map((task) => task.id === id ? { ...task, status } : task));
     try {
-      const updated = await services.tasks.updateTaskStatus(id, status);
+      const updated = await services.tasks.updateTaskStatus(id, status, currentUserId);
       setTasks((current) => current.map((task) => task.id === id ? updated : task));
       return true;
     } catch (cause) {
@@ -93,13 +93,13 @@ export function useAdminTasks(currentUserId: string) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível mover a tarefa.');
       return false;
     }
-  }, [tasks]);
+  }, [currentUserId, tasks]);
 
   const deleteTask = useCallback(async (id: string) => {
     setSaving(true);
     setError('');
     try {
-      await services.tasks.deleteTask(id);
+      await services.tasks.deleteTask(id, currentUserId);
       setTasks((current) => current.filter((task) => task.id !== id));
       setNotice('Tarefa excluída.');
       return true;
@@ -109,7 +109,7 @@ export function useAdminTasks(currentUserId: string) {
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [currentUserId]);
 
   return { tasks: visibleTasks, columns, staff, filter, setFilter, loading, saving, error, notice, load, createTask, updateTask, moveTask, deleteTask };
 }

@@ -14,6 +14,12 @@ describe('booking rules', () => {
   it('ignora reserva cancelada', () => {
     expect(hourIsUnavailable([{ ...booking, status: 'cancelled' }], booking.roomId, new Date(2026, 7, 10), 1)).toBe(false);
   });
+
+  it('bloqueia horários que já começaram no dia atual', () => {
+    const now = new Date(2026, 7, 10, 9, 30);
+    expect(hourIsUnavailable([], booking.roomId, new Date(2026, 7, 10), 1, now)).toBe(true);
+    expect(hourIsUnavailable([], booking.roomId, new Date(2026, 7, 10), 2, now)).toBe(false);
+  });
 });
 
 describe('bookingHasConflict', () => {

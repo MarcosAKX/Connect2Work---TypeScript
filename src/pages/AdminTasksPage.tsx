@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react';
-import { CheckCircleIcon, ClockIcon, CloseIcon, PlusIcon, TaskIcon, TrashIcon, UserIcon } from '../components/icons';
+import { CheckCircleIcon, ClockIcon, CloseIcon, LockIcon, PlusIcon, TaskIcon, TrashIcon, UserIcon } from '../components/icons';
 import { useAdminTasks } from '../hooks/useAdminTasks';
 import { useAuth } from '../state/AuthContext';
 import type { Task, TaskPriority, TaskStatus } from '../types/domain';
@@ -31,6 +31,7 @@ function initials(name: string) {
 export function AdminTasksPage() {
   const { user } = useAuth();
   const currentUserId = user?.id ?? '';
+  const isAdmin = user?.role === 'admin';
   const { columns: taskColumns, staff, filter, setFilter, loading, saving, error, notice, createTask, updateTask, moveTask, deleteTask } = useAdminTasks(currentUserId);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskFormState>(emptyForm);
@@ -40,6 +41,7 @@ export function AdminTasksPage() {
   const [dropTarget, setDropTarget] = useState<TaskStatus | null>(null);
   const editorRef = useRef<HTMLDialogElement>(null);
   const deleteRef = useRef<HTMLDialogElement>(null);
+  const isSecretaryEditing = Boolean(editingTask && user?.role === 'secretaria');
 
   useEffect(() => {
     if (deleteTarget) deleteRef.current?.showModal();
@@ -54,6 +56,7 @@ export function AdminTasksPage() {
   }
 
   function openEdit(task: Task) {
+    if (!isAdmin && task.createdBy !== currentUserId) return;
     setEditingTask(task);
     setForm({
       title: task.title,
@@ -140,19 +143,23 @@ export function AdminTasksPage() {
                 {!loading && items.length === 0 && <p className="admin-task-empty">{filter === 'mine' ? 'Nenhuma tarefa sua nesta etapa' : 'Nenhuma tarefa nesta etapa'}</p>}
                 {items.map((task) => {
                   const assignee = staff.find((person) => person.id === task.assignedTo);
+                  const creator = staff.find((person) => person.id === task.createdBy);
+                  const canEditContent = isAdmin || task.createdBy === currentUserId;
                   const dueState = getTaskDueState(task);
                   return (
                     <article
                       key={task.id}
-                      className={`admin-task-card is-${task.priority}${dueState !== 'none' ? ` due-${dueState}` : ''}${draggedId === task.id ? ' is-dragging' : ''}`}
+                      className={`admin-task-card is-${task.priority}${dueState !== 'none' ? ` due-${dueState}` : ''}${draggedId === task.id ? ' is-dragging' : ''}${canEditContent ? '' : ' is-limited'}`}
                       draggable
-                      tabIndex={0}
+                      tabIndex={canEditContent ? 0 : undefined}
+                      title={canEditContent ? 'Abrir para editar' : `Criada por ${creator?.name ?? 'outro usuário'}. Somente o autor ou um administrador pode editar.`}
                       onDragStart={(event) => handleDragStart(event, task.id)}
                       onDragEnd={() => { setDraggedId(null); setDropTarget(null); }}
-                      onClick={() => openEdit(task)}
-                      onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openEdit(task); } }}
+                      onClick={() => { if (canEditContent) openEdit(task); }}
+                      onKeyDown={(event) => { if (canEditContent && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openEdit(task); } }}
                     >
                       <div className="admin-task-card__top"><span className={`admin-task-priority is-${task.priority}`}>{priorityLabels[task.priority]}</span>{dueState === 'overdue' && <span className="admin-task-alert">Atrasada</span>}{dueState === 'today' && <span className="admin-task-alert">Vence hoje</span>}</div>
+                      {!canEditContent && <span className="admin-task-readonly"><LockIcon width="12" height="12" />Somente visualização</span>}
                       <h2>{task.title}</h2>
                       {task.description && <p>{task.description}</p>}
                       <footer>
@@ -171,15 +178,15 @@ export function AdminTasksPage() {
       <dialog ref={editorRef} className="admin-task-modal" onClose={() => { setEditingTask(null); setFormError(''); }}>
         <form method="dialog" onSubmit={(event) => { void submitTask(event); }}>
           <header><div><h2>{editingTask ? 'Editar Tarefa' : 'Nova Tarefa'}</h2><p>{editingTask ? 'Atualize as informações da pendência' : 'Adicione uma pendência ao quadro da equipe'}</p></div><button type="button" onClick={() => editorRef.current?.close()} aria-label="Fechar"><CloseIcon width="20" height="20" /></button></header>
-          <label>Título<input value={form.title} maxLength={120} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} autoFocus /></label>
-          <label>Descrição <span>(opcional)</span><textarea value={form.description} maxLength={500} rows={4} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></label>
+          <label><span className="admin-task-field-label">Título</span><input value={form.title} maxLength={120} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} autoFocus /></label>
+          <label><span className="admin-task-field-label">Descrição <small>(opcional)</small></span><textarea value={form.description} maxLength={500} rows={4} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></label>
           <div className="admin-task-form-grid">
-            <label>Responsável<select value={form.assignedTo} onChange={(event) => setForm((current) => ({ ...current, assignedTo: event.target.value }))}><option value="">Sem responsável</option>{staff.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
-            <label>Prioridade<select value={form.priority} onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value as TaskPriority }))}><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
-            <label>Prazo <span>(opcional)</span><input type="date" value={form.dueDate} onChange={(event) => setForm((current) => ({ ...current, dueDate: event.target.value }))} /></label>
+            <label><span className="admin-task-field-label">Responsável</span><select value={form.assignedTo} onChange={(event) => setForm((current) => ({ ...current, assignedTo: event.target.value }))}><option value="">Sem responsável</option>{staff.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
+            <label><span className="admin-task-field-label">Prioridade</span><select value={form.priority} onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value as TaskPriority }))}><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
+            <label><span className="admin-task-field-label">Prazo <small>{isSecretaryEditing ? '(definido na criação)' : '(opcional)'}</small></span><input type="date" value={form.dueDate} disabled={isSecretaryEditing} title={isSecretaryEditing ? 'A data estimada não pode ser alterada após a criação' : undefined} onChange={(event) => setForm((current) => ({ ...current, dueDate: event.target.value }))} /></label>
           </div>
           {formError && <p className="admin-task-form-error" role="alert">{formError}</p>}
-          <footer>{editingTask && <button type="button" className="admin-task-delete" onClick={() => { editorRef.current?.close(); setDeleteTarget(editingTask); }}><TrashIcon width="16" height="16" />Excluir</button>}<span /><button type="button" className="btn btn-secondary" onClick={() => editorRef.current?.close()}>Cancelar</button><button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Salvando…' : 'Salvar'}</button></footer>
+          <footer className="admin-task-modal__actions"><div>{editingTask && <button type="button" className="admin-task-delete" onClick={() => { editorRef.current?.close(); setDeleteTarget(editingTask); }}><TrashIcon width="16" height="16" />Excluir</button>}</div><div><button type="button" className="btn btn-secondary" onClick={() => editorRef.current?.close()}>Cancelar</button><button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Salvando…' : 'Salvar'}</button></div></footer>
         </form>
       </dialog>
 

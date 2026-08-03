@@ -239,6 +239,18 @@ describe('localStorage services', () => {
     await expect(services.bookings.cancel(booking.id, 'user-1')).rejects.toThrow('24 horas');
   });
 
+  it('impede reserva sobreposta mesmo quando feita por outro usuário', async () => {
+    const services = createLocalStorageServices();
+    await services.bookings.create({
+      userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-09-10',
+      timeSlot: '08:00 - 09:00', status: 'upcoming',
+    });
+    await expect(services.bookings.create({
+      userId: 'user-2', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-09-10',
+      timeSlot: '08:30 - 09:30', status: 'upcoming',
+    })).rejects.toThrow('já está ocupado');
+  });
+
   it('mantém rascunho de checkout apenas na sessão', () => {
     const services = createLocalStorageServices();
     const draft = { userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10', timeSlot: '09:00 - 11:00', duration: 2, total: 160 };
@@ -260,15 +272,15 @@ describe('localStorage services', () => {
       createdBy: 'seed-administrador',
     });
     expect(created).toMatchObject({ title: 'Conferir recepção', description: 'Verificar materiais', status: 'todo' });
-    await expect(services.tasks.updateTaskStatus(created.id, 'in_progress')).resolves.toMatchObject({ status: 'in_progress' });
+    await expect(services.tasks.updateTaskStatus(created.id, 'in_progress', 'seed-secretaria')).resolves.toMatchObject({ status: 'in_progress' });
     await expect(services.tasks.updateTask(created.id, {
       title: 'Conferir recepção e copa',
       description: undefined,
       assignedTo: undefined,
       priority: 'medium',
       dueDate: undefined,
-    })).resolves.toMatchObject({ title: 'Conferir recepção e copa', assignedTo: undefined });
-    await expect(services.tasks.deleteTask(created.id)).resolves.toBeUndefined();
+    }, 'seed-administrador')).resolves.toMatchObject({ title: 'Conferir recepção e copa', assignedTo: undefined });
+    await expect(services.tasks.deleteTask(created.id, 'seed-administrador')).resolves.toBeUndefined();
     await expect(services.tasks.listTasks()).resolves.not.toEqual(expect.arrayContaining([expect.objectContaining({ id: created.id })]));
   });
 
@@ -280,5 +292,82 @@ describe('localStorage services', () => {
       priority: 'low',
       createdBy: 'seed-administrador',
     })).rejects.toThrow('Responsável inválido');
+  });
+
+  it('impede a secretária de editar ou excluir tarefa criada por outro usuário', async () => {
+    const services = createLocalStorageServices();
+    const created = await services.tasks.createTask({
+      title: 'Tarefa exclusiva do administrador',
+      priority: 'medium',
+      createdBy: 'seed-administrador',
+    });
+    const changedContent = {
+      title: 'Alteração indevida',
+      description: undefined,
+      assignedTo: undefined,
+      priority: 'high' as const,
+      dueDate: undefined,
+    };
+
+    await expect(services.tasks.updateTask(created.id, changedContent, 'seed-secretaria')).rejects.toThrow('somente as tarefas que criou');
+    await expect(services.tasks.updateTask(created.id, {
+      title: created.title,
+      description: created.description,
+      assignedTo: created.assignedTo,
+      priority: created.priority,
+      dueDate: '2026-08-15',
+    }, 'seed-secretaria')).rejects.toThrow('somente as tarefas que criou');
+    await expect(services.tasks.deleteTask(created.id, 'seed-secretaria')).rejects.toThrow('Somente quem criou');
+    await expect(services.tasks.updateTaskStatus(created.id, 'in_progress', 'seed-secretaria')).resolves.toMatchObject({ status: 'in_progress' });
+  });
+
+  it('permite à secretária editar a própria tarefa, exceto a data estimada', async () => {
+    const services = createLocalStorageServices();
+    const created = await services.tasks.createTask({
+      title: 'Tarefa da secretária',
+      priority: 'medium',
+      dueDate: '2026-08-15',
+      createdBy: 'seed-secretaria',
+    });
+
+    await expect(services.tasks.updateTask(created.id, {
+      title: 'Tarefa revisada pela secretária',
+      description: 'Conteúdo atualizado',
+      assignedTo: 'seed-secretaria',
+      priority: 'high',
+      dueDate: created.dueDate,
+    }, 'seed-secretaria')).resolves.toMatchObject({
+      title: 'Tarefa revisada pela secretária',
+      priority: 'high',
+      dueDate: '2026-08-15',
+    });
+    await expect(services.tasks.updateTask(created.id, {
+      title: created.title,
+      description: created.description,
+      assignedTo: created.assignedTo,
+      priority: created.priority,
+      dueDate: '2026-08-20',
+    }, 'seed-secretaria')).rejects.toThrow('só pode ser definida durante a criação');
+  });
+
+  it('permite ao administrador editar e excluir tarefa criada pela secretária', async () => {
+    const services = createLocalStorageServices();
+    const created = await services.tasks.createTask({
+      title: 'Tarefa criada pela secretária',
+      priority: 'low',
+      createdBy: 'seed-secretaria',
+    });
+
+    await expect(services.tasks.updateTask(created.id, {
+      title: 'Tarefa revisada pelo administrador',
+      description: 'Conteúdo atualizado',
+      assignedTo: 'seed-administrador',
+      priority: 'high',
+      dueDate: '2026-08-20',
+    }, 'seed-administrador')).resolves.toMatchObject({
+      title: 'Tarefa revisada pelo administrador',
+      priority: 'high',
+    });
+    await expect(services.tasks.deleteTask(created.id, 'seed-administrador')).resolves.toBeUndefined();
   });
 });

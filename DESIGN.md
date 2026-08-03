@@ -36,6 +36,8 @@ Fonte: `src/assets/css/base.css`.
 - Gestão administrativa usa tabelas no desktop, linhas reordenadas no celular e modais nativos para formulários e confirmações destrutivas.
 - Gestão de salas usa filtro por unidade, tags compactas para comodidades e alvos interativos de pelo menos 44 px.
 - Cada card de sala possui galeria própria com setas, contador e indicadores; a tela de agendamento mantém galeria ampliada com os mesmos controles.
+- O seletor de agendamento apresenta limites de início e término, explica a duração com um exemplo e usa o estado cinza para intervalos ocupados ou já iniciados.
+- No tema claro, calendário e horários usam superfícies frias de alto contraste; amarelo identifica seleção, contorno identifica o dia atual e cinza sólido identifica indisponibilidade.
 - Gestão de agendamentos abre filtrada no dia atual, destaca pendências por fundo e mantém busca, status, unidade e datas em uma barra operacional compacta.
 - O Painel do Dia é uma tela operacional independente da listagem histórica e organiza o trabalho por urgência: aguardando chegada, presentes agora, pagamentos pendentes, check-ins, próxima chegada e agenda cronológica com ações rápidas.
 - Os filtros do Painel do Dia refinam apenas a agenda; os indicadores superiores preservam os totais completos de hoje para manter contexto operacional.
@@ -46,6 +48,8 @@ Fonte: `src/assets/css/base.css`.
 - Os temas escuro e claro compartilham tokens semânticos; login, cliente, admin e secretaria usam o mesmo componente de alternância, com dimensões, ícone, estados, rótulo acessível e tooltip idênticos.
 - Nos cabeçalhos autenticados, identidade, tema e saída são ações visualmente separadas e seguem a mesma composição para cliente, admin e secretaria.
 - O quadro de tarefas usa três colunas operacionais, badges semânticos de prioridade, prazos legíveis e alertas de atraso que não dependem apenas da cor.
+- Para secretárias, tarefas criadas por outro usuário exibem “Somente visualização” e não abrem o formulário. Ao editar uma tarefa própria, a data estimada permanece visivelmente bloqueada; administradores mantêm edição completa.
+- O formulário de tarefas mantém rótulos na mesma linha de base, campos alinhados em grade e ações destrutivas separadas das ações de confirmação.
 - Em telas pequenas, o controle de tema mantém área de toque mínima de 44 px.
 - O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e dourado de marca próprio; não é uma simples inversão do tema escuro.
 - O login é uma exceção deliberada ao tema claro: mantém fundo e card escuros como assinatura da marca, ajustando apenas textos, campos e contraste.
