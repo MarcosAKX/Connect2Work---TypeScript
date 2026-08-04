@@ -54,6 +54,7 @@ Fonte: `src/assets/css/base.css`.
 - Para secretárias, tarefas criadas por outro usuário exibem “Somente visualização” e não abrem o formulário. Ao editar uma tarefa própria, a data estimada permanece visivelmente bloqueada; administradores mantêm edição completa.
 - O formulário de tarefas mantém rótulos na mesma linha de base, campos alinhados em grade e ações destrutivas separadas das ações de confirmação.
 - Em telas pequenas, o controle de tema mantém área de toque mínima de 44 px.
+- Em telas de até 720 px, o cabeçalho administrativo oculta a navegação horizontal e usa exclusivamente o drawer; filtros empilham, modais ocupam a largura disponível com rolagem interna e ações fixadas ao final. Em até 480 px, grades de métricas passam para uma coluna.
 - O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e amarelo de marca ajustado para contraste; não é uma simples inversão do tema escuro.
 - Os temas claro e escuro compartilham amarelo solar `#ffc400` e hover `#ffd54a` em gráficos, seleções, ícones e ações.
 - No modo claro, o CTA com preço na lista de salas e o selo no cabeçalho do agendamento usam amarelo solar, texto quase preto e contorno discreto para manter leitura sobre superfícies claras ou imagens.

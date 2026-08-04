@@ -95,6 +95,7 @@
 - `src/assets/css/pages/admin-tasks.css` — quadro Kanban, cards, estados de prazo e modais de tarefas.
 - `src/assets/css/admin-sidebar.css` — drawer administrativo, overlay e estados ativos.
 - `src/assets/css/ui-foundations.css` — foco, tabelas, tipografia administrativa, placeholders e movimento reduzido compartilhados.
+- `src/assets/css/mobile-phase-one.css` — correções estruturais mobile compartilhadas: header administrativo compacto, filtros empilhados, modais responsivos, alvos de toque e grades de métricas.
 - `src/assets/img/` — imagens próprias da aplicação, incluindo a logo compacta `cwlogo.ico`.
 
 ## Testes

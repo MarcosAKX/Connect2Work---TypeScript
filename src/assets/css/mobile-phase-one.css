@@ -1,0 +1,187 @@
+/* Fase 1 mobile: ajustes estruturais compartilhados da área administrativa. */
+
+@media (max-width: 720px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .admin-header {
+    min-height: 72px;
+    flex-wrap: nowrap;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .admin-brand,
+  .admin-account {
+    min-width: 0;
+  }
+
+  .admin-nav {
+    display: none;
+  }
+
+  .admin-account {
+    margin-left: auto;
+    gap: var(--space-2);
+  }
+
+  .admin-account__identity {
+    max-width: 112px;
+    min-height: 44px;
+    padding-inline: var(--space-2);
+  }
+
+  .admin-account__logout,
+  .theme-toggle {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .admin-dashboard,
+  .admin-bookings-page,
+  .admin-daily-page,
+  .admin-tasks-page,
+  .admin-units-page,
+  .admin-rooms-page,
+  .admin-users-page,
+  .hours-plan-page,
+  .governance-page,
+  .admin-business-services-page {
+    padding-top: 104px;
+  }
+
+  .admin-bookings-filters,
+  .admin-daily-filters,
+  .admin-users-filters,
+  .hours-plan-filters {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-bookings-filters > *,
+  .admin-daily-filters > *,
+  .admin-users-filters > *,
+  .hours-plan-filters > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-bookings-filters :is(input, select, button),
+  .admin-daily-filters :is(input, select, button),
+  .admin-users-filters :is(input, select, button),
+  .hours-plan-filters :is(input, select, button) {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  :is(
+    .admin-bookings-modal,
+    .admin-users-modal,
+    .admin-room-modal,
+    .admin-unit-modal,
+    .admin-task-modal,
+    .hours-plan-modal
+  ) {
+    width: calc(100% - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  :is(
+    .admin-bookings-modal,
+    .admin-users-modal,
+    .admin-room-modal,
+    .admin-unit-modal,
+    .admin-task-modal,
+    .hours-plan-modal
+  ) footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    flex-direction: column-reverse;
+    padding-top: var(--space-3);
+    padding-bottom: max(var(--space-1), env(safe-area-inset-bottom));
+    background: var(--color-surface);
+  }
+
+  :is(
+    .admin-bookings-modal,
+    .admin-users-modal,
+    .admin-room-modal,
+    .admin-unit-modal,
+    .admin-task-modal,
+    .hours-plan-modal
+  ) footer :is(.btn, button) {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .admin-task-modal header button,
+  .admin-room-form > header button,
+  .admin-unit-form > header button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .admin-bookings-actions button,
+  .admin-bookings-checkin,
+  .admin-bookings-payment.is-action,
+  .admin-day-action button,
+  .hours-plan-actions button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 480px) {
+  .admin-brand {
+    gap: var(--space-1);
+  }
+
+  .admin-brand__logo {
+    width: 40px;
+    height: 44px;
+  }
+
+  .admin-brand__logo img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .admin-brand__badge {
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-account__identity {
+    display: none;
+  }
+
+  .admin-bookings-stats,
+  .admin-bookings-stats.is-secretary,
+  .admin-users-stats,
+  .hours-plan-stats,
+  .admin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-bookings-stat,
+  .admin-users-stat,
+  .hours-plan-stats article,
+  .admin-stat {
+    min-height: 0;
+  }
+}
+
