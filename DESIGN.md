@@ -28,7 +28,7 @@ Fonte: `src/assets/css/base.css`.
 - Navegação autenticada com três áreas principais: Unidades, Meus Agendamentos e Serviços.
 - `BackLink` ou retorno contextual em todas as telas.
 - Cards usados apenas para unidades reais de informação.
-- Telas públicas compartilham `NetworkBackground`, fachada e card de autenticação.
+- O login usa composição dividida entre fachada contextual e painel de acesso; cadastro e recuperação preservam `NetworkBackground` e card de autenticação.
 - Checkout usa painel principal e resumo lateral sticky; no celular, ambos formam fluxo vertical.
 - Formas de pagamento usam seleção tipo radio tile, sem cards aninhados.
 - Serviços usa composição editorial com três entidades próprias, imagens administráveis, benefícios compactos e CTAs dourados de consulta.
@@ -57,7 +57,7 @@ Fonte: `src/assets/css/base.css`.
 - O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e amarelo de marca ajustado para contraste; não é uma simples inversão do tema escuro.
 - Os temas claro e escuro compartilham amarelo solar `#ffc400` e hover `#ffd54a` em gráficos, seleções, ícones e ações.
 - No modo claro, o CTA com preço na lista de salas e o selo no cabeçalho do agendamento usam amarelo solar, texto quase preto e contorno discreto para manter leitura sobre superfícies claras ou imagens.
-- O login é uma exceção deliberada ao tema claro: mantém fundo e card escuros como assinatura da marca, ajustando apenas textos, campos e contraste.
+- O login é uma exceção deliberada ao tema claro: mantém painel escuro e fachada em tela dividida como assinatura da marca, com contraste idêntico nos dois temas.
 - A ação “Novo Agendamento” usa tamanho compacto; o formulário registra também a situação do pagamento.
 - Pagamentos pendentes são ações clicáveis e pedem confirmação antes de mudar para concluído.
 - Plano de horas usa resumo contextual na etapa de agendamento, badge discreto no histórico e estado vencido com orientação acionável; o saldo não é repetido em outras telas do cliente.

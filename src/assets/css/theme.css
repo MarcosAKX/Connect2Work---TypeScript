@@ -270,6 +270,16 @@ html[data-theme='light'] .login-card .btn-primary {
   background: linear-gradient(135deg, #ffd54a, #ffc400 60%);
   color: #1a1400;
 }
+
+html[data-theme='light'] .login-page--split .login-card .btn-primary {
+  background: #ffc400;
+}
+
+html[data-theme='light'] .login-page--split .login-card .login-register-button {
+  border-color: #dca900;
+  background: transparent;
+  color: #ffc400;
+}
 html[data-theme='light'] :is(.room-card__price, .room-details__price) {
   border: 1px solid color-mix(in srgb, var(--color-accent-bright) 72%, #171200);
   background-color: var(--color-accent-bright);

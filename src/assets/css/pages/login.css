@@ -292,3 +292,304 @@
     right: var(--space-4);
   }
 }
+
+/* Login dividido: fachada como contexto, acesso como tarefa principal. */
+.login-page--split {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 56.25%) minmax(420px, 43.75%);
+  align-items: stretch;
+  padding: 0;
+  overflow: auto;
+  background: #090b0e;
+}
+
+.login-page--split::before,
+.login-page--split::after {
+  display: none;
+}
+
+.login-visual {
+  position: relative;
+  min-height: 100svh;
+  background-image:
+    linear-gradient(180deg, rgb(4 6 8 / 10%) 42%, rgb(4 6 8 / 82%) 100%),
+    url("../../img/faxada.png");
+  background-position: center;
+  background-size: cover;
+  isolation: isolate;
+}
+
+.login-visual__logo {
+  position: absolute;
+  top: clamp(24px, 4vw, 48px);
+  left: clamp(28px, 4.5vw, 64px);
+  color: #f8fafc;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 42%);
+}
+
+.login-visual__logo span {
+  color: #f8fafc;
+}
+
+.login-visual__logo b {
+  color: #ffc400;
+  font-weight: inherit;
+}
+
+.login-visual__message {
+  position: absolute;
+  right: clamp(28px, 4.5vw, 64px);
+  bottom: clamp(34px, 6vw, 76px);
+  left: clamp(28px, 4.5vw, 64px);
+  display: grid;
+  gap: 8px;
+  color: #f8fafc;
+  text-shadow: 0 2px 14px rgb(0 0 0 / 60%);
+}
+
+.login-visual__message strong {
+  font-size: clamp(1.55rem, 2.4vw, 2.25rem);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.login-visual__message span {
+  font-size: clamp(1rem, 1.45vw, 1.25rem);
+}
+
+.login-panel {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: clamp(72px, 9vh, 112px) clamp(32px, 7vw, 112px);
+  background:
+    radial-gradient(circle at 58% 42%, rgb(255 196 0 / 4%), transparent 42%),
+    #090b0e;
+}
+
+.login-page--split .login-theme-toggle {
+  position: absolute;
+  top: clamp(22px, 3vw, 40px);
+  right: clamp(22px, 3vw, 40px);
+  border-color: #343940;
+  background: #0e1115;
+  color: #f4f4f5;
+  backdrop-filter: none;
+}
+
+.login-page--split .login-card {
+  width: min(100%, 420px);
+  max-width: none;
+  padding: 0;
+  animation: fade-up 0.45s var(--ease-out) both;
+}
+
+.login-page--split .login-card-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.login-page--split .login-card-header h1 {
+  margin-bottom: 8px;
+  color: #f8fafc;
+  font-size: clamp(1.65rem, 2.2vw, 2rem);
+  letter-spacing: -0.025em;
+}
+
+.login-page--split .login-card-header p {
+  color: #9ba3af;
+  font-size: 0.9375rem;
+}
+
+.login-page--split .field {
+  margin-bottom: 20px;
+}
+
+.login-page--split .field label {
+  margin-bottom: 8px;
+  color: #e5e7eb;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.login-page--split .field-input-wrap {
+  min-height: 50px;
+  border: 1px solid #424852;
+  border-radius: 7px;
+  background: #0d1014;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.login-page--split .field-input-wrap:focus-within {
+  border-color: #ffc400;
+  box-shadow: 0 0 0 3px rgb(255 196 0 / 14%);
+}
+
+.login-page--split .field-input-wrap input {
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  color: #f8fafc;
+}
+
+.login-page--split .field-input-wrap input::placeholder {
+  color: #8d96a3;
+  opacity: 1;
+}
+
+.login-page--split .toggle-visibility {
+  color: #a9b0ba;
+}
+
+.login-page--split .field-meta-row {
+  margin: -8px 0 30px;
+}
+
+.login-page--split .forgot-link {
+  color: #ffc400;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.login-page--split .auth-form-error {
+  margin-bottom: 16px;
+}
+
+.login-page--split form > .btn {
+  width: 100%;
+  min-height: 50px;
+  border-radius: 7px;
+}
+
+.login-page--split form > .btn-primary {
+  background: #ffc400;
+  color: #171200;
+  box-shadow: 0 3px 7px rgb(0 0 0 / 22%);
+  font-weight: 700;
+}
+
+.login-page--split form > .btn-primary:hover:not(:disabled) {
+  background: #ffd54a;
+}
+
+.login-page--split .divider {
+  margin: 26px 0;
+  color: #89919c;
+  font-size: 0.8125rem;
+  text-transform: lowercase;
+}
+
+.login-page--split .divider::before,
+.login-page--split .divider::after {
+  background: #30353c;
+}
+
+.login-page--split .login-register-button {
+  border-color: #dca900;
+  background: transparent;
+  color: #ffc400;
+  font-weight: 650;
+}
+
+.login-page--split .login-register-button:hover {
+  border-color: #ffc400;
+  background: rgb(255 196 0 / 7%);
+}
+
+.login-google-button {
+  width: 100%;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  border: 0;
+  background: transparent;
+  color: #c4c9d0;
+  font-size: 0.8125rem;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.login-google-button:hover:not(:disabled) {
+  color: #ffffff;
+}
+
+.login-security {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+  color: #8d96a3;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 900px) {
+  .login-page--split {
+    grid-template-columns: minmax(280px, 42%) minmax(0, 58%);
+  }
+
+  .login-panel {
+    padding-right: clamp(28px, 6vw, 64px);
+    padding-left: clamp(28px, 6vw, 64px);
+  }
+}
+
+@media (max-width: 680px) {
+  .login-page--split {
+    min-height: 100svh;
+    display: block;
+    background: #090b0e;
+  }
+
+  .login-visual {
+    min-height: 220px;
+    height: 30svh;
+    background-position: center 58%;
+  }
+
+  .login-visual__logo {
+    top: 24px;
+    left: 24px;
+    font-size: 2rem;
+  }
+
+  .login-visual__message {
+    right: 24px;
+    bottom: 24px;
+    left: 24px;
+    gap: 4px;
+  }
+
+  .login-visual__message strong {
+    font-size: 1.35rem;
+  }
+
+  .login-visual__message span {
+    font-size: 0.9375rem;
+  }
+
+  .login-panel {
+    min-height: 70svh;
+    padding: 72px 24px 40px;
+  }
+
+  .login-page--split .login-theme-toggle {
+    top: 18px;
+    right: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page--split .login-card {
+    animation: none;
+  }
+}

@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, EyeIcon, GoogleIcon } from '../components/icons';
-import { NetworkBackground } from '../components/NetworkBackground';
+import { EyeIcon, GoogleIcon, LockIcon } from '../components/icons';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useAuth } from '../state/AuthContext';
 
@@ -49,28 +48,28 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login-page">
-      <ThemeToggle className="login-theme-toggle" />
-      <NetworkBackground />
-      <div className="login-glow login-glow--top" aria-hidden="true" />
-      <div className="login-glow login-glow--bottom" aria-hidden="true" />
+    <main className="login-page login-page--split">
+      <section className="login-visual" aria-label="Fachada da Connect2Work">
+        <div className="login-visual__logo" aria-label="Connect2Work"><span>C2</span><b>W</b></div>
+        <div className="login-visual__message">
+          <strong>Seu espaço. Seu ritmo.</strong>
+          <span>Salas e soluções para trabalhar melhor.</span>
+        </div>
+      </section>
 
-      <div className="login-brand">
-        <div className="login-logo"><span className="mark">Connect2<span>Work</span></span></div>
-        <p className="login-tagline">Seu espaço de trabalho, do seu jeito.</p>
-      </div>
-
-      <section className="login-card card" aria-labelledby="login-heading">
+      <section className="login-panel" aria-labelledby="login-heading">
+        <ThemeToggle className="login-theme-toggle" />
+        <div className="login-card">
         <div className="login-card-header">
-          <h1 id="login-heading">Entrar</h1>
-          <p>Acesse sua conta para agendar salas</p>
+          <h1 id="login-heading">Bem-vindo de volta</h1>
+          <p>Acesse sua conta Connect2Work</p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="field">
-            <label htmlFor="email">E-mail ou usuário</label>
+            <label htmlFor="email">E-mail</label>
             <div className="field-input-wrap">
-              <input id="email" name="email" type="text" placeholder="seu@email.com" autoComplete="username" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} required />
+              <input id="email" name="email" type="email" placeholder="usuario@empresa.com.br" autoComplete="username" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} required />
             </div>
           </div>
 
@@ -90,12 +89,13 @@ export function LoginPage() {
           <button type="submit" className={`btn btn-primary${isLoading ? ' is-loading' : ''}`} disabled={isLoading}>
             <span className="btn-label">Entrar</span><span className="btn-spinner" aria-hidden="true" />
           </button>
-          <div className="divider">OU CONTINUE COM</div>
-          <button type="button" className="btn btn-secondary" disabled={isLoading} onClick={handleGoogleLogin}><GoogleIcon width="18" height="18" />Entrar com Google</button>
+          <div className="divider">ou</div>
+          <Link to="/cadastro" className="btn btn-secondary login-register-button">Criar uma conta</Link>
+          <button type="button" className="login-google-button" disabled={isLoading} onClick={handleGoogleLogin}><GoogleIcon width="17" height="17" />Entrar com Google</button>
         </form>
 
-        <p className="login-footer">Não tem uma conta? <Link to="/cadastro" className="text-link">Cadastre-se</Link></p>
-        <button type="button" className="back-link login-back-link" onClick={() => navigate(-1)}><ArrowLeftIcon width="14" height="14" />Voltar</button>
+          <p className="login-security"><LockIcon width="15" height="15" />Ambiente seguro <span aria-hidden="true">·</span> Seus dados protegidos</p>
+        </div>
       </section>
     </main>
   );
