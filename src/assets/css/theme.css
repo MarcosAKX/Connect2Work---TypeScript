@@ -117,7 +117,15 @@ html[data-theme='light'] .admin-chart-track .is-active {
 }
 
 html[data-theme='light'] .theme-toggle {
-  background: #ffffff;
+  border-color: color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface-raised) 92%, var(--color-accent) 8%);
+  color: var(--color-text-secondary);
+}
+
+html[data-theme='light'] .login-page--split .login-theme-toggle {
+  border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface-raised) 92%, var(--color-accent) 8%);
+  color: var(--color-accent);
 }
 
 html[data-theme='light'] .admin-brand__badge {
