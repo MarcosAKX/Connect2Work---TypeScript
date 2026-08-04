@@ -40,8 +40,9 @@
 - `src/components/AdminSidebar.tsx` — drawer das ferramentas administrativas.
 - `src/components/BackLink.tsx` — retorno reutilizável.
 - `src/components/ThemeToggle.tsx` — controle único de tema usado por login, cliente, admin e secretaria.
+- `src/components/PublicAuthLayout.tsx` — composição compartilhada de fachada e painel usada por login, cadastro e recuperação de senha.
 - `src/components/UnitsMap.tsx` — mapa Leaflet/OpenStreetMap, marcadores das unidades e posição opcional do cliente.
-- `src/components/NetworkBackground.tsx` — fundo animado das telas públicas.
+- `src/components/NetworkBackground.tsx` — fundo animado legado, disponível para futuras composições públicas.
 - `src/components/icons.tsx` — ícones SVG reutilizáveis.
 
 ## Dados e serviços

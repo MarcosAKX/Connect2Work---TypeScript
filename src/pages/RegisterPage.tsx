@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, EyeIcon } from '../components/icons';
-import { NetworkBackground } from '../components/NetworkBackground';
+import { PublicAuthLayout } from '../components/PublicAuthLayout';
 import { services } from '../services';
 import { emailError, formatPhone, fullNameError, passwordError, phoneError, professionError } from '../utils/validators';
 
@@ -62,13 +62,8 @@ export function RegisterPage() {
   }
 
   return (
-    <main className="login-page cadastro-page">
-      <NetworkBackground />
-      <div className="login-glow login-glow--top" aria-hidden="true" />
-      <div className="login-glow login-glow--bottom" aria-hidden="true" />
-      <div className="login-brand"><div className="login-logo"><span className="mark">Connect2<span>Work</span></span></div><p className="login-tagline">Crie sua conta e reserve seu espaço</p></div>
-
-      <section className="login-card card cadastro-card" aria-labelledby="register-heading">
+    <PublicAuthLayout labelledBy="register-heading" pageClassName="cadastro-page">
+      <div className="login-card cadastro-card">
         <div className="login-card-header"><h1 id="register-heading">Criar Conta</h1><p>Preencha os dados abaixo para se cadastrar</p></div>
         <form onSubmit={handleSubmit} noValidate>
           <FormField label="Nome Completo" name="name" value={form.name} onChange={updateField} autoComplete="name" placeholder="Seu nome completo" maxLength={100} />
@@ -82,8 +77,8 @@ export function RegisterPage() {
         </form>
         <p className="login-footer">Já tem uma conta? <Link to="/login" className="text-link">Entrar</Link></p>
         <Link to="/login" className="back-link"><ArrowLeftIcon width="14" height="14" />Voltar para login</Link>
-      </section>
-    </main>
+      </div>
+    </PublicAuthLayout>
   );
 }
 

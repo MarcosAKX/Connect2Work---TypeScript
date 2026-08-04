@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeftIcon } from '../components/icons';
-import { NetworkBackground } from '../components/NetworkBackground';
+import { PublicAuthLayout } from '../components/PublicAuthLayout';
 import { services } from '../services';
 import { emailError } from '../utils/validators';
 
@@ -32,13 +32,8 @@ export function RecoverPasswordPage() {
   }
 
   return (
-    <main className="login-page recover-page">
-      <NetworkBackground />
-      <div className="login-glow login-glow--top" aria-hidden="true" />
-      <div className="login-glow login-glow--bottom" aria-hidden="true" />
-      <div className="login-brand"><div className="login-logo"><span className="mark">Connect2<span>Work</span></span></div><p className="login-tagline">Recupere o acesso à sua conta</p></div>
-
-      <section className="login-card card recover-card" aria-labelledby="recover-heading">
+    <PublicAuthLayout labelledBy="recover-heading" pageClassName="recover-page">
+      <div className="login-card recover-card">
         <div className="login-card-header">
           <h1 id="recover-heading">{sent ? 'Verifique seu e-mail' : 'Recuperar Senha'}</h1>
           {!sent && <p>Informe seu e-mail para receber o link de redefinição</p>}
@@ -53,7 +48,7 @@ export function RecoverPasswordPage() {
           <div className="recover-success" role="status"><p className="recover-success-text">Enviamos um link de redefinição para <strong>{email.trim()}</strong>. Verifique sua caixa de entrada e o spam.</p><Link to="/login" className="btn btn-secondary recover-success-btn">Voltar para login</Link></div>
         )}
         {!sent && <Link to="/login" className="back-link"><ArrowLeftIcon width="14" height="14" />Voltar para login</Link>}
-      </section>
-    </main>
+      </div>
+    </PublicAuthLayout>
   );
 }

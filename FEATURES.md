@@ -31,7 +31,7 @@
 - O gráfico mensal do dashboard permite alternar entre 6/12 meses, filtrar unidade, ocultar séries, consultar valores em tooltip e abrir Agendamentos com mês/unidade já filtrados.
 - O cabeçalho administrativo permite alternar entre modo escuro e claro; a preferência respeita o sistema na primeira visita e fica persistida localmente.
 - O cabeçalho do cliente também permite alternar entre modo escuro e claro, compartilhando a mesma preferência persistida.
-- A tela de login possui seletor próprio de tema e composição dividida entre a fachada e o painel escuro de acesso, preservando o amarelo solar mesmo quando o restante do sistema está claro.
+- Login, cadastro e recuperação de senha possuem seletor de tema e compartilham composição dividida entre fachada e painel escuro de acesso, preservando o amarelo solar mesmo quando o restante do sistema está claro.
 - Agendamentos de hoje e dos próximos sete dias, com identificação do cliente: implementados.
 - Receita total: indisponível até o domínio persistir o valor efetivamente pago.
 - Gestão de unidades com criação, edição, imagem local e exclusão protegida: implementada via `CatalogGateway`.
@@ -107,7 +107,7 @@
 - Visual responsivo das sete telas: implementado.
 - App shell compartilhado com nome e saída vermelha: implementado.
 - Retorno visível e contextual: implementado.
-- Fachada nas telas públicas e rede animada no cadastro e na recuperação de senha: implementadas.
+- Fachada persistente no fluxo público de autenticação: implementada no login, cadastro e recuperação de senha.
 - Foco visível, estados de seleção, loading, disabled e movimento reduzido: implementados.
 
 ## Pagamento

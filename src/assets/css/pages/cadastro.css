@@ -4,14 +4,14 @@
    de registro (mais campos, card um pouco mais largo)
    ============================================ */
 
-.cadastro-page {
-  justify-content: flex-start;
-  padding-top: var(--space-5);
-  padding-bottom: var(--space-5);
+.cadastro-page .login-panel {
+  place-items: start center;
+  padding-top: clamp(72px, 8vh, 96px);
+  padding-bottom: 48px;
 }
 
-.cadastro-card {
-  max-width: 440px;
+.cadastro-page.login-page--split .cadastro-card {
+  width: min(100%, 520px);
 }
 
 .cadastro-card .field {
@@ -36,24 +36,8 @@
   width: 100%;
 }
 
-@media (min-width: 480px) {
-  .cadastro-page {
-    justify-content: center;
-    padding-top: var(--space-6);
-    padding-bottom: var(--space-6);
-  }
-}
-
 @media (max-width: 420px) {
   .cadastro-card .field {
     margin-bottom: var(--space-2);
-  }
-
-  .login-brand {
-    margin-bottom: var(--space-4);
-  }
-
-  .login-logo .mark {
-    font-size: 2.25rem;
   }
 }

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { EyeIcon, GoogleIcon, LockIcon } from '../components/icons';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { PublicAuthLayout } from '../components/PublicAuthLayout';
 import { useAuth } from '../state/AuthContext';
 
 export function LoginPage() {
@@ -48,18 +48,8 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login-page login-page--split">
-      <section className="login-visual" aria-label="Fachada da Connect2Work">
-        <div className="login-visual__logo" aria-label="Connect2Work"><span>C2</span><b>W</b></div>
-        <div className="login-visual__message">
-          <strong>Seu espaço. Seu ritmo.</strong>
-          <span>Salas e soluções para trabalhar melhor.</span>
-        </div>
-      </section>
-
-      <section className="login-panel" aria-labelledby="login-heading">
-        <ThemeToggle className="login-theme-toggle" />
-        <div className="login-card">
+    <PublicAuthLayout labelledBy="login-heading">
+      <div className="login-card">
         <div className="login-card-header">
           <h1 id="login-heading">Bem-vindo de volta</h1>
           <p>Acesse sua conta Connect2Work</p>
@@ -95,8 +85,7 @@ export function LoginPage() {
         </form>
 
           <p className="login-security"><LockIcon width="15" height="15" />Ambiente seguro <span aria-hidden="true">·</span> Seus dados protegidos</p>
-        </div>
-      </section>
-    </main>
+      </div>
+    </PublicAuthLayout>
   );
 }

@@ -28,7 +28,7 @@ Fonte: `src/assets/css/base.css`.
 - Navegação autenticada com três áreas principais: Unidades, Meus Agendamentos e Serviços.
 - `BackLink` ou retorno contextual em todas as telas.
 - Cards usados apenas para unidades reais de informação.
-- O login usa composição dividida entre fachada contextual e painel de acesso; cadastro e recuperação preservam `NetworkBackground` e card de autenticação.
+- Login, cadastro e recuperação compartilham composição dividida: fachada contextual fixa à esquerda e painel de autenticação à direita; no celular, fachada passa para o topo.
 - Checkout usa painel principal e resumo lateral sticky; no celular, ambos formam fluxo vertical.
 - Formas de pagamento usam seleção tipo radio tile, sem cards aninhados.
 - Serviços usa composição editorial com três entidades próprias, imagens administráveis, benefícios compactos e CTAs dourados de consulta.

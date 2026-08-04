@@ -310,13 +310,16 @@
 }
 
 .login-visual {
-  position: relative;
+  position: sticky;
+  top: 0;
+  height: 100svh;
   min-height: 100svh;
   background-image:
     linear-gradient(180deg, rgb(4 6 8 / 10%) 42%, rgb(4 6 8 / 82%) 100%),
     url("../../img/faxada.png");
   background-position: center;
   background-size: cover;
+  background-repeat: no-repeat;
   isolation: isolate;
 }
 
@@ -551,6 +554,8 @@
   }
 
   .login-visual {
+    position: relative;
+    top: auto;
     min-height: 220px;
     height: 30svh;
     background-position: center 58%;
