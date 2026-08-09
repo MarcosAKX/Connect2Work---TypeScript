@@ -58,7 +58,7 @@ Fonte: `src/assets/css/base.css`.
 - O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e amarelo de marca ajustado para contraste; não é uma simples inversão do tema escuro.
 - Os temas claro e escuro compartilham amarelo solar `#ffc400` e hover `#ffd54a` em gráficos, seleções, ícones e ações.
 - No modo claro, o CTA com preço na lista de salas e o selo no cabeçalho do agendamento usam amarelo solar, texto quase preto e contorno discreto para manter leitura sobre superfícies claras ou imagens.
-- O login é uma exceção deliberada ao tema claro: mantém painel escuro e fachada em tela dividida como assinatura da marca, com contraste idêntico nos dois temas.
+- Login, cadastro e recuperação preservam a fachada fotográfica nos dois temas; no modo claro, o painel de autenticação, campos, textos e controles usam as superfícies e contrastes claros do sistema.
 - A ação “Novo Agendamento” usa tamanho compacto; o formulário registra também a situação do pagamento.
 - Pagamentos pendentes são ações clicáveis e pedem confirmação antes de mudar para concluído.
 - Plano de horas usa resumo contextual na etapa de agendamento, badge discreto no histórico e estado vencido com orientação acionável; o saldo não é repetido em outras telas do cliente.

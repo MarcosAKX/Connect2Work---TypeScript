@@ -31,7 +31,7 @@
 - O gráfico mensal do dashboard permite alternar entre 6/12 meses, filtrar unidade, ocultar séries, consultar valores em tooltip e abrir Agendamentos com mês/unidade já filtrados.
 - O cabeçalho administrativo permite alternar entre modo escuro e claro; a preferência respeita o sistema na primeira visita e fica persistida localmente.
 - O cabeçalho do cliente também permite alternar entre modo escuro e claro, compartilhando a mesma preferência persistida.
-- Login, cadastro e recuperação de senha possuem seletor de tema e compartilham composição dividida entre fachada e painel escuro de acesso, preservando o amarelo solar mesmo quando o restante do sistema está claro.
+- Login, cadastro e recuperação de senha possuem seletor de tema e compartilham composição dividida entre fachada e painel de acesso; o painel acompanha o tema claro ou escuro e preserva o amarelo solar como destaque.
 - Agendamentos de hoje e dos próximos sete dias, com identificação do cliente: implementados.
 - Receita total: indisponível até o domínio persistir o valor efetivamente pago.
 - Gestão de unidades com criação, edição, imagem local e exclusão protegida: implementada via `CatalogGateway`.
@@ -46,7 +46,7 @@
 - Gestão de usuários: implementada em `/admin/usuarios`, com busca, filtros, estatísticas, cadastro e edição completa de dados, permissão, senha e status.
 - Papéis disponíveis: `client`, `admin` e `secretaria`; secretaria acessa as ferramentas operacionais autorizadas, sem acessar gestão de contas, unidades ou salas.
 - Secretaria possui navegação reduzida e é redirecionada ao tentar acessar dashboard, unidades, salas ou usuários.
-- Na gestão de agendamentos, a receita total é exibida somente ao administrador; a secretária mantém os valores e pagamentos individuais necessários à operação.
+- Na gestão de agendamentos, a receita total e a coluna de valor são exibidas somente ao administrador; a secretária mantém o estado e as ações de pagamento necessários à operação.
 - Cancelamento administrativo exige motivo, persistido e consultável na tabela.
 - Admin e secretaria podem criar agendamentos confirmados para clientes ativos, com busca segura, conflito de horário e valor ajustável.
 - Criação administrativa permite registrar pagamento `pending` ou `completed`; reservas do checkout nascem concluídas.

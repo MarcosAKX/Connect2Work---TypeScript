@@ -244,49 +244,89 @@ html[data-theme='light'] .time-legend__box--unavailable {
   opacity: 1;
 }
 
-/* O login preserva sua assinatura escura mesmo quando o restante do sistema está claro. */
-html[data-theme='light'] .login-page {
-  --color-bg: #0a0a0a;
-  --color-surface: #141414;
-  --color-surface-raised: #1a1a1a;
-  --color-border: #262626;
-  --color-border-hover: #363636;
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a3a3a3;
-  --color-text-tertiary: #7d7d7d;
-  --color-accent: #ffc400;
-  --color-accent-hover: #ffd54a;
-  --color-accent-text: #1a1400;
-  background-color: var(--color-bg);
+/* Autenticação pública: fachada preservada e painel adaptado ao modo claro. */
+html[data-theme='light'] .login-page--split {
+  background: var(--color-bg);
 }
 
-html[data-theme='light'] .login-card :is(input, .field-input-wrap, .btn-secondary) {
-  border-color: #2f2f2f;
-  background: #0d0d0d;
-  color: #fafafa;
+html[data-theme='light'] .login-panel {
+  background:
+    radial-gradient(circle at 58% 42%, color-mix(in srgb, var(--color-accent) 6%, transparent), transparent 42%),
+    var(--color-bg);
 }
 
-html[data-theme='light'] .login-card input::placeholder {
-  color: #858585;
+html[data-theme='light'] .login-page--split .login-theme-toggle {
+  border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--color-accent) 8%);
+  color: color-mix(in srgb, var(--color-accent) 54%, var(--color-text-primary));
 }
 
-html[data-theme='light'] .login-card-header h1 {
-  color: #fafafa;
+html[data-theme='light'] .login-page--split .login-card-header h1,
+html[data-theme='light'] .login-page--split .field label {
+  color: var(--color-text-primary);
 }
 
-html[data-theme='light'] .login-card .btn-primary {
-  background: linear-gradient(135deg, #ffd54a, #ffc400 60%);
-  color: #1a1400;
+html[data-theme='light'] .login-page--split .login-card-header p,
+html[data-theme='light'] .login-page--split .recover-success-text {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme='light'] .login-page--split .field-input-wrap {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+html[data-theme='light'] .login-page--split .field-input-wrap:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+html[data-theme='light'] .login-page--split .field-input-wrap input {
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+html[data-theme='light'] .login-page--split .field-input-wrap input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+html[data-theme='light'] .login-page--split .toggle-visibility,
+html[data-theme='light'] .login-page--split .login-google-button,
+html[data-theme='light'] .login-page--split .login-security {
+  color: var(--color-text-secondary);
+}
+
+html[data-theme='light'] .login-page--split :is(.forgot-link, .text-link) {
+  color: color-mix(in srgb, var(--color-accent) 52%, var(--color-text-primary));
+}
+
+html[data-theme='light'] .login-page--split .divider {
+  color: var(--color-text-tertiary);
+}
+
+html[data-theme='light'] .login-page--split .divider::before,
+html[data-theme='light'] .login-page--split .divider::after {
+  background: var(--color-border);
 }
 
 html[data-theme='light'] .login-page--split .login-card .btn-primary {
-  background: #ffc400;
+  border-color: transparent;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
-html[data-theme='light'] .login-page--split .login-card .login-register-button {
-  border-color: #dca900;
-  background: transparent;
-  color: #ffc400;
+html[data-theme='light'] .login-page--split .login-card .login-register-button,
+html[data-theme='light'] .login-page--split .login-card .recover-success-btn {
+  border-color: color-mix(in srgb, var(--color-accent) 58%, var(--color-border));
+  background: var(--color-surface);
+  color: color-mix(in srgb, var(--color-accent) 52%, var(--color-text-primary));
+}
+
+html[data-theme='light'] .login-page--split .login-card .login-register-button:hover,
+html[data-theme='light'] .login-page--split .login-card .recover-success-btn:hover,
+html[data-theme='light'] .login-page--split .login-google-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--color-accent) 8%);
+  color: var(--color-text-primary);
 }
 html[data-theme='light'] :is(.room-card__price, .room-details__price) {
   border: 1px solid color-mix(in srgb, var(--color-accent-bright) 72%, #171200);

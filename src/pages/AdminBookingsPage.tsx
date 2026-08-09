@@ -5,6 +5,7 @@ import { CalendarIcon, CheckIcon, ClockIcon, CloseIcon, CurrencyIcon, DashboardI
 import { useAdminBookings, type AdminBookingRow, type AdminBookingStatusFilter } from '../hooks/useAdminBookings';
 import { useCreateBookingForAdmin } from '../hooks/useCreateBookingForAdmin';
 import { useAuth } from '../state/AuthContext';
+import { canViewBookingValue } from '../utils/admin-bookings-visibility';
 import '../assets/css/pages/admin-bookings.css';
 import '../assets/css/pages/admin-operations-polish.css';
 
@@ -59,6 +60,7 @@ export function AdminBookingsPage() {
   const [creating, setCreating] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState<AdminBookingRow | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
+  const showBookingValue = canViewBookingValue(user?.role);
   const queryDateFrom = searchParams.get('de') ?? '';
   const queryDateTo = searchParams.get('ate') ?? '';
   const queryUnitId = searchParams.get('unidade') ?? '';
@@ -96,7 +98,7 @@ export function AdminBookingsPage() {
       ) : (
         <div className="admin-bookings-table-wrap">
           <table className="admin-bookings-table">
-            <thead><tr><th>ID</th><th>Cliente</th><th>Sala</th><th>Unidade</th><th>Data</th><th>Horário</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Check-in</th><th>Ações</th></tr></thead>
+            <thead><tr><th>ID</th><th>Cliente</th><th>Sala</th><th>Unidade</th><th>Data</th><th>Horário</th>{showBookingValue && <th>Valor</th>}<th>Pagamento</th><th>Status</th><th>Check-in</th><th>Ações</th></tr></thead>
             <tbody>{data.bookings.map((item) => {
               const paymentStatus = item.booking.paymentStatus ?? 'completed';
               const isAwaitingCheckIn = item.booking.date === data.today && item.adminStatus === 'confirmed' && !item.booking.checkedInAt;
@@ -107,7 +109,7 @@ export function AdminBookingsPage() {
                 <td data-label="Unidade">{item.unitName}</td>
                 <td data-label="Data"><time dateTime={item.booking.date}>{formatDate(item.booking.date)}</time></td>
                 <td data-label="Horário">{item.booking.timeSlot}</td>
-                <td data-label="Valor"><strong>{money.format(item.total)}</strong></td>
+                {showBookingValue && <td data-label="Valor"><strong>{money.format(item.total)}</strong></td>}
                 <td data-label="Pagamento">{paymentStatus === 'pending' && item.adminStatus !== 'cancelled' ? <button type="button" className="admin-bookings-payment is-pending is-clickable is-action" onClick={() => { data.clearMutationError(); setConfirmingPayment(item); }} disabled={data.isSaving} title="Confirmar recebimento"><CurrencyIcon width="14" height="14" />Confirmar pagamento</button> : <span className={`admin-bookings-payment is-${paymentStatus}`}>{paymentStatus === 'completed' ? 'Concluído' : 'Pendente'}</span>}</td>
                 <td data-label="Status">{item.adminStatus === 'cancelled' ? <button type="button" className="admin-bookings-badge is-cancelled is-clickable" onClick={() => setViewingReason(item)} title="Ver motivo do cancelamento">Cancelado</button> : <span className={`admin-bookings-badge is-${item.adminStatus}`}>{statusLabels[item.adminStatus]}</span>}</td>
                 <td data-label="Check-in">{item.adminStatus !== 'confirmed' ? <span className="admin-bookings-checkin-na">—</span> : item.booking.checkedInAt ? <span className="admin-bookings-checkin is-completed"><CheckIcon width="14" height="14" />Chegou às {formatCheckInTime(item.booking.checkedInAt)}</span> : <button type="button" className="admin-bookings-checkin is-action" onClick={() => void checkIn(item)} disabled={data.isSaving}><UserIcon width="14" height="14" />Check-in</button>}</td>
