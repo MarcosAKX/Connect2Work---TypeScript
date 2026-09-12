@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { BackLink } from '../components/BackLink';
-import { ArrowLeftIcon, ArrowRightIcon, UsersIcon } from '../components/icons';
+import { ArrowLeftIcon, ArrowRightIcon, ImageIcon, UsersIcon } from '../components/icons';
 import { services } from '../services';
 import type { Room, Unit } from '../types/domain';
 import { getRoomImages } from '../utils/room-images';
@@ -16,8 +16,8 @@ function RoomCard({ room, featured = false }: { room: Room; featured?: boolean }
 
   return (
     <article className={`room-card card${featured ? ' room-card--featured' : ''}`}>
-      <div className="room-card__visual">
-        {currentImage ? <img className="room-card__image" src={currentImage} alt={`${room.name}, imagem ${imageIndex + 1} de ${images.length}`} /> : <span className="room-card__name-fallback">{room.name}</span>}
+      <div className={`room-card__visual${currentImage ? '' : ' room-card__visual--empty'}`}>
+        {currentImage ? <img className="room-card__image" src={currentImage} alt={`${room.name}, imagem ${imageIndex + 1} de ${images.length}`} /> : <span className="room-card__empty-gallery"><ImageIcon width="44" height="44" aria-hidden="true" /><span>Fotos em breve</span></span>}
         <Link className="room-card__visual-link" to={bookingUrl} aria-label={`Ver detalhes e agendar ${room.name}`} />
         {images.length > 1 && (
           <>
@@ -42,10 +42,13 @@ function RoomCard({ room, featured = false }: { room: Room; featured?: boolean }
             {room.amenities.slice(0, 3).map((amenity) => <span className="room-card__tag" key={amenity}>{amenity}</span>)}
           </div>
         </div>
-        <Link to={bookingUrl} className="room-card__booking-button" aria-label={`Agendar ${room.name} por ${money.format(room.pricePerHour)} por hora`}>
-          <strong>{money.format(room.pricePerHour)}/h</strong>
-          <ArrowRightIcon width="17" height="17" aria-hidden="true" />
-        </Link>
+        <div className="room-card__booking-footer">
+          <p className="room-card__hourly-price"><strong>{money.format(room.pricePerHour)}</strong><span>/hora</span></p>
+          <Link to={bookingUrl} className="room-card__booking-button" aria-label={`Ver horários de ${room.name}`}>
+            Ver horários
+            <ArrowRightIcon width="17" height="17" aria-hidden="true" />
+          </Link>
+        </div>
       </div>
     </article>
   );

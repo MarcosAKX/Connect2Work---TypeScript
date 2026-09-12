@@ -28,6 +28,9 @@ Fonte: `src/assets/css/base.css`.
 - Navegação autenticada com três áreas principais: Unidades, Meus Agendamentos e Serviços.
 - `BackLink` ou retorno contextual em todas as telas.
 - Cards usados apenas para unidades reais de informação.
+- Os períodos Manhã e Tarde do agendamento usam SVGs de sol e sol no horizonte, com 18px e amarelo solar, alinhados aos rótulos.
+- O total de salas no cabeçalho da unidade usa selo amarelo solar sólido com texto escuro e peso forte nos dois temas.
+- Na lista de salas e na tela de agendamento, galerias sem imagens exibem ícone e “Fotos em breve”; no tema claro usam superfície clara, sem gradiente escuro. Fotos cadastradas são preservadas.
 - Login, cadastro e recuperação compartilham composição dividida: fachada contextual fixa à esquerda e painel de autenticação à direita; no celular, fachada passa para o topo.
 - Checkout usa painel principal e resumo lateral sticky; no celular, ambos formam fluxo vertical.
 - Formas de pagamento usam seleção tipo radio tile, sem cards aninhados.
@@ -57,7 +60,7 @@ Fonte: `src/assets/css/base.css`.
 - Em telas de até 720 px, o cabeçalho administrativo oculta a navegação horizontal e usa exclusivamente o drawer; filtros empilham, modais ocupam a largura disponível com rolagem interna e ações fixadas ao final. Em até 480 px, grades de métricas passam para uma coluna.
 - O modo claro usa fundo frio, superfícies brancas delimitadas, campos contrastantes e amarelo de marca ajustado para contraste; não é uma simples inversão do tema escuro.
 - Os temas claro e escuro compartilham amarelo solar `#ffc400` e hover `#ffd54a` em gráficos, seleções, ícones e ações.
-- No modo claro, o CTA com preço na lista de salas e o selo no cabeçalho do agendamento usam amarelo solar, texto quase preto e contorno discreto para manter leitura sobre superfícies claras ou imagens.
+- Na lista de salas, o rodapé separa preço destacado à esquerda (com sufixo /hora) e botão amarelo “Ver horários” à direita, nos dois temas. O selo no cabeçalho do agendamento permanece amarelo solar com texto quase preto.
 - Login, cadastro e recuperação preservam a fachada fotográfica nos dois temas; no modo claro, o painel de autenticação, campos, textos e controles usam as superfícies e contrastes claros do sistema.
 - A ação “Novo Agendamento” usa tamanho compacto; o formulário registra também a situação do pagamento.
 - Pagamentos pendentes são ações clicáveis e pedem confirmação antes de mudar para concluído.
