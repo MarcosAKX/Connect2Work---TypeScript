@@ -17,7 +17,7 @@
 - Listagem de salas por unidade: implementada (dados locais).
 - Detalhes, capacidade, preço e comodidades: implementados.
 - Carrossel individual em cada card e galeria ampliada deduplicada via `imageUrl` e `imageUrls`: implementados.
-- Cards de salas com fotos 16:9, comparação compacta de capacidade e comodidades e CTA de agendamento com preço por hora: implementados.
+- Cards de salas com fotos 16:9, comparação compacta de capacidade e comodidades, preço por hora destacado e CTA separado “Ver horários”: implementados.
 - CRUD administrativo e upload local de imagens: implementados.
 - Endereço Fiscal, Endereço Comercial e Plano de Horas são entidades próprias, com conteúdo, imagem, benefícios, ordem e visibilidade editáveis em `/admin/servicos`.
 
