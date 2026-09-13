@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { BackLink } from '../components/BackLink';
-import { ArrowLeftIcon, ArrowRightIcon, ImageIcon, UsersIcon } from '../components/icons';
+import { ArrowLeftIcon, ArrowRightIcon, ImageIcon, MapPinIcon, UsersIcon } from '../components/icons';
 import { services } from '../services';
 import type { Room, Unit } from '../types/domain';
 import { getRoomImages } from '../utils/room-images';
@@ -80,7 +80,7 @@ export function RoomsPage() {
       <header className="rooms-header">
         <h1>Salas disponíveis</h1>
         <div className="unit-summary" aria-label="Unidade selecionada">
-          <span className="unit-summary__pin" aria-hidden="true">⌖</span>
+          <span className="unit-summary__pin" aria-hidden="true"><MapPinIcon width="20" height="20" /></span>
           <div className="unit-summary__info">
             <h2>{unit.name}</h2>
             <p className="unit-summary__address">{unit.address}</p>
