@@ -164,10 +164,14 @@ describe('localStorage services', () => {
   });
 
   it('persiste reserva vinculada ao usuário', async () => {
-    const services = createLocalStorageServices();
+    const services = createLocalStorageServices(() => new Date(2026, 7, 9, 12));
     const booking = await services.bookings.create({ userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10', timeSlot: '09:00 - 11:00', status: 'upcoming' });
     expect(isUuid(booking.id)).toBe(true);
     await expect(services.bookings.getByUserAndStatus('user-1', 'upcoming')).resolves.toHaveLength(1);
+    await expect(services.bookings.getByUserAndStatus('user-2', 'upcoming')).resolves.toHaveLength(0);
+    const afterStart = createLocalStorageServices(() => new Date(2026, 7, 10, 9));
+    await expect(afterStart.bookings.getByUserAndStatus('user-1', 'upcoming')).resolves.toHaveLength(0);
+    await expect(afterStart.bookings.getByUserAndStatus('user-1', 'past')).resolves.toEqual([expect.objectContaining({ id: booking.id, status: 'past' })]);
   });
 
   it('administrador confirma e cancela agendamentos', async () => {

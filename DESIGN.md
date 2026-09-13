@@ -28,6 +28,8 @@ Fonte: `src/assets/css/base.css`.
 - Navegação autenticada com três áreas principais: Unidades, Meus Agendamentos e Serviços.
 - `BackLink` ou retorno contextual em todas as telas.
 - Cards usados apenas para unidades reais de informação.
+- O título “Selecione a Data” no agendamento usa o CalendarIcon SVG compartilhado, alinhado ao ícone da seleção de horário.
+- O endereço da unidade na lista de salas usa o SVG compartilhado MapPinIcon, em amarelo dentro do círculo existente.
 - Os períodos Manhã e Tarde do agendamento usam SVGs de sol e sol no horizonte, com 18px e amarelo solar, alinhados aos rótulos.
 - O total de salas no cabeçalho da unidade usa selo amarelo solar sólido com texto escuro e peso forte nos dois temas.
 - Na lista de salas e na tela de agendamento, galerias sem imagens exibem ícone e “Fotos em breve”; no tema claro usam superfície clara, sem gradiente escuro. Fotos cadastradas são preservadas.

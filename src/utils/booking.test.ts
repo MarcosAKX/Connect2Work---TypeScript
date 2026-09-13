@@ -5,14 +5,27 @@ import type { Booking } from '../types/domain';
 const booking: Booking = { id: 'booking-1', userId: 'user-1', unitId: 'unit-1', roomId: 'room-1-1', date: '2026-08-10', timeSlot: '09:00 - 11:00', status: 'upcoming', createdAt: '2026-08-01T00:00:00.000Z' };
 
 describe('booking rules', () => {
+  const beforeBooking = new Date(2026, 7, 9, 12);
   it('interpreta intervalos e bloqueia horas sobrepostas', () => {
     expect(parseTimeSlot('09:00 - 11:00')).toEqual({ start: 540, end: 660 });
-    expect(hourIsUnavailable([booking], booking.roomId, new Date(2026, 7, 10), 1)).toBe(true);
-    expect(hourIsUnavailable([booking], booking.roomId, new Date(2026, 7, 10), 3)).toBe(false);
+    expect(hourIsUnavailable([booking], booking.roomId, new Date(2026, 7, 10), 1, beforeBooking)).toBe(true);
+    expect(hourIsUnavailable([booking], booking.roomId, new Date(2026, 7, 10), 3, beforeBooking)).toBe(false);
   });
 
   it('ignora reserva cancelada', () => {
-    expect(hourIsUnavailable([{ ...booking, status: 'cancelled' }], booking.roomId, new Date(2026, 7, 10), 1)).toBe(false);
+    expect(hourIsUnavailable([{ ...booking, status: 'cancelled' }], booking.roomId, new Date(2026, 7, 10), 1, beforeBooking)).toBe(false);
+  });
+
+  it('bloqueia datas passadas mesmo sem reservas ou com reserva cancelada', () => {
+    const now = new Date(2026, 7, 11, 8);
+    const date = new Date(2026, 7, 10);
+    expect(hourIsUnavailable([], booking.roomId, date, 1, now)).toBe(true);
+    expect(hourIsUnavailable([{ ...booking, status: 'cancelled' }], booking.roomId, date, 1, now)).toBe(true);
+  });
+
+  it('bloqueia no instante de início mesmo após cancelamento', () => {
+    const now = new Date(2026, 7, 10, 9);
+    expect(hourIsUnavailable([{ ...booking, status: 'cancelled' }], booking.roomId, new Date(2026, 7, 10), 1, now)).toBe(true);
   });
 
   it('bloqueia horários que já começaram no dia atual', () => {

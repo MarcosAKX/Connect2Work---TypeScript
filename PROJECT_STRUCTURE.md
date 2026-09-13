@@ -100,6 +100,8 @@
 
 ## Testes
 
+- Cenários temporais de disponibilidade e listagem de reservas usam datas explícitas nas funções e no relógio injetável do adaptador local, sem depender do dia de execução. Cobrem datas passadas, início do horário, cancelamento e transição para histórico.
+
 - `src/services/local-storage.test.ts` — autenticação, persistência, propriedade e cancelamento.
 - `src/services/supabase/mappers.test.ts` — conversão tipada entre Supabase e domínio.
 - `src/utils/booking.test.ts` — conflito, horário, status e limite exato de 24 horas.
