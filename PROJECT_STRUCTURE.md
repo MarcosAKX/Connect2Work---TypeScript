@@ -100,13 +100,86 @@
 
 ## Testes
 
+- `src/hooks/useBooking.test.tsx` — seleção de períodos, conflitos, plano integral/parcial/vencido, rascunho e erros de pagamento, com relógio controlado.
+- `src/pages/BookingPage.test.tsx` — integração React da página: calendário, carrossel, resumo e navegação ao checkout.
+- `src/pages/AdminBookingsPage.test.tsx` — integração da listagem administrativa: filtros, contexto da URL, criação, cancelamento com motivo, pagamento, check-in com responsável e diferenças entre admin/secretaria.
+- `src/pages/AdminDailyPanelPage.test.tsx` — filtros operacionais/período, métricas globais, limite temporal da presença, pagamento/check-in de admin e secretaria, erros, estados vazios e links dos próximos sete dias.
+- `src/pages/AdminTasksPage.test.tsx` — quadro por responsável, criação, edição/exclusão por autor e papel, prazo bloqueado para secretária, teclado, drag-and-drop, rollback e erros de persistência.
+- `src/pages/AdminUsersPage.test.tsx` — busca e filtros, cadastro, validação, edição de dados/senha/papel, autoproteção administrativa, atualização da sessão, ativação/desativação e erros de persistência.
+
+## Piloto de separação View / ViewModel — Agendamento
+
+- `src/pages/BookingPage.tsx` compõe a View, lê a rota e mantém carregamento/redirecionamento.
+- `src/hooks/useBooking.ts` é o ViewModel: estado único da reserva, coordenação dos gateways, disponibilidade apresentada, saldo, total e ações de confirmação/pagamento.
+- `src/components/booking/RoomGallery.tsx`, `BookingCalendar.tsx`, `BookingTimeSlots.tsx` e `BookingSummary.tsx` são seções visuais. A galeria mantém apenas seu índice local de imagem.
+- Regras de conflito, datas e plano permanecem em `src/utils/booking.ts` e nos serviços. O hook aceita `AppServices` para testes sem acoplar a View ao armazenamento.
+- Primeiro piloto aplicado a Agendamento; Gerenciar Agendamentos, Painel do Dia, Tarefas e Gerenciar Usuários seguem as separações descritas abaixo. As demais telas ainda seguem sua organização anterior. CSS e rotas foram preservados.
+- A futura API com MySQL deverá implementar os contratos de serviços; esta separação não instala nem integra um backend.
+
 - Cenários temporais de disponibilidade e listagem de reservas usam datas explícitas nas funções e no relógio injetável do adaptador local, sem depender do dia de execução. Cobrem datas passadas, início do horário, cancelamento e transição para histórico.
 
 - `src/services/local-storage.test.ts` — autenticação, persistência, propriedade e cancelamento.
 - `src/services/supabase/mappers.test.ts` — conversão tipada entre Supabase e domínio.
 - `src/utils/booking.test.ts` — conflito, horário, status e limite exato de 24 horas.
 
+## Separação View / ViewModel — Gerenciar Agendamentos
+
+- `src/pages/AdminBookingsPage.tsx` compõe a View e recebe usuário/consulta da rota, sem coordenar mutações ou manter o estado dos modais.
+- `src/hooks/useAdminBookingsPage.ts` coordena modais, filtros recebidos pela URL, ações operacionais e notificações de cinco segundos. Compõe o `useAdminBookings` existente, sem duplicar dados ou regras.
+- `src/hooks/useAdminBookings.ts` permanece inalterado: leitura via gateways, filtros, métricas e mutações continuam compartilhados com Painel do Dia.
+- `src/components/admin-bookings/AdminBookingStats.tsx`, `AdminBookingFilters.tsx` e `AdminBookingTable.tsx` apresentam métricas, filtros, estados de carregamento/vazio e tabela, mantendo HTML e classes existentes.
+- `CancelBookingDialog.tsx`, `CancellationReasonDialog.tsx`, `ConfirmPaymentDialog.tsx` e `CreateBookingDialog.tsx`, na mesma pasta, separam os modais. Estado local do campo de motivo e ciclo de vida do elemento dialog permanecem nos componentes; criação reaproveita `useCreateBookingForAdmin`, sem alterar suas regras.
+- `src/components/admin-bookings/formatters.ts` contém apenas formatação de moeda, datas, horário de check-in e rótulos exibidos.
+- Refatoração interna: sem mudança de CSS, rotas, permissões, contratos, persistência ou regras de pagamento/cancelamento/check-in. Não integra MySQL nem modifica Painel do Dia.
+
 ## Contexto para agentes
+
+### Separação View / ViewModel — Painel do Dia
+
+- `src/pages/AdminDailyPanelPage.tsx` compõe a View e fornece o usuário autenticado ao ViewModel; não mantém filtros, estado do modal ou coordenação de mutações.
+- `src/hooks/useAdminDailyPanel.ts` compõe `useAdminBookings` e concentra busca/unidade/situação/período, agenda filtrada, próximos sete dias, estado do modal, check-in, confirmação de pagamento e notificações temporárias.
+- `src/components/admin-daily-panel/` separa `DailyPanelMetrics`, `DailyPanelFilters`, `DailyPanelAgenda`, `DailyPanelAttention`, `DailyPanelUpcoming` e `DailyConfirmPaymentDialog`. Os componentes mantêm HTML, classes e textos existentes; o modal conserva o ciclo de vida do elemento dialog.
+- `src/utils/daily-panel.ts` reúne os auxiliares puros de formatação de datas e limites de horário antes locais à página.
+- Filtros continuam afetando somente a agenda, não as métricas globais. Presença exige check-in e horário em andamento; check-ins permanecem contabilizados após o fim do intervalo.
+- Refatoração sem alteração de CSS, rotas, contratos, persistência ou regras. `useAdminBookings`, compartilhado com Gerenciar Agendamentos, permanece inalterado.
+
+### Separação View / ViewModel — Tarefas
+
+- `src/pages/AdminTasksPage.tsx` compõe a View e fornece o usuário autenticado ao `useAdminTasksPage`.
+- `src/hooks/useAdminTasksPage.ts` coordena formulário, edição, exclusão, validação do título, referências dos dialogs e eventos de arrastar/soltar. Mantém o ciclo de abertura/fechamento existente.
+- `src/components/admin-tasks/TaskBoard.tsx` renderiza colunas e estados vazios/carregamento; `TaskCard.tsx` apresenta conteúdo, responsável, prioridade, prazo e interações existentes.
+- `TaskEditorDialog.tsx` e `TaskDeleteDialog.tsx`, na mesma pasta, apresentam os formulários e confirmações sem acessar armazenamento.
+- `src/hooks/useAdminTasks.ts` permanece inalterado: contratos de dados, filtro por responsável, mutações, notificações e rollback da movimentação continuam centralizados nele. O indicador de tarefas do menu não foi modificado.
+- Admin continua editando/excluindo qualquer tarefa; secretária somente as próprias, sem alterar prazo após criação. Movimentação entre colunas continua compartilhada. HTML, CSS, rotas e regras do gateway foram preservados.
+
+### Separação View / ViewModel — Gerenciar Usuários
+
+- `src/pages/AdminUsersPage.tsx` compõe a View e fornece usuário/atualização de sessão ao `useAdminUsersPage`.
+- `src/hooks/useAdminUsersPage.ts` coordena criação/edição, atualização da sessão ao editar a própria conta e confirmação de desativação. O estado `formUser` mantém os significados existentes: `undefined` fechado, `null` cadastro e `User` edição.
+- `src/hooks/useManagedUserForm.ts` mantém campos, validações de nome/e-mail/senha e indicadores de edição/autoproteção, sem acessar persistência. Senha vazia na edição continua preservando a atual.
+- `src/components/admin-users/` separa `UserStats`, `UserFilters`, `UserTable`, `UserFormDialog` e `DeactivateUserDialog`, mantendo HTML, classes, textos e ciclo de vida dos dialogs.
+- `src/hooks/useAdminUsers.ts` permanece inalterado: gateways, filtros, métricas, mutações e notificações existentes são reaproveitados. Rotas, permissões, CSS, contratos e formato dos dados não mudam.
+- A refatoração preserva o bloqueio de perda de permissão/desativação da própria conta administrativa; não acrescenta segurança de backend ao mock.
+
+### Separação View / ViewModel — Gerenciar Salas
+
+- `src/pages/AdminRoomsPage.tsx` compõe a View; `src/hooks/useAdminRoomsPage.ts` coordena modais, ações e notificações temporárias.
+- `src/hooks/useRoomForm.ts` concentra campos, validações, imagens e comodidades do formulário. Reaproveita `prepareImageUpload`, mantendo o limite de seis imagens.
+- `src/components/admin-rooms/` separa tabela, formulário, confirmação de exclusão e campos de imagens/comodidades, preservando HTML e classes.
+- `useAdminRooms` permanece inalterado: leitura, filtro e mutações continuam via CatalogGateway. Exclusão com reservas vinculadas permanece bloqueada no serviço.
+- `src/pages/AdminRoomsPage.test.tsx` cobre filtros, cadastro, edição, validação, galeria, comodidades, erros e exclusão protegida. O processamento de pixels do upload é simulado no teste de persistência; depende do canvas do navegador.
+- Sem alterações de CSS, rotas, permissões, contratos ou formato dos dados.
+
+### Separação View / ViewModel — Gerenciar Unidades
+
+- `src/pages/AdminUnitsPage.tsx` compõe a View; `src/hooks/useAdminUnitsPage.ts` coordena modais, ações e notificações de cinco segundos.
+- `src/hooks/useUnitForm.ts` mantém campos, validações de coordenadas e upload via `prepareImageUpload`.
+- `src/components/admin-units/` separa `UnitTable`, `UnitFormDialog` e `DeleteUnitDialog`, preservando HTML, classes e ciclo de vida dos dialogs.
+- `useAdminUnits` permanece inalterado: contagem real de salas, leitura e mutações via CatalogGateway. Exclusão de unidades com salas permanece bloqueada.
+- `src/pages/AdminUnitsPage.test.tsx` cobre contagem, cadastro, coordenadas, edição, exclusão protegida, falhas, imagem e estado vazio. Processamento de pixels é simulado na fronteira de upload; depende de canvas no navegador.
+- Sem mudanças de CSS, rotas, permissões, contratos ou formato dos dados.
+
+### Instruções e referências
 
 - `AGENTS.md` — instruções gerais.
 - `.cursor/rules/` — regras sempre aplicadas.
