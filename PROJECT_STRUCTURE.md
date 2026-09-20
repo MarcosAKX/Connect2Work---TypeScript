@@ -1,5 +1,29 @@
 # Connect2Work — Estrutura do Projeto
 
+## Padrão para novas telas
+
+A aplicação usa React com serviços por contratos e separação View / ViewModel
+progressiva. O padrão orienta novas telas e refatorações; não exige converter
+todas as páginas nem implementar MVVM clássico com classes.
+
+- **Página (`src/pages/`):** compõe seções e conecta contexto de autenticação/rota ao fluxo da tela.
+- **ViewModel (`src/hooks/`):** concentra estado, validações do fluxo e coordenação das ações. Preferir `useNomeDaTela`; se já existir hook de dados compartilhado, compô-lo sem duplicar seus dados ou regras.
+- **Componentes (`src/components/<area>/`):** apresentam seções coerentes com props tipadas. Estado estritamente visual, referências DOM e ciclo de vida de dialogs podem permanecer locais.
+- **Domínio e regras puras:** tipos em `src/types/domain.ts`, funções reutilizáveis em `src/utils/`; não copiar regras entre telas.
+- **Dados:** operações passam pelos contratos de `src/services/contracts.ts` e seus adaptadores. Páginas/componentes não acessam banco, SDK ou armazenamento diretamente.
+- **Backend futuro:** uma API deverá implementar as validações, permissões e transações no servidor e acessar MySQL. A separação do frontend não substitui segurança de backend.
+
+Extrair apenas responsabilidades claras. Não criar hooks sem lógica, componentes
+triviais ou uma segunda cópia de estado apenas para cumprir nomenclatura. Manter
+os tokens, shells, proteções de rota e componentes compartilhados existentes.
+
+### Critérios de conclusão
+
+1. Testar comportamentos importantes (sucesso, erro, validação e perfis aplicáveis), com datas controladas em cenários temporais.
+2. Em refatoração estrutural, preservar textos, HTML relevante, classes, navegação, regras e formato dos dados; não acrescentar funcionalidades.
+3. Executar `npm run typecheck`, `npm run test` e `npm run build`. Informar limitações e avisos; comparação de HTML não equivale a teste visual no navegador.
+4. Atualizar esta documentação para mudanças estruturais; atualizar os demais documentos somente quando seu conteúdo for afetado.
+
 ## Entrada e rotas
 
 - `src/main.tsx` — inicializa React, Router e autenticação.
@@ -178,6 +202,131 @@
 - `useAdminUnits` permanece inalterado: contagem real de salas, leitura e mutações via CatalogGateway. Exclusão de unidades com salas permanece bloqueada.
 - `src/pages/AdminUnitsPage.test.tsx` cobre contagem, cadastro, coordenadas, edição, exclusão protegida, falhas, imagem e estado vazio. Processamento de pixels é simulado na fronteira de upload; depende de canvas no navegador.
 - Sem mudanças de CSS, rotas, permissões, contratos ou formato dos dados.
+
+### Separação View / ViewModel — Planos de Horas
+
+- `src/pages/AdminHoursPlanPage.tsx` compõe a View e lê o usuário autenticado para preservar o retorno ao dashboard exclusivo do admin.
+- `src/hooks/useAdminHoursPlanPage.ts` coordena edição, renovação e conversão dos campos para a entrada do gateway; fecha os modais somente após sucesso.
+- `src/hooks/useHoursPlanForm.ts` mantém campos e validações do formulário. Saldo acima do pacote continua permitido com aviso, como antes.
+- `src/components/admin-hours-plan/` separa `HoursPlanStats`, `HoursPlanFilters`, `HoursPlanTable`, `PlanDialog` e `RenewalDialog`, mantendo HTML, classes e ciclo de vida dos dialogs.
+- `useAdminHoursPlan` permanece inalterado: busca, filtros, métricas globais, notificações e mutações via serviços. Regras de saldo, renovação, auditoria e extrato permanecem no gateway existente.
+- `src/pages/AdminHoursPlanPage.test.tsx` cobre filtros, ativação, validações, ajuste, desativação, renovação por admin/secretaria, falhas e recuperação de carregamento com relógio controlado.
+- Sem alterações de CSS, rotas, permissões, contratos ou dados persistidos.
+
+### Separação View / ViewModel — Gerenciar Serviços
+
+- `src/pages/AdminBusinessServicesPage.tsx` compõe a View, usando `ServiceCard` e `ServiceDialog` em `src/components/admin-business-services/`.
+- `src/hooks/useAdminBusinessServicesPage.ts` coordena edição, fechamento, erros e mensagem de sucesso. A mensagem permanece persistente como no comportamento anterior.
+- `src/hooks/useBusinessServiceForm.ts` concentra campos, validação, normalização dos benefícios por linha e upload via `prepareImageUpload`.
+- `useAdminBusinessServices` permanece inalterado, com leitura e atualização via gateway. Tipo, ordem, visibilidade e benefícios secundários são preservados ao salvar.
+- `src/pages/AdminBusinessServicesPage.test.tsx` cobre listagem, cancelamento, validação, edição, benefícios, visibilidade e erro de persistência.
+- Sem alterações de CSS, rotas, contratos ou regras de dados.
+
+### Separação View / ViewModel — Atividades
+
+- `src/pages/AdminActivityPage.tsx` compõe a View e fornece o usuário autenticado ao `useAdminActivity`.
+- `src/hooks/useAdminActivity.ts` concentra carregamento via gateways, clientes, busca e limite incremental de 30 registros. A leitura inicial mantém o limite de 500 registros.
+- `src/hooks/useHoursStatement.ts` coordena consulta do extrato pelo cliente e ator autenticado, preservando o comportamento existente.
+- `src/components/admin-activity/ActivityList.tsx` e `HoursStatement.tsx` apresentam registros e movimentos. Rótulos compartilhados ficam em `src/utils/activity-labels.ts`.
+- `src/pages/AdminActivityPage.test.tsx` cobre paginação, busca, seleção de cliente, identificação do ator, extrato vazio e falha inicial.
+- Sem mudanças de CSS, rotas, permissões, gateways ou dados. Tratamento de falhas/concorrência na consulta do extrato não foi ampliado nesta refatoração.
+
+### Separação View / ViewModel — Dashboard
+
+- `src/pages/AdminDashboardPage.tsx` compõe cabeçalho, estado de erro, indicadores, gráfico, pendências e agendas.
+- `src/components/admin-dashboard/` separa `DashboardOverview`, `DashboardAttention`, `DashboardSchedules`, `BookingList` e `MonthlyBookingsChart`.
+- `src/hooks/useMonthlyBookingsChart.ts` concentra período, unidade, séries visíveis e geometria derivada do gráfico. Links mensais e formatação permanecem na apresentação.
+- `useAdminDashboard` permanece inalterado: carregamento via gateways, agregações, datas e métricas não foram duplicados ou modificados.
+- `src/pages/AdminDashboardPage.test.tsx` cobre métricas, agenda limitada a quatro registros, nomes, links, período, unidade, séries, estados vazios e recuperação de erro, com relógio controlado.
+- Sem alterações de CSS, rotas, permissões ou regras. A comparação temporária de HTML/SVG passou nos estados inicial, 12 meses, unidade filtrada e série oculta; não substitui avaliação visual no navegador.
+
+### Separação View / ViewModel — Meus Agendamentos
+
+- `src/pages/BookingsPage.tsx` compõe a View e fornece o usuário autenticado ao `src/hooks/useBookings.ts`.
+- `useBookings` coordena catálogo, reservas por status, contagens, confirmação/cancelamento e feedback temporário. Leituras e mutações continuam pelos gateways.
+- `src/components/bookings/BookingTabs.tsx` mantém navegação acessível por teclado e referências de foco locais; `BookingList.tsx` apresenta cartões, datas, plano de horas e confirmação inline.
+- `canCancelBooking` e o gateway de cancelamento permanecem inalterados, inclusive proprietário e limite exato de 24 horas.
+- `src/pages/BookingsPage.test.tsx` cobre isolamento por usuário, categorias/contagens, 24h, erro, foco por teclado, aviso temporário e estado vazio.
+- Sem mudanças de CSS, rotas, contratos ou regras. Tratamento de erros/concorrência das leituras iniciais não foi ampliado nesta refatoração.
+
+### Separação View / ViewModel — Pagamento
+
+- `src/pages/PaymentPage.tsx` compõe a View e preserva redirecionamentos por rascunho ausente, de outro usuário ou catálogo indisponível.
+- `src/hooks/usePayment.ts` coordena catálogo, método, campos do cartão em memória, cópia PIX, checagem de conflito e confirmação demonstrativa pelos gateways.
+- `src/components/payment/` separa `PaymentPanel`, `PaymentSummary` e `DemoQrCode`; `src/utils/payment.ts` mantém as máscaras e validações existentes.
+- `src/pages/PaymentPage.test.tsx` cobre rascunhos inválidos, PIX/cartão, conflito, falha de persistência e consumo parcial do plano. Comparação temporária de HTML passou em PIX, cartão e validação.
+- Sem mudanças de CSS, cobrança real, regras de cartão, contratos ou dados. Campos de cartão não são enviados aos gateways.
+
+### Separação View / ViewModel — Salas do cliente
+
+- `src/pages/RoomsPage.tsx` mantém composição, parâmetro de unidade, redirecionamento e distribuição dos cartões nas duas colunas.
+- `src/hooks/useRooms.ts` coordena leitura da unidade e das salas pelo CatalogGateway, sem duplicar dados ou usar o campo estático `availableRooms` na contagem.
+- `src/components/rooms/RoomCard.tsx` apresenta fotos, comodidades, preço e link de reserva; índice do carrossel permanece local a cada cartão por ser estado de apresentação.
+- `src/pages/RoomsPage.test.tsx` cobre unidade ausente/inexistente, contagem real, colunas, preços, links, carrosséis independentes, placeholder e estado vazio.
+- Sem alterações de CSS, contratos, permissões ou regras. Comparação temporária de HTML passou no estado inicial e após avançar uma foto. Tratamento de falhas/concorrência das leituras foi preservado.
+
+### Separação View / ViewModel — Serviços do cliente
+
+- `src/pages/ServicesPage.tsx` compõe a vitrine editorial e fornece o nome do usuário autenticado aos conteúdos.
+- `src/hooks/useServices.ts` coordena o carregamento público pelo BusinessServiceGateway e deriva os três tipos de serviço, mantendo a proteção contra atualizações após desmontagem.
+- `src/components/services/ServiceContent.tsx` apresenta descrição, benefícios, modalidades e CTA; `ServiceMedia.tsx` apresenta imagem ou fallback administrativo.
+- `src/utils/service-contact.ts` preserva número do WhatsApp, saudação por horário local e codificação da mensagem com nome do cliente e serviço.
+- `src/pages/ServicesPage.test.tsx` cobre catálogo, ordem editorial, imagens, fallback, modalidades, mensagens/saudações, nome vazio, carregamento e catálogo vazio. Comparação temporária de HTML passou com o catálogo completo.
+- Sem mudanças de CSS, rotas, contratos ou dados. O tratamento de falha de leitura permanece como antes; não foi acrescentada recuperação de erro nesta refatoração estrutural.
+
+### Separação View / ViewModel — Unidades do cliente
+
+- `src/pages/UnitsPage.tsx` compõe catálogo, mapa e painel de proximidade.
+- `src/hooks/useUnits.ts` coordena leitura via CatalogGateway, seleção, solicitação explícita de geolocalização e estados de permissão. Distâncias e unidades ordenadas são derivadas sem duplicar estado.
+- `src/components/units/UnitLocationCard.tsx` apresenta a unidade; `NearestUnits.tsx` apresenta proximidade, permissão e retorno à lista. A rolagem DOM permanece na apresentação.
+- `src/utils/coordinates.ts` preserva o cálculo de distância geográfica antes local à página. O componente `UnitsMap` e seu ciclo de vida Leaflet permanecem inalterados.
+- `src/pages/UnitsPage.test.tsx` cobre catálogo, seleção sincronizada, links, geolocalização explícita, ordenação, unidades sem coordenadas, erros de permissão/indisponibilidade e catálogo vazio. Leaflet é simulado na fronteira; testes não validam carregamento de tiles externos. Comparação temporária de HTML inicial passou.
+- Sem mudanças de CSS, rotas, permissões ou dados. Contagem continua usando `unit.availableRooms`, como antes nesta tela; tratamento de falhas de leitura não foi ampliado.
+
+### Separação View / ViewModel — Login
+
+- `src/pages/LoginPage.tsx` apresenta formulário e redirecionamento declarativo; visibilidade da senha permanece local por ser estado visual.
+- `src/hooks/useLogin.ts` concentra campos, validação obrigatória, loading, erros e coordenação de login/Google via AuthContext, preservando destinos por perfil e atualização da sessão.
+- `PublicAuthLayout`, tema, contratos, autenticação mock e rotas permanecem inalterados. Não foi criada integração real com Google nem novos componentes sem responsabilidade própria.
+- `src/pages/LoginPage.test.tsx` cobre sessões e login dos três perfis, validação, senha visível, links, loading, falha com nova tentativa, Google indisponível e tema. Comparação temporária de HTML passou nos estados inicial e de erro obrigatório.
+- Sem alterações de CSS, mensagens, regras, permissões ou persistência.
+
+### Separação View / ViewModel — Cadastro
+
+- `src/pages/RegisterPage.tsx` compõe o formulário e mantém visibilidade das duas senhas como estado visual independente.
+- `src/hooks/useRegister.ts` coordena campos, máscara, ordem das validações, loading, erros e cadastro via AuthGateway, preservando retorno ao login com `registered: true`.
+- `src/components/auth/RegisterFormField.tsx` apresenta os campos tipados e controles de visibilidade antes locais à página; validadores existentes são reaproveitados sem mudanças.
+- `src/pages/RegisterPage.test.tsx` cobre sequência de validação, telefone, dados enviados, retorno ao login, falha/repetição e visibilidade independente. Comparação temporária de HTML passou nos estados inicial e de validação.
+- Sem mudanças de CSS, contratos, permissões, regras ou persistência. Confirmação da senha não é enviada ao gateway.
+
+### Separação View / ViewModel — Recuperar senha
+
+- `src/pages/RecoverPasswordPage.tsx` apresenta formulário e confirmação, reaproveitando PublicAuthLayout.
+- `src/hooks/useRecoverPassword.ts` concentra e-mail, validação existente, loading, erro genérico e solicitação via AuthGateway. O e-mail continua enviado com `trim()`.
+- `src/pages/RecoverPasswordPage.test.tsx` cobre validação, confirmação uniforme para endereços distintos, loading, falha sem exposição do detalhe interno e nova tentativa. Comparação temporária de HTML passou nos estados inicial e de confirmação.
+- Sem mudanças de CSS, textos, contratos ou dados. O envio permanece simulado no adaptador local; não foi implementada integração de e-mail.
+
+### Revisão estrutural — Confirmação de pagamento
+
+- `src/pages/PaymentConfirmationPage.tsx` permanece uma View simples: recebe resumo da rota, apresenta detalhes, volta ao topo e fornece atalhos. Não coordena persistência ou pagamento.
+- Não foi criado ViewModel: extrair apenas leitura da rota e formatação local acrescentaria camada sem responsabilidade própria. A confirmação não substitui validação financeira no backend.
+- `src/pages/PaymentConfirmationPage.test.tsx` cobre estado ausente/sem ID, resumo, data, duração singular/plural, rolagem inicial, aviso de integrações futuras e navegação dos dois atalhos.
+- Código da página, CSS, dados, textos e comportamento permanecem inalterados.
+
+### Revisão estrutural — Página 404
+
+- `src/pages/NotFoundPage.tsx` permanece uma View simples, sem ViewModel artificial: exibe aviso e deriva destino de retorno do perfil autenticado.
+- `src/pages/NotFoundPage.test.tsx` cobre ausência de sessão e os perfis cliente, admin e secretaria, verificando mensagem, destino e navegação pelo link.
+- Página, CSS e rota curinga permanecem inalterados. Backup também foi revisado após autorização posterior, conforme seção abaixo. Otimização do bundle permanece etapa separada.
+
+### Separação View / ViewModel — Backup
+
+- `src/pages/AdminBackupPage.tsx` compõe cabeçalho, feedback e as seções de exportação/restauração, fornecendo usuário e logout do AuthContext.
+- `src/hooks/useAdminBackup.ts` coordena data do último backup, arquivo, confirmação, estados de operação, feedback temporário, download e restauração pelos gateways.
+- `src/components/admin-backup/BackupExport.tsx` e `BackupRestore.tsx` apresentam os controles; a referência DOM do arquivo permanece local à apresentação.
+- Mantidos limite de 20 MB, aceite de JSON, confirmação exata `RESTAURAR`, validação estrutural no gateway, logout após importação e retorno a `/login`. Persistência, permissões, schema e política de credenciais não mudaram.
+- `src/pages/AdminBackupPage.test.tsx` cobre exportação, aviso de cinco segundos, arquivo inválido/grande, confirmação, erros, limpeza ao trocar arquivo e sequência importação/logout/redirecionamento com gateways simulados. Comparação temporária de HTML passou antes e depois de selecionar arquivo.
+- Revisão estrutural das telas previstas concluída. Otimização do bundle e conferência do mapa externo no navegador continuam separadas. Tratamento de concorrência na leitura de arquivos não foi ampliado nesta refatoração.
 
 ### Instruções e referências
 

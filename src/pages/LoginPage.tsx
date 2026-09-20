@@ -1,51 +1,17 @@
-import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
 import { EyeIcon, GoogleIcon, LockIcon } from '../components/icons';
 import { PublicAuthLayout } from '../components/PublicAuthLayout';
-import { useAuth } from '../state/AuthContext';
+import { useLogin } from '../hooks/useLogin';
 
 export function LoginPage() {
-  const { user, login, loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    destination, email, password, error, isLoading,
+    setEmail, setPassword, handleSubmit, handleGoogleLogin,
+  } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
 
-  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades'} replace />;
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError('');
-    if (!email.trim() || !password) {
-      setError('Informe seu e-mail e senha.');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const authenticatedUser = await login(email, password);
-      navigate(authenticatedUser.role === 'admin' ? '/admin' : authenticatedUser.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades', { replace: true });
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Não foi possível entrar.');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleGoogleLogin() {
-    setIsLoading(true);
-    setError('');
-    try {
-      const authenticatedUser = await loginWithGoogle();
-      navigate(authenticatedUser.role === 'admin' ? '/admin' : authenticatedUser.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades', { replace: true });
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Não foi possível entrar com Google.');
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  if (destination) return <Navigate to={destination} replace />;
 
   return (
     <PublicAuthLayout labelledBy="login-heading">
@@ -59,14 +25,22 @@ export function LoginPage() {
           <div className="field">
             <label htmlFor="email">E-mail</label>
             <div className="field-input-wrap">
-              <input id="email" name="email" type="email" placeholder="usuario@empresa.com.br" autoComplete="username" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} required />
+              <input
+                id="email" name="email" type="email" placeholder="usuario@empresa.com.br"
+                autoComplete="username" maxLength={254} value={email}
+                onChange={(event) => setEmail(event.target.value)} required
+              />
             </div>
           </div>
 
           <div className="field">
             <label htmlFor="password">Senha</label>
             <div className="field-input-wrap">
-              <input id="password" name="password" type={showPassword ? 'text' : 'password'} placeholder="Sua senha" autoComplete="current-password" maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} required />
+              <input
+                id="password" name="password" type={showPassword ? 'text' : 'password'}
+                placeholder="Sua senha" autoComplete="current-password" maxLength={128}
+                value={password} onChange={(event) => setPassword(event.target.value)} required
+              />
               <button type="button" className="toggle-visibility" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
                 <EyeIcon width="18" height="18" hidden={showPassword} />
               </button>
