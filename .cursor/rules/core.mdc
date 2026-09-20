@@ -17,6 +17,9 @@ importar ou redirecionar para `../coworking-site/`.
 - Integrações atrás dos contratos de `src/services/contracts.ts`.
 - Componentes não acessam SDK de backend ou `localStorage` diretamente.
 - Manter `strict: true`; não usar `any`, `@ts-ignore` ou casts para ocultar erro.
+- Seguir “Padrão para novas telas” em `PROJECT_STRUCTURE.md`: View em páginas/componentes, estado e coordenação em hooks/ViewModels, acesso a dados via gateways.
+- Reutilizar hooks existentes; não duplicar estado derivável ou regras. Telas simples não precisam de camadas artificiais.
+- Refatoração estrutural preserva visual, comportamento, permissões e persistência; não misturar com mudanças funcionais não solicitadas.
 
 # Visual
 
@@ -36,4 +39,3 @@ importar ou redirecionar para `../coworking-site/`.
 
 Antes de criar arquivo, consultar `PROJECT_STRUCTURE.md`. Antes de concluir,
 executar typecheck, testes e build, além de atualizar documentação afetada.
-

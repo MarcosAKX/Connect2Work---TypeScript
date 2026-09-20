@@ -9,6 +9,8 @@ alwaysApply: true
 2. Definir IDs e query strings necessários usando tipos existentes.
 3. Definir destinos reais para salvar, confirmar, cancelar e voltar.
 4. Reutilizar contratos e componentes; não duplicar sessão, logout ou validação.
+5. Planejar responsabilidades conforme “Padrão para novas telas” em `PROJECT_STRUCTURE.md`. Extrair hooks e seções somente quando melhorarem clareza ou testabilidade.
+6. Definir testes dos fluxos relevantes, incluindo erros e diferenças por perfil quando aplicável. Ao refatorar, verificar comportamento antes e depois.
 
 # Rotas
 
