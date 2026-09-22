@@ -76,6 +76,8 @@ Fonte: `src/assets/css/base.css`.
 
 ## Acessibilidade
 
+- Na primeira abertura de uma rota, o download do código pode exibir “Carregando página…” com `role="status"`, sem animação. Em áreas autenticadas, o cabeçalho permanece disponível. O aviso usa o texto secundário do tema atual; o visual das páginas carregadas não muda.
+
 - Seletores administrativos declaram o esquema do tema para manter fundo e texto legíveis também na lista nativa de opções.
 
 - Ferramentas administrativas secundárias usam drawer lateral com overlay, fechamento por clique externo, botão e tecla Esc.

@@ -104,6 +104,9 @@
 
 ## Interface e acessibilidade
 
+- Código das páginas carregado sob demanda, com aviso acessível e cabeçalho autenticado preservado durante a espera. O mapa é baixado ao abrir Unidades, não junto do login.
+- Falhas no download de tela usam a recuperação global existente; regras, dados locais e permissões não foram alterados por essa otimização.
+
 - Visual responsivo das sete telas: implementado.
 - App shell compartilhado com nome e saída vermelha: implementado.
 - Retorno visível e contextual: implementado.

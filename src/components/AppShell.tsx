@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { RouteLoading } from './RouteLoading';
 import { useAuth } from '../state/AuthContext';
 import logo from '../assets/img/cwlogo.ico';
 import { UserIcon } from './icons';
@@ -43,7 +44,7 @@ export function AppShell() {
           </button>
         </div>
       </header>
-      <Outlet />
+      <Suspense fallback={<RouteLoading />}><Outlet /></Suspense>
     </>
   );
 }

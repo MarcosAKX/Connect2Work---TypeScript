@@ -31,6 +31,20 @@ os tokens, shells, proteções de rota e componentes compartilhados existentes.
 - `vite.config.ts` — Vite, React e Vitest.
 - `vercel.json` — fallback das rotas da SPA para `index.html` no Vercel.
 
+### Carregamento sob demanda das rotas
+
+- `src/App.tsx` declara as páginas com `React.lazy` e caminhos explícitos de `import()`, fora do componente. Novas páginas devem seguir esse padrão, mantendo os guards existentes.
+- `Suspense` em `App` cobre rotas públicas; `AppShell` e `AdminShell` possuem limites junto ao `Outlet`, preservando o cabeçalho enquanto a página é baixada. `RouteLoading` anuncia “Carregando página…” sem animação e usa os tokens dos dois temas.
+- O JavaScript de Leaflet acompanha `UnitsPage`, não a entrada do login. Componentes e utilitários compartilhados podem gerar arquivos comuns automaticamente pelo Vite; não há configuração manual de chunks nem alteração de dependências.
+- `src/route-styles.ts` mantém os estilos das páginas carregados antecipadamente na ordem anterior. Isto evita que seletores compartilhados mudem de prioridade conforme a navegação. Os estilos globais continuam em `src/styles.css`; otimizar/separar CSS exige outra revisão da cascata, não mover imports silenciosamente para as páginas lazy.
+- Falha no download de uma página chega ao `ErrorBoundary` existente, com ação manual “Recarregar aplicação”. Não há recarga automática nem descarte de dados/formulários por um mecanismo de retry. Uma recarga manual pode perder campos ainda não salvos, como já ocorre ao recarregar o site.
+- Lazy loading melhora distribuição do código; **não é controle de acesso**. Guards, regras dos gateways e necessidade de validação no futuro backend permanecem inalterados.
+- `src/App.test.tsx` cobre as rotas reais, perfis, redirecionamentos, parâmetros, rascunho do checkout, estado de confirmação e navegação sem remontar o cabeçalho. `RouteLoading.test.tsx` cobre espera e falha de download.
+
+Medição local em 21/09/2026 (build de produção): JavaScript único anterior de **626,63 kB / 176,38 kB gzip**; entrada nova de **282,70 kB / 87,12 kB gzip**. Somando entrada, runtime e dependências necessárias para abrir o login: **295,54 kB / 91,22 kB gzip**, redução aproximada de **53% sem compressão / 48% gzip**. `UnitsPage` com mapa: **155,94 kB / 45,98 kB gzip**, sob demanda. Nenhum chunk ultrapassou 500 kB, sem aumentar o limite do aviso. Estes números medem arquivos, não tempo de carregamento nem Core Web Vitals em produção.
+
+Validação visual/funcional local: login dos três perfis, mapa com tiles, fluxo cliente até o checkout sem confirmar pagamento, dashboard e modal via `novo=1`, restrição da secretária, recarga de rota privada, temas claro/escuro e navegação mobile. CSS anterior comparado byte a byte no build: idêntico, exceto pela regra nova `.route-loading`. Não substitui medição em aparelho/rede reais nem teste do próximo deploy.
+
 ## Páginas
 
 - `src/pages/LoginPage.tsx` — `/login`.

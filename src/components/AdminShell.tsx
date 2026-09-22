@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { RouteLoading } from './RouteLoading';
 import logo from '../assets/img/cwlogo.ico';
 import { useAuth } from '../state/AuthContext';
 import { BuildingIcon, CalendarIcon, DashboardIcon, DoorIcon, MenuIcon, TaskIcon, UserIcon } from './icons';
@@ -114,7 +115,7 @@ export function AdminShell() {
         </div>
       </header>
       <AdminSidebar open={isSidebarOpen} hoverMode={isSidebarHoverMode} onMouseEnter={cancelScheduledClose} onMouseLeave={scheduleHoverClose} onClose={closeSidebar} role={role} taskAttentionCount={taskAttentionCount} />
-      <Outlet />
+      <Suspense fallback={<RouteLoading />}><Outlet /></Suspense>
     </>
   );
 }
