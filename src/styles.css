@@ -65,3 +65,9 @@
   font-size: 0.8125rem;
   line-height: 1.45;
 }
+.route-loading {
+  min-height: 40vh;
+  padding: 120px var(--space-5) var(--space-7);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
