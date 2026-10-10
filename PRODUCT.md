@@ -46,3 +46,8 @@ destaque dourado reservado para marca, foco, seleção e ações principais.
 - Login Google aguarda escolha do backend.
 - Administração de unidades, salas e imagens locais implementada.
 - Dashboard administrativo e gestão de unidades, salas e agendamentos implementados.
+
+## Backend — etapa 1 (08/10/2026)
+
+- Fundação local NestJS/TypeScript em backend/, com health/readiness e driver MySQL. Frontend permanece no mock; autenticação e cobrança reais não implementadas.
+- MySQL substitui a direção Supabase para o backend novo; schema antigo permanece legado. Conexão real da API aguarda senha local e check:database.

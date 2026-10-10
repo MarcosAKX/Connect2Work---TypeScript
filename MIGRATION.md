@@ -58,3 +58,7 @@ Passos pendentes:
 4. Disparar a sincronização no backend após mutações de agendamento. Preferir fila ou outbox transacional com retry, para não depender do navegador e não perder eventos em falhas temporárias.
 5. Implementar a versão real do `CalendarSyncGateway` quando o backend estiver pronto; no frontend, o adaptador deverá chamar somente endpoints próprios autenticados, nunca a API do Google diretamente.
 6. Cobrir criação, confirmação, alterações de data/horário/sala e cancelamento; check-in permanece operação interna e não exige atualização do evento.
+
+## Direção vigente — MySQL (08/10/2026)
+
+A decisão atual substitui os passos Supabase acima: MySQL local e API NestJS/TypeScript. Schema de 14 tabelas e seed em database/mysql/, recriados pelo usuário em banco de validação. Backend etapa 1 implementa health/readiness e comando check:database; acesso real aguarda senha local. Próxima etapa: identidade, sessão e autorização antes de trocar gateways. Não importar credenciais mock nem habilitar pagamento real. Histórico Supabase é legado não ativo.

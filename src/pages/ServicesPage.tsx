@@ -27,7 +27,7 @@ export function ServicesPage() {
   return <main className="services-page">
     <header className="services-header">
       <h1>Serviços para o seu negócio</h1>
-      <p>Soluções inteligentes que dão mais profissionalismo e flexibilidade para sua empresa crescer.</p>
+      <p>Soluções inteligentes que dão mais profissionalismo, economia e flexibilidade para sua empresa crescer.</p>
     </header>
 
     <section className={`services-showcase${isLoading ? ' is-loading' : ''}`} aria-label="Serviços empresariais" aria-busy={isLoading}>
@@ -56,8 +56,8 @@ export function ServicesPage() {
 
     <section className="services-benefits" aria-label="Benefícios dos serviços">
       <div><span><UsersIcon width="25" height="25" /></span><p><strong>Atendimento nas unidades</strong>Apoio presencial para atender você e sua empresa.</p></div>
-      <div><span><CheckIcon width="25" height="25" /></span><p><strong>Contrato flexível</strong>Mais liberdade para ajustar conforme sua necessidade.</p></div>
-      <div><span><BuildingIcon width="25" height="25" /></span><p><strong>Suporte da equipe C2W</strong>Conte com nosso time sempre que precisar.</p></div>
+      <div><span><CheckIcon width="25" height="25" /></span><p><strong>Contrato flexível</strong>Locações sem burocracia pelo tempo que você precisa</p></div>
+      <div><span><BuildingIcon width="25" height="25" /></span><p><strong>Suporte da equipe Connect2Work</strong>Conte com nosso time sempre que precisar.</p></div>
     </section>
   </main>;
 }

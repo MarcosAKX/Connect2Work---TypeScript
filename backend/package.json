@@ -1,0 +1,24 @@
+{
+  "name": "connect2work-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": { "node": ">=24.15 <25" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test dist/test/*.spec.js",
+    "start": "node --env-file=.env dist/src/main.js",
+    "dev": "npm run build && npm start",
+    "check:database": "npm run build && node --env-file=.env dist/src/check-database.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.2.7",
+    "@nestjs/core": "11.2.7",
+    "@nestjs/platform-express": "11.2.7",
+    "mysql2": "3.24.5",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": { "@types/node": "24.10.1", "typescript": "5.9.3" }
+}

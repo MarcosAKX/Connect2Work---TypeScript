@@ -17,7 +17,7 @@ export function LoginPage() {
     <PublicAuthLayout labelledBy="login-heading">
       <div className="login-card">
         <div className="login-card-header">
-          <h1 id="login-heading">Bem-vindo de volta</h1>
+          <h1 id="login-heading">Bem-vindo</h1>
           <p>Acesse sua conta Connect2Work</p>
         </div>
 

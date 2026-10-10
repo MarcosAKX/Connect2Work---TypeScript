@@ -135,3 +135,10 @@
 - Uploads administrativos aceitam apenas JPEG, PNG e WebP, com limite de 2 MB e normalização WebP.
 - A aplicação possui tela 404 e limite global para falhas inesperadas da interface.
 - O backup operacional usa schema 3, inclui serviços empresariais e não exporta senhas, tokens ou sessões; autenticação fica separada para a futura adoção do Supabase Auth.
+
+## API local — etapa 1
+
+- GET /health e /ready implementados, com testes isolados do backend. Nenhuma rota de dados privados foi habilitada.
+- Validação de configuração, pool MySQL, decimais como string, consultas parametrizadas e sessões UTC. Senha em backend/.env ignorado pelo Git.
+- Conexão real ainda depende de configuração local; oito testes não comprovam acesso ao banco real. Login/cadastro continuam mock.
+- Direção atual: MySQL. Referências Supabase anteriores são preparação histórica, não integração ativa.
