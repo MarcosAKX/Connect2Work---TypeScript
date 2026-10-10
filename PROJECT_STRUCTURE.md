@@ -26,6 +26,8 @@ os tokens, shells, proteções de rota e componentes compartilhados existentes.
 
 ## Entrada e rotas
 
+Em 08/10/2026, os 22 arquivos `src/pages/*.test.tsx` foram removidos por solicitação do usuário. Referências a esses testes nas seções de refatoração abaixo registram validações históricas; esses arquivos não integram mais a suíte atual. Os testes fora de `src/pages` permanecem.
+
 - `src/main.tsx` — inicializa React, Router e autenticação.
 - `src/App.tsx` — rotas públicas, do cliente e administrativas.
 - `vite.config.ts` — Vite, React e Vitest.
@@ -356,3 +358,16 @@ Validação visual/funcional local: login dos três perfis, mapa com tiles, flux
 - `src/components/ErrorBoundary.tsx`: recuperação global de falhas de renderização.
 - `src/pages/NotFoundPage.tsx`: destino explícito para rotas inexistentes.
 - `src/utils/image-upload.ts`: validação, redimensionamento e normalização dos uploads locais.
+
+## SQL MySQL consolidado
+
+- database/mysql/estrutura-inicial.sql contém as 14 tabelas em português extraídas do banco local e ordenadas por dependências, somente com criações. Substitui o arquivo anterior de seis tabelas.
+- database/mysql/seeds/001_perfis.sql guarda os perfis iniciais sem credenciais.
+- database/mysql/README.md registra evidências e limitações. A restauração em outro schema ainda não foi validada. Frontend permanece no mock local.
+
+## Backend local — etapa 1
+
+- backend/ tem package.json, lockfile e TypeScript estrito próprios; configuração em src/config, infraestrutura MySQL em src/infrastructure/database e controller em src/api.
+- backend/src/application.ts compõe NestJS; main.ts inicia em loopback; check-database.ts testa acesso real sem alterar dados.
+- backend/test usa Node test runner; Vitest da raiz inclui somente src/**/*.test.{ts,tsx}, separando as suítes.
+- backend/.env, node_modules e dist são ignorados pelo Git. Frontend continua no mock. Leia backend/README.md para executar.

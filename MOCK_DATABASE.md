@@ -157,3 +157,7 @@ operação atômica para evitar dois usuários reservando o mesmo intervalo.
 - Registros de auditoria podem armazenar `actorName` como fotografia do nome exibido no momento da operação.
 - Backups novos usam schema 3, incluem `businessServices` e mantêm `credentialsIncluded: false`. Usuários são exportados sem `password`, tokens ou sessão.
 - Ao restaurar no mock, credenciais de contas já presentes são preservadas. Contas desconhecidas importadas ficam inativas até revisão do administrador.
+
+## Relação com MySQL e API local
+
+O mock descrito aqui segue ativo no frontend. A API da etapa 1 tem somente saúde/prontidão; não migra usuários, senhas ou dados locais. Schema MySQL em database/mysql/; credenciais de conexão somente em backend/.env. Novas regras de autenticação ainda serão definidas. O banco MySQL é a direção atual, substituindo a preparação Supabase anterior.

@@ -82,7 +82,7 @@ export function UnitFormDialog({ unit, isSaving, gatewayError, onCancel, onSave 
             </div>
           </div>
           <div className="admin-unit-form__image-field">
-            <label htmlFor="unit-image"><UploadIcon width="17" height="17" />Imagem da unidade <span>(até 2 MB)</span></label>
+            <label htmlFor="unit-image"><UploadIcon width="17" height="17" />Imagem da unidade <span>(até 5 MB)</span></label>
             <input id="unit-image" type="file" accept="image/*" onChange={(event) => void handleImageChange(event)} />
             {imageUrl && (
               <div className="admin-unit-form__preview">

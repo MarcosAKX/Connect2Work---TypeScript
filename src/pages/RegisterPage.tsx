@@ -17,7 +17,7 @@ export function RegisterPage() {
         <form onSubmit={handleSubmit} noValidate>
           <RegisterFormField label="Nome Completo" name="name" value={form.name} onChange={updateField} autoComplete="name" placeholder="Seu nome completo" maxLength={100} />
           <RegisterFormField label="E-mail" name="email" value={form.email} onChange={updateField} type="email" autoComplete="email" placeholder="seu@email.com" maxLength={254} />
-          <RegisterFormField label="Profissão" name="profession" value={form.profession} onChange={updateField} autoComplete="organization-title" placeholder="Ex: Desenvolvedor, Designer, Advogado" maxLength={80} />
+          <RegisterFormField label="Profissão" name="profession" value={form.profession} onChange={updateField} autoComplete="organization-title" placeholder="Ex: Psicólogo, Advogado, Nutricionista" maxLength={80} />
           <RegisterFormField label="Telefone" name="phone" value={form.phone} onChange={updateField} type="tel" autoComplete="tel" placeholder="(00) 00000-0000" inputMode="numeric" />
           <RegisterFormField label="Senha" name="password" value={form.password} onChange={updateField} type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="Mínimo 6 caracteres" maxLength={128} toggle={{ shown: showPassword, change: setShowPassword, label: 'senha' }} />
           <RegisterFormField label="Confirmar Senha" name="confirmPassword" value={form.confirmPassword} onChange={updateField} type={showConfirmation ? 'text' : 'password'} autoComplete="new-password" placeholder="Confirme sua senha" maxLength={128} toggle={{ shown: showConfirmation, change: setShowConfirmation, label: 'confirmação de senha' }} />

@@ -6,6 +6,7 @@ export default defineConfig({
   publicDir: 'public',
   test: {
     environment: 'jsdom',
+    include: ['src/**/*.test.{ts,tsx}'],
   },
   server: {
     port: 5173,

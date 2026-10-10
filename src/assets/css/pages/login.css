@@ -28,7 +28,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url("../../img/faxada.png");
+  background-image: url("../../img/faxada1.JPG");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -316,7 +316,7 @@
   min-height: 100svh;
   background-image:
     linear-gradient(180deg, rgb(4 6 8 / 10%) 42%, rgb(4 6 8 / 82%) 100%),
-    url("../../img/faxada.png");
+    url("../../img/faxada1.JPG");
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -598,3 +598,5 @@
     animation: none;
   }
 }
+
+
