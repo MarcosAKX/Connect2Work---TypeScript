@@ -1,5 +1,5 @@
 import { Controller, Get, Header, Inject, ServiceUnavailableException } from '@nestjs/common';
-import type { Readiness } from '../infrastructure/database/database.service';
+import type { Readiness } from '../database/database.service';
 export const READINESS = Symbol('READINESS');
 @Controller()
 export class HealthController {

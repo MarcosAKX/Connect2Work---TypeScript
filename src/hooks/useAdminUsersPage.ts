@@ -4,7 +4,7 @@ import type { UserFormValue } from './useManagedUserForm';
 import type { User, CreateManagedUserInput, UpdateManagedUserInput } from '../types/domain';
 
 // Coordenação da página; leitura e mutações permanecem em useAdminUsers.
-export function useAdminUsersPage(currentUser: User | null, refreshUser: () => void) {
+export function useAdminUsersPage(currentUser: User | null, refreshUser: () => Promise<void>) {
   const admin = useAdminUsers();
   const [formUser, setFormUser] = useState<User | null | undefined>(undefined);
   const [deactivatingUser, setDeactivatingUser] = useState<User | null>(null);
@@ -19,7 +19,7 @@ export function useAdminUsersPage(currentUser: User | null, refreshUser: () => v
     if (formUser) {
       const input: UpdateManagedUserInput = { ...value, password: value.password || undefined };
       if (await admin.updateUser(formUser.id, input)) {
-        if (formUser.id === currentUser?.id) refreshUser();
+        if (formUser.id === currentUser?.id) await refreshUser();
         setFormUser(undefined);
       }
       return;

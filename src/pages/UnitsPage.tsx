@@ -11,6 +11,10 @@ export function UnitsPage() {
         <h1>Escolha sua unidade</h1>
         <p className="units-subtitle">Encontre o espaço mais próximo da sua rotina</p>
       </header>
+      {model.loading ? <p role="status">Carregando unidades…</p>
+        : model.error ? <div role="alert"><p>{model.error}</p><button className="btn btn-secondary" onClick={() => { void model.reload(); }}>Tentar novamente</button></div>
+        : model.units.length === 0 ? <p role="status">Nenhuma unidade cadastrada no momento.</p> : null}
+      {!model.loading && !model.error && model.units.length > 0 && (
       <div className="units-explorer">
         <section id="units-list" className="units-list" aria-label="Unidades disponíveis">
           {model.units.map((unit) => (
@@ -36,6 +40,7 @@ export function UnitsPage() {
           />
         </aside>
       </div>
+      )}
     </main>
   );
 }

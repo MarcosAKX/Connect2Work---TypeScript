@@ -96,3 +96,13 @@ Fonte: `src/assets/css/base.css`.
 - Não usar cores hardcoded quando existir token semântico equivalente.
 - Não criar variantes visuais diferentes para mesma ação.
 - Não usar gradiente em texto, glassmorphism decorativo ou cards excessivamente arredondados.
+
+
+## Estados de sessão — 11/10/2026
+
+Preservar tema e formulários. Verificação inicial usa carregamento; falha usa mensagem genérica e botão Tentar novamente. Módulos privados pendentes usam mensagem Funcionalidade em preparação dentro do Shell. Falha de logout aparece junto ao botão Sair e permite nova tentativa. Verificação em segundo plano conserva a página e suspende interação via inert/aria-busy até confirmação.
+
+
+## Unidades — integração MySQL em 17/10/2026
+
+Preservar o layout e o mapa existentes. Exibir carregamento, ausência de unidades e falha com nova tentativa antes de montar o mapa. A contagem deve usar Salas na unidade / salas cadastradas: disponibilidade por horário depende da etapa de Agendamentos. Imagem não configurada usa placeholder existente. Sem coordenadas, o card permanece na lista.

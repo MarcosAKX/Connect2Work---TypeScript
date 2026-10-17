@@ -1,3 +1,4 @@
+import { IntegrationPending } from './IntegrationPending';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Suspense, useState } from 'react';
 import { RouteLoading } from './RouteLoading';
@@ -6,17 +7,20 @@ import logo from '../assets/img/cwlogo.ico';
 import { UserIcon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
 
-export function AppShell() {
+export function AppShell({ blocked = false }: { blocked?: boolean }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLeaving, setIsLeaving] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
 
   async function handleLogout() {
-    setIsLeaving(true);
+    setIsLeaving(true); setLogoutError('');
     try {
       await logout();
       navigate('/login', { replace: true, state: { from: location.pathname } });
+    } catch {
+      setLogoutError('Não foi possível encerrar a sessão. Tente novamente.');
     } finally {
       setIsLeaving(false);
     }
@@ -39,12 +43,12 @@ export function AppShell() {
             <span className="app-user-name">{user?.name ?? 'Usuário'}</span>
           </span>
           <ThemeToggle />
-          <button type="button" className="app-logout" onClick={handleLogout} disabled={isLeaving} aria-label="Sair da conta">
+          <div className="logout-status"><button type="button" className="app-logout" onClick={handleLogout} disabled={isLeaving} aria-label="Sair da conta">
             {isLeaving ? 'Saindo...' : 'Sair'}
-          </button>
+          </button>{logoutError && <p className="auth-shell-error" role="alert">{logoutError}</p>}</div>
         </div>
       </header>
-      <Suspense fallback={<RouteLoading />}><Outlet /></Suspense>
+      <Suspense fallback={<RouteLoading />}>{blocked ? <IntegrationPending /> : <Outlet />}</Suspense>
     </>
   );
 }

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../state/AuthContext';
 
 export function useLogin() {
-  const { user, login, loginWithGoogle } = useAuth();
+  const { user, login, loginWithGoogle, status: authStatus, error: authError, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,5 +46,5 @@ export function useLogin() {
   const destination = user
     ? user.role === 'admin' ? '/admin' : user.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades'
     : null;
-  return { destination, email, password, error, isLoading, setEmail, setPassword, handleSubmit, handleGoogleLogin };
+  return { destination, email, password, error, isLoading, authStatus, authError, refreshUser, setEmail, setPassword, handleSubmit, handleGoogleLogin };
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { DatabaseService, buildPoolOptions, type DatabaseConnection } from '../src/infrastructure/database/database.service';
+import { DatabaseService, buildPoolOptions, type DatabaseConnection } from '../src/database/database.service';
 import { validateEnvironment } from '../src/config/environment';
 const config = validateEnvironment({ DB_HOST: '127.0.0.1', DB_NAME: 'connect2work', DB_USER: 'c2w_api', DB_PASSWORD: 'fake-test-password' });
 test('pool preserves decimals and limits waiting connections', () => {

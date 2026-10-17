@@ -13,6 +13,7 @@ export function emailError(value: string) {
 }
 
 export function fullNameError(value: string) {
+  if (/\p{N}/u.test(value)) return 'O nome não pode conter números.';
   const parts = value.trim().split(/\s+/).filter(Boolean);
   if (parts.length < 2 || parts.some((part) => part.length < 2)) return 'Informe seu nome e sobrenome.';
   if (value.trim().length > 100) return 'Use no máximo 100 caracteres.';
@@ -20,6 +21,7 @@ export function fullNameError(value: string) {
 }
 
 export function professionError(value: string) {
+  if (/\p{N}/u.test(value)) return 'A profissão não pode conter números.';
   const profession = value.trim();
   if (profession.length < 2) return 'Informe sua profissão.';
   if (profession.length > 80) return 'Use no máximo 80 caracteres.';
