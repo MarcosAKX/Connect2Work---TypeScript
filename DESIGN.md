@@ -106,3 +106,11 @@ Preservar tema e formulários. Verificação inicial usa carregamento; falha usa
 ## Unidades — integração MySQL em 17/10/2026
 
 Preservar o layout e o mapa existentes. Exibir carregamento, ausência de unidades e falha com nova tentativa antes de montar o mapa. A contagem deve usar Salas na unidade / salas cadastradas: disponibilidade por horário depende da etapa de Agendamentos. Imagem não configurada usa placeholder existente. Sem coordenadas, o card permanece na lista.
+
+## Redirecionamento por expiração — 17/10/2026
+
+Quando o prazo já confirmado pela API é atingido, AuthContext encerra o acesso na interface e as rotas protegidas retornam ao login, sem exigir nova consulta HTTP. O prazo usa o menor entre inatividade e expiração absoluta, com o ajuste de relógio recebido da API. Um temporizador independente continua ativo mesmo se uma verificação falhar ou ficar pendente; respostas antigas não reabrem a sessão. Nova confirmação de atividade substitui o prazo anterior. A interface libera o estado inert ao expirar.
+
+O backend continua sendo a autoridade para aceitar requisições: não houve alteração dos limites de 15 minutos/4 horas nem das verificações no servidor. Esta mudança é conservadora no cliente: o prazo conhecido também pode encerrar essa aba quando outra aba tiver renovado a sessão sem sincronização local. Falhas de verificação antes de conhecer um prazo (por exemplo, primeira abertura com API indisponível) continuam exibindo Tentar novamente; expiração conhecida retorna ao login. Em abas suspensas, a interface atualiza quando o navegador retoma a execução.
+
+Regressões cobrem expiração por inatividade e absoluta com rede indisponível, consulta pendente, resposta tardia, erro anterior ao vencimento e renovação do prazo. Não há alteração de tabelas, credenciais ou dados.

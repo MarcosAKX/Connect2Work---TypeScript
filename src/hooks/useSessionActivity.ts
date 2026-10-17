@@ -39,7 +39,7 @@ export function useSessionActivity({ enabled, session, onActivity, onCheck, acce
     const events = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'input'];
     for (const event of events) document.addEventListener(event, handle, { passive: true });
     document.addEventListener('visibilitychange', visible);
-    // Consulta no limite; o servidor confirma expiração. Nenhum heartbeat renova a sessão.
+    // Sinaliza o limite ao coordenador; não envia heartbeat nem renova a sessão sozinho.
     const expiryTimer = setTimeout(check, Math.max(0, deadline - Date.now()));
     return () => {
       stopped = true;
