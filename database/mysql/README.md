@@ -19,3 +19,12 @@ Servidor local confirmado: MySQL 26.7.0, portas 3306/33060 em 127.0.0.1.
 O agente inspecionou o dump completo, encontrou as 14 criações e não encontrou INSERTs ou contas. A versão consolidada ainda não foi restaurada em outro schema. Testes do frontend não validam SQL. Sobreposição de reservas, atualização atômica de saldo, autorização HTTP e pagamento real permanecem pendentes.
 
 Arquivos e colunas usam português; códigos client/admin/secretaria permanecem compatíveis com o frontend. Planos e movimentações são provisórios. A API ainda não está implementada; frontend permanece com mock local.
+## Preparacao do cadastro — 11/10/2026
+
+`migrations/002_usuarios_senha_hash.sql` adiciona somente `usuarios.senha_hash`: VARCHAR(255), ASCII bin, nullable, sem senha padrao. Executar uma vez com a conta administrativa; c2w_api nao recebe ALTER. Contas sem hash deverao ter login negado pelo backend. Hash nunca deve ser retornado pela API, registrado em logs ou incluido em auditoria.
+
+O arquivo estrutura-inicial.sql continua representando a base original: em instalacoes novas, aplicar a migracao depois dele. Aplicacao no banco atual ainda pendente de confirmacao do operador. Nenhuma rota de cadastro ou login foi implementada nesta etapa. A fundacao da API e a conexao real foram validadas anteriormente; o frontend segue no mock.
+
+## Estado atual — 17/10/2026
+
+As descrições anteriores registram etapas históricas. Cadastro, login, sessões e consulta de unidades estão implementados na API MySQL. As migrações 002 e 003 já foram aplicadas e confirmadas; não reaplicar sobre o banco atual. Consulta de unidades usa estrutura existente, sem nova migração. O agente validou LEFT JOIN/contagem e coordenadas com dados temporários próprios, removidos após o teste. Não há seed permanente de unidades. A aplicação mostra lista vazia quando não existem unidades reais.

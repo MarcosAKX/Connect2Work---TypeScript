@@ -1,21 +1,21 @@
+import { protecaoHttp } from './security/protecao-http';
 import 'reflect-metadata';
-import { Module, type INestApplication } from '@nestjs/common';
+import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { NestFactory } from '@nestjs/core';
-import { HealthController, READINESS } from './api/health.controller';
-import type { Readiness } from './infrastructure/database/database.service';
-@Module({})
-class AppModule {}
-export async function createApplication(database: Readiness): Promise<INestApplication> {
-  const app = await NestFactory.create({
-    module: AppModule,
-    controllers: [HealthController],
-    providers: [{ provide: READINESS, useValue: database }]
-  }, { logger: false, bodyParser: false });
+import { AppModule } from './app.module';
+import type { CadastroDependencies } from './modules/auth.module';
+import type { Readiness } from './database/database.service';
+import type { CatalogoDependencies } from './modules/catalogo.module';
+export async function createApplication(database: Readiness, cadastro?: CadastroDependencies, catalogo?: CatalogoDependencies): Promise<INestApplication> {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule.register(database, cadastro, catalogo), { logger: false, bodyParser: false });
   app.use((_request: unknown, response: { removeHeader(name: string): void; setHeader(name: string, value: string): void }, next: () => void) => {
     response.removeHeader('X-Powered-By');
     response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Cache-Control', 'no-store');
     next();
   });
+  if (cadastro?.auth) app.use(protecaoHttp(cadastro.auth.config));
+  if (cadastro) app.useBodyParser('json', { limit: '8kb' });
   return app;
 }

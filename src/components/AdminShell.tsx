@@ -1,3 +1,4 @@
+import { IntegrationPending } from './IntegrationPending';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { RouteLoading } from './RouteLoading';
@@ -18,16 +19,17 @@ const adminNavigation = [
   { to: '/admin/unidades', label: 'Unidades', icon: BuildingIcon, end: false, roles: ['admin'] },
 ] satisfies Array<{ to: string; label: string; icon: typeof DashboardIcon; end: boolean; roles: UserRole[] }>;
 
-export function AdminShell() {
+export function AdminShell({ blocked = false }: { blocked?: boolean }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isLeaving, setIsLeaving] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarHoverMode, setIsSidebarHoverMode] = useState(false);
   const hoverModeRef = useRef(false);
   const closeTimerRef = useRef<number | null>(null);
   const role = user?.role ?? 'client';
-  const taskAttentionCount = useTaskAttentionCount();
+  const taskAttentionCount = useTaskAttentionCount(!blocked);
   const visibleNavigation = adminNavigation.filter((item) => (item.roles as UserRole[]).includes(role));
 
   useEffect(() => () => {
@@ -74,10 +76,12 @@ export function AdminShell() {
   }
 
   async function handleLogout() {
-    setIsLeaving(true);
+    setIsLeaving(true); setLogoutError('');
     try {
       await logout();
       navigate('/login', { replace: true });
+    } catch {
+      setLogoutError('Não foi possível encerrar a sessão. Tente novamente.');
     } finally {
       setIsLeaving(false);
     }
@@ -109,13 +113,13 @@ export function AdminShell() {
         <div className="admin-account">
           <span className="admin-account__identity"><UserIcon width="16" height="16" />{user?.name ?? 'Administrador'}</span>
           <ThemeToggle />
-          <button type="button" className="admin-account__logout" onClick={handleLogout} disabled={isLeaving}>
+          <div className="logout-status"><button type="button" className="admin-account__logout" onClick={handleLogout} disabled={isLeaving}>
             {isLeaving ? 'Saindo…' : 'Sair'}
-          </button>
+          </button>{logoutError && <p className="auth-shell-error" role="alert">{logoutError}</p>}</div>
         </div>
       </header>
       <AdminSidebar open={isSidebarOpen} hoverMode={isSidebarHoverMode} onMouseEnter={cancelScheduledClose} onMouseLeave={scheduleHoverClose} onClose={closeSidebar} role={role} taskAttentionCount={taskAttentionCount} />
-      <Suspense fallback={<RouteLoading />}><Outlet /></Suspense>
+      <Suspense fallback={<RouteLoading />}>{blocked ? <IntegrationPending /> : <Outlet />}</Suspense>
     </>
   );
 }

@@ -114,7 +114,7 @@ export function useAdminTasks(currentUserId: string) {
   return { tasks: visibleTasks, columns, staff, filter, setFilter, loading, saving, error, notice, load, createTask, updateTask, moveTask, deleteTask };
 }
 
-export function useTaskAttentionCount() {
+export function useTaskAttentionCount(enabled = true) {
   const [count, setCount] = useState(0);
 
   const refresh = useCallback(async () => {
@@ -126,11 +126,12 @@ export function useTaskAttentionCount() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     void refresh();
     const handleChange = () => { void refresh(); };
     window.addEventListener(TASKS_CHANGED_EVENT, handleChange);
     return () => window.removeEventListener(TASKS_CHANGED_EVENT, handleChange);
-  }, [refresh]);
+  }, [refresh, enabled]);
 
   return count;
 }

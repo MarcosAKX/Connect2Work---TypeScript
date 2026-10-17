@@ -367,7 +367,62 @@ Validação visual/funcional local: login dos três perfis, mapa com tiles, flux
 
 ## Backend local — etapa 1
 
-- backend/ tem package.json, lockfile e TypeScript estrito próprios; configuração em src/config, infraestrutura MySQL em src/infrastructure/database e controller em src/api.
+- backend/ tem package.json, lockfile e TypeScript estrito próprios; configuração em src/config, infraestrutura MySQL em src/database e controller em src/controllers.
 - backend/src/application.ts compõe NestJS; main.ts inicia em loopback; check-database.ts testa acesso real sem alterar dados.
 - backend/test usa Node test runner; Vitest da raiz inclui somente src/**/*.test.{ts,tsx}, separando as suítes.
 - backend/.env, node_modules e dist são ignorados pelo Git. Frontend continua no mock. Leia backend/README.md para executar.
+
+## Cadastro real — etapa de backend (11/10/2026)
+
+POST /auth/register implementado com classes ServicoCadastro, ServicoSenha (Argon2id) e RepositorioUsuariosMysql. Senha de 6 a 128 unidades UTF-16, sem caracteres em branco; perfil client definido no servidor, consultas parametrizadas, respostas sem senha/hash. Migracao senha_hash confirmada pelo usuario. Teste HTTP/MySQL real validou criacao e duplicata; fixture temporaria removida.
+
+Frontend e MVVM existentes permanecem no mock. Integracao da tela, maxlength, login e sessao sao proximas etapas. Contrato HTTP, limites locais e verificacoes detalhados em backend/README.md.
+## Organizacao do backend por camadas — 11/10/2026
+
+Estrutura atual de backend/src:
+
+- controllers/: CadastroController e HealthController, entrada HTTP.
+- services/: ServicoCadastro, regras e coordenacao.
+- repositories/contracts/: contrato RepositorioUsuarios e dados de persistencia NovoUsuario.
+- repositories/mysql/: RepositorioUsuariosMysql, SQL parametrizado.
+- security/: contrato GeradorHash e implementacao ServicoSenha em servico-senha-argon2.ts.
+- dto/: UsuarioCadastradoDto, resposta publica explicitamente sem credenciais.
+- database/: infraestrutura de conexao e prontidao MySQL.
+- modules/: AuthModule e HealthModule, composicao dos providers existentes.
+- config/: validacao do ambiente.
+- app.module.ts: composicao raiz; application.ts: fabrica HTTP usada tambem nos testes; main.ts: inicializacao.
+
+Refatoracao estrutural: contratos extraidos e imports atualizados, sem alteracao de rotas, validacoes, SQL, politica de senha, limites ou permissao. Ciclo de vida dos pools preservado; os pools existentes de prontidao e usuarios continuam separados nesta etapa. Frontend e seu MVVM permanecem inalterados. Nao ha pasta auth/api/infrastructure antiga nem pastas vazias criadas para funcionalidades futuras.
+
+Validacao: 14 testes do backend e cadastro HTTP/MySQL real aprovados depois da reorganizacao; fixture temporaria removida pelo teste.
+## Integracao progressiva do cadastro — 11/10/2026
+
+CadastroHttpGateway implementa cadastro HTTP e AuthHttpGateway implementa login/sessão/logout. create-app-services.ts seleciona os adaptadores conforme modo, preservando View/RegisterPage e ViewModel/useRegister. Cadastro confirmado navega para /login sem iniciar sessão. Contas MySQL agora podem entrar no login real. Não copia contas/senhas para mock nem faz fallback se HTTP falhar.
+
+Integração atual: VITE_AUTH_API=true em .env.development.local ativa cadastro, login, sessão e logout HTTP no desenvolvimento. Produção usa API obrigatoriamente e falha fechada se /api estiver indisponível. Proxy Vite /api aponta para http://127.0.0.1:3001; implantação exige proxy HTTPS equivalente. Nenhuma credencial MySQL usa variável VITE_.
+
+Gateway envia somente os cinco campos do contrato, timeout de 10 segundos, sem cookies; valida resposta em runtime e seleciona apenas campos publicos. Erros sao traduzidos por status, sem exibir mensagem interna do servidor. Os dois inputs ja possuiam maxlength=128; mantidos e conferidos no navegador. Validacao de espacos e comprimento permanece no ViewModel e backend. Testes adicionados fora de pages, em hooks e services.
+## Classes de autenticação e sessão — 11/10/2026
+
+Backend permanece organizado por camadas: AutenticacaoController -> ServicoAutenticacao/ServicoSessoes -> contratos RepositorioAutenticacao/RepositorioSessoes -> implementações MySQL. DTOs sessao/usuario-publico selecionam respostas; security reúne CookieSessao, TokenSessao, PoliticaSenha, ServicoSenha e LimiteAutenticacao. Relogio substituível permite testar limites sem espera real. database/conexao-limitada.ts limita operação integral, inclusive transação e aquisição de conexão.
+
+check-authentication.ts valida HTTP/MySQL com conta fictícia aleatória e limpeza no finally. AuthGateway e AuthContext agora integram sessões reais; CadastroHttpGateway usa X-C2W-Request para proteção HTTP.
+
+## Integração de sessão no frontend — 11/10/2026
+
+Login e cadastro usam a API local/MySQL. AuthHttpGateway encapsula HTTP; AuthContext coordena estado; hooks coordenam ações e Views apresentam a interface, preservando MVVM no frontend e camadas/POO no backend. Token fica em cookie HttpOnly, sem localStorage. Sessão não persistente: 15 minutos sem atividade e limite absoluto de 4 horas. GET de sessão não renova; interação real em aba visível registra atividade no máximo uma vez por minuto.
+
+Rotas aguardam confirmação inicial da API. Falha de rede bloqueia acesso com mensagem genérica e nova tentativa. Verificação ao retornar à aba preserva a página, bloqueando interação até confirmar; prazo vencido bloqueia imediatamente. Logout só encerra visualmente após confirmação do servidor; falha permite tentar novamente. Respostas antigas não reabrem sessão encerrada.
+
+Em modo HTTP, catálogo de unidades/salas/serviços ainda é demonstração estática somente leitura. Reservas, pagamento, plano de horas, tarefas, auditoria, backup e administração aguardam integração e ficam bloqueados; não usam dados privados mock. Google e recuperação de senha ainda indisponíveis. Desenvolvimento sem VITE_AUTH_API usa mock explicitamente; produção sempre usa API. Sessões reais não são exportadas em backups.
+
+Validação: testes automatizados cobrem limites, falhas e concorrência; navegador confirmou senha incorreta, login real, recarga mantendo sessão, bloqueio de reservas e logout com rota privada redirecionada. Conta fictícia de teste e suas sessões removidas após validação. Não houve publicação.
+## Unidades no MySQL — 17/10/2026
+
+A tela /unidades agora consulta GET /api/unidades pelo UnidadesHttpGateway. A API exige sessão válida e usuário ativo, sem renovar atividade em consultas GET. UnidadesController → ServicoUnidades → RepositorioUnidades → RepositorioUnidadesMysql preserva a arquitetura por camadas; View UnitsPage e ViewModel useUnits continuam separados.
+
+A consulta lê unidades e conta salas por LEFT JOIN, incluindo unidades sem salas. O campo availableRooms do contrato legado significa quantidade de salas cadastradas; a interface usa esse rótulo, sem prometer disponibilidade por horário. Coordenadas DECIMAL são convertidas para números e validadas. Sem coordenadas, a unidade continua na lista e não recebe marcador no mapa. Imagens continuam provisórias: URL HTTPS ou caminho relativo à raiz são aceitos; chave ainda sem armazenamento configurado usa a imagem substituta da interface. Upload/resolução de chaves será uma etapa própria.
+
+Carregamento, lista vazia e falha com Tentar novamente são explícitos. Respostas atrasadas são ignoradas; não há fallback de unidades para seeds ou localStorage no modo HTTP. Um 401 revalida a sessão atual na fila de autenticação sem cancelar um login/logout em andamento. Salas ficam bloqueadas até a integração seguinte, evitando misturar IDs reais com salas demonstrativas. Serviços empresariais ainda são demonstrativos somente leitura; administração e reservas continuam pendentes.
+
+Nenhuma alteração de tabela ou migração foi necessária. Não foram importados dados demonstrativos permanentes. Teste HTTP/MySQL com fixtures próprias cobriu acesso sem sessão, contagem zero/um, coordenadas e rejeição após logout; fixtures removidas ao finalizar. Navegador conferiu card e mapa com dados temporários reais. Cadastro de unidades pela administração ainda não implementado no modo HTTP.

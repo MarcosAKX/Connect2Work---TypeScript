@@ -1,3 +1,4 @@
+import { AuthRouteStatus } from '../components/AuthRouteStatus';
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { EyeIcon, GoogleIcon, LockIcon } from '../components/icons';
@@ -6,11 +7,12 @@ import { useLogin } from '../hooks/useLogin';
 
 export function LoginPage() {
   const {
-    destination, email, password, error, isLoading,
+    destination, email, password, error, isLoading, authStatus, authError, refreshUser,
     setEmail, setPassword, handleSubmit, handleGoogleLogin,
   } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
 
+  if (authStatus === 'checking' || authStatus === 'error') return <AuthRouteStatus status={authStatus} error={authError} onRetry={refreshUser} />;
   if (destination) return <Navigate to={destination} replace />;
 
   return (

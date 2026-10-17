@@ -491,3 +491,10 @@
     max-width: 72px;
   }
 }
+
+.auth-route-status, .integration-pending { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-4); padding: 6rem var(--space-5); text-align: center; }
+.auth-route-status p, .integration-pending p { max-width: 40rem; color: var(--color-text-secondary); }
+.auth-route-status .btn { width: auto; padding-inline: var(--space-5); }
+.integration-pending h1 { font-size: 1.5rem; }
+.logout-status { display: flex; flex-direction: column; align-items: flex-end; gap: .3rem; }
+.auth-shell-error { max-width: 14rem; font-size: .75rem; line-height: 1.35; color: var(--color-error); }

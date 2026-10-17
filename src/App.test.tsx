@@ -72,7 +72,7 @@ describe('App — rotas sob demanda e permissões', () => {
   }
 
   it.each([
-    ['/login', null, 'Bem-vindo de volta'],
+    ['/login', null, 'Bem-vindo'],
     ['/cadastro', null, 'Criar Conta'],
     ['/recuperar-senha', null, 'Recuperar Senha'],
     ['/unidades', 'client', 'Escolha sua unidade'],
@@ -104,15 +104,15 @@ describe('App — rotas sob demanda e permissões', () => {
   });
 
   it.each([
-    ['/admin/usuarios', null, '/login', 'Bem-vindo de volta'],
-    ['/agendamento?sala=room-1-1', null, '/login', 'Bem-vindo de volta'],
+    ['/admin/usuarios', null, '/login', 'Bem-vindo'],
+    ['/agendamento?sala=room-1-1', null, '/login', 'Bem-vindo'],
     ['/admin/backup', 'client', '/unidades', 'Escolha sua unidade'],
     ['/admin/usuarios', 'secretaria', '/admin/painel-do-dia', 'Painel do Dia'],
     ['/unidades', 'admin', '/admin', 'Dashboard'],
     ['/admin/dashboard', 'admin', '/admin', 'Dashboard'],
     ['/pagamento', 'client', '/unidades', 'Escolha sua unidade'],
     ['/pagamento-confirmado', 'client', '/meus-agendamentos', 'Meus Agendamentos'],
-    ['/', null, '/login', 'Bem-vindo de volta'],
+    ['/', null, '/login', 'Bem-vindo'],
   ] as const)('preserva redirecionamento de %s para %s', async (path, role, destination, heading) => {
     await renderRoute(path, role);
     expect(container.querySelector('[data-location]')?.textContent).toBe(destination);

@@ -31,7 +31,7 @@ export function UnitLocationCard({ unit, selected, nearest, distance, selectUnit
         {unit.description && <p className="unit-location-card__description">{unit.description}</p>}
         <div className="unit-location-card__availability">
           <DoorIcon width="17" height="17" />
-          <span><small>Salas disponíveis</small><strong>{unit.availableRooms} salas disponíveis</strong></span>
+          <span><small>Salas na unidade</small><strong>{unit.availableRooms} {unit.availableRooms === 1 ? 'sala cadastrada' : 'salas cadastradas'}</strong></span>
           {distance !== undefined && <b>{distance.toFixed(1).replace('.', ',')} km</b>}
         </div>
         <Link to={`/salas?unidade=${encodeURIComponent(unit.id)}`} className="btn btn-primary">

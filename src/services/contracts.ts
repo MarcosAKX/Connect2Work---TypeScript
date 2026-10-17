@@ -1,6 +1,12 @@
 import type { AuditLog, BackupPayload, Booking, BookingCounts, BookingStatus, BusinessService, CheckoutDraft, ClientSummary, CreateBookingInput, CreateBusinessServiceInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, HoursPlanTransaction, RegisterInput, Room, Task, TaskStatus, Unit, UpdateBusinessServiceInput, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, UpdateUserHoursPlanInput, User, UserRole } from '../types/domain';
 
+export interface AuthSession { user: User; idleExpiresAt: string; absoluteExpiresAt: string; clockOffsetMs?: number; }
+
 export interface AuthGateway {
+  readonly mode: 'mock' | 'http';
+  restoreSession(): Promise<AuthSession | null>;
+  recordActivity(): Promise<AuthSession | null>;
+  onSessionExpired(listener: () => void): () => void;
   getCurrentUser(): User | null;
   getUserById(id: string): Promise<User | null>;
   login(email: string, password: string): Promise<User>;

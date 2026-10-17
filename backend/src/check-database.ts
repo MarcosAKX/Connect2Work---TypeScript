@@ -1,6 +1,6 @@
 import { createPool, type RowDataPacket } from 'mysql2/promise';
 import { validateEnvironment } from './config/environment';
-import { buildPoolOptions } from './infrastructure/database/database.service';
+import { buildPoolOptions } from './database/database.service';
 interface Probe extends RowDataPacket { account: string; decimal_value: string; }
 async function check(): Promise<void> {
   const config = validateEnvironment(process.env);

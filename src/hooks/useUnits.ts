@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { services } from '../services';
 import type { Unit } from '../types/domain';
 import { distanceInKm, type Coordinates } from '../utils/coordinates';
@@ -8,13 +8,25 @@ export function useUnits() {
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<Coordinates | null>(null);
   const [locationState, setLocationState] = useState<'idle' | 'loading' | 'denied' | 'unavailable'>('idle');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const generation = useRef(0);
+  const reload = useCallback(async () => {
+    const operation = ++generation.current;
+    setLoading(true); setError(''); setUnits([]);
+    try {
+      const items = await services.catalog.getUnits();
+      if (operation !== generation.current) return;
+      setUnits(items); setSelectedUnitId(items[0]?.id ?? null);
+    } catch {
+      if (operation === generation.current) { setSelectedUnitId(null); setError('Não foi possível carregar as unidades. Tente novamente.'); }
+    } finally { if (operation === generation.current) setLoading(false); }
+  }, []);
 
   useEffect(() => {
-    void services.catalog.getUnits().then((items) => {
-      setUnits(items);
-      setSelectedUnitId(items[0]?.id ?? null);
-    });
-  }, []);
+    void reload();
+    return () => { generation.current++; };
+  }, [reload]);
   const selectUnit = useCallback((unitId: string) => setSelectedUnitId(unitId), []);
   const distances = useMemo(() => new Map(units.flatMap((unit) =>
     userPosition && typeof unit.latitude === 'number' && typeof unit.longitude === 'number'
@@ -43,7 +55,7 @@ export function useUnits() {
     );
   }
 
-  return { units, selectedUnitId, userPosition, locationState, distances, sortedUnits, nearestUnit, selectUnit, requestLocation };
+  return { units, loading, error, reload, selectedUnitId, userPosition, locationState, distances, sortedUnits, nearestUnit, selectUnit, requestLocation };
 }
 
 export type UnitsViewModel = ReturnType<typeof useUnits>;

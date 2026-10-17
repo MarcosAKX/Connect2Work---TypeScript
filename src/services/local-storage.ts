@@ -300,6 +300,14 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
 
   return {
     auth: {
+      mode: 'mock',
+      async restoreSession() {
+        const user = this.getCurrentUser();
+        const current = now().getTime();
+        return user ? { user, idleExpiresAt: new Date(current + 900000).toISOString(), absoluteExpiresAt: new Date(current + 14400000).toISOString() } : null;
+      },
+      async recordActivity() { return this.restoreSession(); },
+      onSessionExpired() { return () => {}; },
       getCurrentUser() {
         const session = readObject<User>(KEYS.session);
         if (!session) return null;

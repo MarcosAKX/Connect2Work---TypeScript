@@ -1,6 +1,6 @@
 import type { OnModuleDestroy } from '@nestjs/common';
 import { createPool, type PoolOptions } from 'mysql2/promise';
-import type { DatabaseConfig } from '../../config/environment';
+import type { DatabaseConfig } from '../config/environment';
 
 export interface Readiness { isReady(): Promise<boolean>; }
 export interface DatabaseConnection { execute(sql: string): Promise<void>; release(): void; }
