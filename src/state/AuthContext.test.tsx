@@ -29,7 +29,7 @@ describe('AuthContext e proteção assíncrona', () => {
     mocks.clear.mockReset(); mocks.subscribe.mockReset().mockReturnValue(() => {});
     model = undefined; container = document.createElement('div'); document.body.append(container); root = createRoot(container);
   });
-  afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+  afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
   async function render(path = '/unidades') {
     await act(async () => root.render(<MemoryRouter initialEntries={[path]}><AuthProvider><Probe /><Routes>
       <Route element={<ProtectedRoute />}><Route path="/unidades" element={<p>página</p>} /><Route path="/meus-agendamentos" element={<p>reservas</p>} /></Route>
@@ -50,6 +50,51 @@ describe('AuthContext e proteção assíncrona', () => {
     await act(async () => finish?.(session()));
     expect(page?.isConnected).toBe(true);
     expect(container.querySelector('[inert]')).toBeNull();
+  });
+  it.each(['inatividade', 'absoluto'])('prazo %s vencido retorna ao login mesmo com API indisponível', async limit => {
+    vi.useFakeTimers();
+    const current = session();
+    if (limit === 'absoluto') current.absoluteExpiresAt = new Date(Date.now() + 1000).toISOString();
+    mocks.restore.mockResolvedValueOnce(current).mockRejectedValue(new Error('offline'));
+    await render();
+    await act(async () => vi.advanceTimersByTimeAsync(limit === 'absoluto' ? 1000 : 900000));
+    expect(model?.status).toBe('anonymous'); expect(container.textContent).toContain('login');
+    expect(container.textContent).not.toContain('Tentar novamente');
+    expect(mocks.restore).toHaveBeenCalledOnce();
+  });
+  it('verificação pendente não impede expiração nem deixa o login inerte', async () => {
+    vi.useFakeTimers();
+    mocks.restore.mockResolvedValueOnce(session());
+    await render();
+    let finish: ((value: AuthSession) => void) | undefined;
+    mocks.restore.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    expect(container.querySelector('[inert]')).not.toBeNull();
+    await act(async () => vi.advanceTimersByTimeAsync(900000));
+    expect(model?.status).toBe('anonymous'); expect(container.querySelector('[inert]')).toBeNull();
+    await act(async () => finish?.(session()));
+    expect(model?.status).toBe('anonymous');
+  });
+  it('falha antes do prazo permite tentar novamente, mas prazo vencido volta ao login', async () => {
+    vi.useFakeTimers();
+    mocks.restore.mockResolvedValueOnce(session()).mockRejectedValue(new Error('offline'));
+    await render();
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    expect(container.textContent).toContain('Tentar novamente');
+    await act(async () => vi.advanceTimersByTimeAsync(900000));
+    expect(container.textContent).toContain('login'); expect(container.textContent).not.toContain('Tentar novamente');
+  });
+  it('novo prazo confirmado substitui o anterior', async () => {
+    vi.useFakeTimers();
+    const first = session(); mocks.restore.mockResolvedValueOnce(first);
+    await render();
+    await act(async () => vi.advanceTimersByTimeAsync(14 * 60000));
+    mocks.restore.mockResolvedValueOnce({ ...first, idleExpiresAt: new Date(Date.now() + 900000).toISOString() });
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    await act(async () => vi.advanceTimersByTimeAsync(60000));
+    expect(model?.status).toBe('authenticated');
+    await act(async () => vi.advanceTimersByTimeAsync(14 * 60000));
+    expect(model?.status).toBe('anonymous'); expect(mocks.restore).toHaveBeenCalledTimes(2);
   });
   it('aguarda restauração sem redirecionar nem expor conteúdo privado', async () => {
     let finish: ((value: AuthSession) => void) | undefined;

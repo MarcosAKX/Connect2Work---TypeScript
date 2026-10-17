@@ -16,12 +16,30 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<AuthState>({ status: 'checking', session: null, error: '' });
   const [ending, setEnding] = useState(false);
   const [backgroundChecking, setBackgroundChecking] = useState(false);
+  const [deadline, setDeadline] = useState<number | null>(null);
+  const confirmedDeadline = useRef<number | null>(null);
   const alive = useRef(true); const generation = useRef(0); const leaving = useRef(false);
   const apply = useCallback((session: AuthSession | null) => {
+    const expiresAt = session && services.auth.mode === 'http'
+      ? Math.min(Date.parse(session.idleExpiresAt), Date.parse(session.absoluteExpiresAt)) + (session.clockOffsetMs ?? 0) : null;
+    if (expiresAt !== null && Date.now() >= expiresAt) session = null;
+    confirmedDeadline.current = session ? expiresAt : null;
+    setDeadline(confirmedDeadline.current);
     if (!session) services.checkout.clearDraft();
     setState(session ? { status: 'authenticated', session, error: '' } : anonymous);
   }, []);
-  const expire = useCallback(() => { generation.current++; services.checkout.clearDraft(); if (alive.current) setState(anonymous); }, []);
+  const expire = useCallback(() => {
+    generation.current++; confirmedDeadline.current = null; services.checkout.clearDraft();
+    if (alive.current) { setDeadline(null); setBackgroundChecking(false); setState(anonymous); }
+  }, []);
+  useEffect(() => {
+    if (deadline === null) return;
+    // O prazo confirmado continua valendo mesmo com rede indisponível ou requisição pendente.
+    const timer = setTimeout(() => {
+      if (confirmedDeadline.current !== null && Date.now() >= confirmedDeadline.current) expire();
+    }, Math.max(0, deadline - Date.now()));
+    return () => clearTimeout(timer);
+  }, [deadline, expire]);
   const refreshUser = useCallback(async () => {
     if (leaving.current) return;
     const operation = ++generation.current;
@@ -51,9 +69,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [apply]);
   const checkSession = useCallback(async () => {
     if (leaving.current) return;
-    const currentSession = state.session;
-    const deadline = currentSession ? Math.min(Date.parse(currentSession.idleExpiresAt), Date.parse(currentSession.absoluteExpiresAt)) + (currentSession.clockOffsetMs ?? 0) : 0;
-    if (Date.now() >= deadline) { await refreshUser(); return; }
+    const expiresAt = confirmedDeadline.current;
+    if (expiresAt === null) return;
+    if (Date.now() >= expiresAt) { expire(); return; }
     const operation = ++generation.current;
     setBackgroundChecking(true);
     try {
@@ -62,7 +80,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } catch {
       if (alive.current && operation === generation.current) setState({ status: 'error', session: null, error: 'Não foi possível verificar a sessão. Tente novamente.' });
     } finally { if (alive.current) setBackgroundChecking(false); }
-  }, [state.session, refreshUser, apply]);
+  }, [expire, apply]);
   useSessionActivity({ enabled: services.auth.mode === 'http' && state.status === 'authenticated' && !ending, session: state.session,
     onActivity: recordActivity, onCheck: checkSession });
   const authenticate = useCallback(async (operation: () => Promise<User>): Promise<User> => {

@@ -28,3 +28,7 @@ O arquivo estrutura-inicial.sql continua representando a base original: em insta
 ## Estado atual — 17/10/2026
 
 As descrições anteriores registram etapas históricas. Cadastro, login, sessões e consulta de unidades estão implementados na API MySQL. As migrações 002 e 003 já foram aplicadas e confirmadas; não reaplicar sobre o banco atual. Consulta de unidades usa estrutura existente, sem nova migração. O agente validou LEFT JOIN/contagem e coordenadas com dados temporários próprios, removidos após o teste. Não há seed permanente de unidades. A aplicação mostra lista vazia quando não existem unidades reais.
+
+## Cadastro inicial das unidades — 17/10/2026
+
+A pedido do usuário, as duas unidades do mockup foram cadastradas no MySQL local pelo arquivo comentado database/mysql/seeds/002_unidades.sql: Connect2Work 1 (Av. Osvaldo Perrone, 776, Parque Eldorado) e Connect2Work 2 (R. Lucas Evangelista, 368, Centro), ambas em Bebedouro/SP. Endereços, descrições e coordenadas aproximadas foram preservados do mock-data.ts, com novos UUIDs fixos. Nenhum usuário ou sala foi importado; imagens seguem sem arquivo configurado. A contagem de salas é calculada do banco e não copia o número cinco do mockup. O seed evita duplicação por ID/nome/endereço e não atualiza registros existentes. Aplicação local confirmou duas inclusões. Não houve publicação na Vercel.
