@@ -1,5 +1,5 @@
 import { comConexaoLimitada } from '../../database/conexao-limitada';
-import { ServiceUnavailableException, type OnModuleDestroy } from '@nestjs/common';
+import { HttpException, UnauthorizedException, ServiceUnavailableException, type OnModuleDestroy } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { createPool, type Pool, type PoolConnection, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
 import type { DatabaseConfig } from '../../config/environment';
@@ -23,12 +23,17 @@ export class RepositorioSessoesMysql implements RepositorioSessoes, OnModuleDest
         await connection.execute({ sql: "SET time_zone = '+00:00'", timeout: 2000 });
         return operation(connection);
       });
-    } catch { throw new ServiceUnavailableException('Não foi possível verificar a sessão. Tente novamente.'); }
+    } catch (error: unknown) { if (error instanceof HttpException) throw error; throw new ServiceUnavailableException('Não foi possível verificar a sessão. Tente novamente.'); }
   }
-  async criar(usuarioId: string, hash: Buffer, agora: Date, expiraEm: Date, anterior: Buffer | null): Promise<void> {
+  async criar(usuarioId: string, hash: Buffer, agora: Date, expiraEm: Date, anterior: Buffer | null, senhaHashEsperada?: string): Promise<void> {
     await this.executar(async connection => {
       await connection.beginTransaction();
       try {
+        // A redefinição administrativa usa o mesmo lock de usuário antes de revogar sessões.
+        // Uma verificação de senha iniciada antes dela não pode criar sessão depois do commit.
+        const [users] = await connection.execute<RowDataPacket[]>({ sql: 'SELECT ativo,senha_hash FROM usuarios WHERE id=? FOR UPDATE', timeout: 2000 }, [usuarioId]);
+        const user = users[0];
+        if (!user || user.ativo !== 1 || (senhaHashEsperada !== undefined && user.senha_hash !== senhaHashEsperada)) throw new UnauthorizedException('Senha incorreta');
         if (anterior) await connection.execute({ sql: 'UPDATE sessoes SET revogado_em = GREATEST(criado_em, ?) WHERE token_hash = ? AND revogado_em IS NULL', timeout: 2000 }, [agora, anterior]);
         await connection.execute({ sql: 'INSERT INTO sessoes (id, usuario_id, token_hash, criado_em, ultima_atividade_em, expira_em) VALUES (?, ?, ?, ?, ?, ?)', timeout: 2000 }, [randomUUID(), usuarioId, hash, agora, agora, expiraEm]);
         await connection.commit();

@@ -1,6 +1,7 @@
 export type UserRole = 'client' | 'admin' | 'secretaria';
 
 export interface User {
+  version?: string;
   id: string;
   name: string;
   email: string;
@@ -35,6 +36,11 @@ export interface CreateManagedUserInput {
 export interface UpdateManagedUserInput extends Omit<CreateManagedUserInput, 'password'> {
   password?: string;
 }
+
+export interface ManagedUser extends User { version: string; }
+export interface ManagedUsersSummary { total: number; active: number; inactive: number; admin: number; client: number; secretaria: number; }
+export interface ManagedUsersQuery { search?: string; role?: UserRole; active?: boolean; page: number; pageSize: number; }
+export interface ManagedUsersPage { items: ManagedUser[]; page: number; pageSize: number; total: number; summary: ManagedUsersSummary; }
 
 export interface StoredUser extends User {
   password: string;

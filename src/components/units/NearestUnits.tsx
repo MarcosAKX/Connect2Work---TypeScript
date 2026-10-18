@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import logo from '../../assets/img/cwlogo.ico';
 import { ArrowRightIcon, MapPinIcon } from '../icons';
 import type { UnitsViewModel } from '../../hooks/useUnits';
 
@@ -16,7 +17,7 @@ export function NearestUnits({
         <div className="units-nearest__list">
           {sortedUnits.map((unit) => (
             <button type="button" key={unit.id} onClick={() => selectUnit(unit.id)}>
-              <span>C2W</span>
+              <span><img className="units-nearest__logo" src={logo} alt="" width="24" height="24" /></span>
               <span><strong>{unit.name}</strong><small>{unit.address}</small></span>
               <b>{distances.get(unit.id)?.toFixed(1).replace('.', ',')} km</b>
             </button>

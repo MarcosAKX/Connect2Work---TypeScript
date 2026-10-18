@@ -25,7 +25,7 @@ export class ServicoAutenticacao {
     const hash = credentials?.senhaHash ?? this.hashFicticio;
     const correct = await this.senhas.verificar(hash, senha);
     if (!correct || !credentials?.senhaHash || !credentials.usuario.active) incorreta();
-    const created = await this.sessoes.criar(credentials.usuario.id, tokenAnterior);
+    const created = await this.sessoes.criar(credentials.usuario.id, tokenAnterior, credentials.senhaHash);
     return { token: created.token, resposta: dto(credentials.usuario, created.sessao) };
   }
   private async usuario(session: SessaoValida, token: string | null): Promise<UsuarioPublicoDto | null> {

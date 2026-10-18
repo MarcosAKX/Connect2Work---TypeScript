@@ -7,8 +7,10 @@ import { AppModule } from './app.module';
 import type { CadastroDependencies } from './modules/auth.module';
 import type { Readiness } from './database/database.service';
 import type { CatalogoDependencies } from './modules/catalogo.module';
-export async function createApplication(database: Readiness, cadastro?: CadastroDependencies, catalogo?: CatalogoDependencies): Promise<INestApplication> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule.register(database, cadastro, catalogo), { logger: false, bodyParser: false });
+import type { AdministracaoDependencies } from './modules/administracao.module';
+export async function createApplication(database: Readiness, cadastro?: CadastroDependencies, catalogo?: CatalogoDependencies, admin?: AdministracaoDependencies): Promise<INestApplication> {
+  if (admin && !cadastro?.auth) throw new Error('Administração exige autenticação configurada.');
+  const app = await NestFactory.create<NestExpressApplication>(AppModule.register(database, cadastro, catalogo, admin), { logger: false, bodyParser: false });
   app.use((_request: unknown, response: { removeHeader(name: string): void; setHeader(name: string, value: string): void }, next: () => void) => {
     response.removeHeader('X-Powered-By');
     response.setHeader('X-Content-Type-Options', 'nosniff');
