@@ -34,6 +34,7 @@ Fonte: `src/assets/css/base.css`.
 - O total de salas no cabeçalho da unidade usa selo amarelo solar sólido com texto escuro e peso forte nos dois temas.
 - Na lista de salas e na tela de agendamento, galerias sem imagens exibem ícone e “Fotos em breve”; no tema claro usam superfície clara, sem gradiente escuro. Fotos cadastradas são preservadas.
 - Login, cadastro e recuperação compartilham composição dividida: fachada contextual fixa à esquerda e painel de autenticação à direita; no celular, fachada passa para o topo.
+- O contêiner dividido mantém `overflow: visible` para que a fachada sticky acompanhe a rolagem da página em formulários longos, sem deixar uma faixa vazia abaixo da imagem no desktop. No celular, a fachada permanece no fluxo normal.
 - Checkout usa painel principal e resumo lateral sticky; no celular, ambos formam fluxo vertical.
 - Formas de pagamento usam seleção tipo radio tile, sem cards aninhados.
 - Serviços usa composição editorial com três entidades próprias, imagens administráveis, benefícios compactos e CTAs dourados de consulta.
@@ -42,6 +43,7 @@ Fonte: `src/assets/css/base.css`.
 - Gestão de salas usa filtro por unidade, tags compactas para comodidades e alvos interativos de pelo menos 44 px.
 - A listagem de salas usa duas colunas assimétricas no desktop, primeira sala em destaque, fotos dominantes, galeria própria com setas, contador e indicadores, informações compactas e CTA solar com preço por hora; no celular retorna a uma coluna e a tela de agendamento mantém galeria ampliada.
 - A seleção de unidades combina cartões horizontais e mapa lateral sticky; o mapa respeita os dois temas, mantém atribuição do provedor e solicita localização somente após ação explícita do usuário.
+- Os marcadores das unidades no mapa usam pin GPS SVG amarelo com contorno e centro escuros; a lista de unidades próximas usa `cwlogo.ico` proporcional, sem fundo ou círculo adicional, sem repetir a logo dentro do pin.
 - O seletor de agendamento apresenta limites de início e término, explica a duração com um exemplo e usa o estado cinza para intervalos ocupados ou já iniciados.
 - A tela de agendamento organiza galeria e detalhes da sala, três etapas visuais, calendário e horários lado a lado no desktop e resumo sticky; em telas menores o fluxo se torna vertical.
 - No tema claro, calendário e horários usam superfícies frias de alto contraste; amarelo identifica seleção, contorno identifica o dia atual e cinza sólido identifica indisponibilidade.
@@ -114,3 +116,12 @@ Quando o prazo já confirmado pela API é atingido, AuthContext encerra o acesso
 O backend continua sendo a autoridade para aceitar requisições: não houve alteração dos limites de 15 minutos/4 horas nem das verificações no servidor. Esta mudança é conservadora no cliente: o prazo conhecido também pode encerrar essa aba quando outra aba tiver renovado a sessão sem sincronização local. Falhas de verificação antes de conhecer um prazo (por exemplo, primeira abertura com API indisponível) continuam exibindo Tentar novamente; expiração conhecida retorna ao login. Em abas suspensas, a interface atualiza quando o navegador retoma a execução.
 
 Regressões cobrem expiração por inatividade e absoluta com rede indisponível, consulta pendente, resposta tardia, erro anterior ao vencimento e renovação do prazo. Não há alteração de tabelas, credenciais ou dados.
+
+
+## Salas — integração em 18/10/2026
+
+Layout de cards preservado. Título Salas da unidade identifica catálogo, sem afirmar disponibilidade de horário. Carregamento usa role=status; falha usa role=alert e Tentar novamente; vazio informa ausência de salas cadastradas. Falta de imagens mantém Fotos em breve. Unidade ausente retorna para Unidades. Agendamentos permanecem em preparação.
+
+## Gestão de usuários MySQL — 18/10/2026
+
+A gestão de usuários preserva o sistema visual existente. Paginação usa botões Anterior/Próxima, rótulo de página e bloqueio durante carregamento/gravação; contagem de resultados vem do servidor, enquanto indicadores mantêm o resumo global. Rotas administrativas ainda não integradas mantêm a tela de indisponibilidade. Conferência visual executada no navegador disponível; emulação específica de celular não está disponível nessa ferramenta.

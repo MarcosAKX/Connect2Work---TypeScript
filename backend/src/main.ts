@@ -11,6 +11,11 @@ import { validarConfigAutenticacao } from './config/auth-environment';
 import { createDatabasePool, DatabaseService } from './database/database.service';
 import { RepositorioUnidadesMysql } from './repositories/mysql/repositorio-unidades-mysql';
 import { ServicoUnidades } from './services/servico-unidades';
+import { ServicoSalas } from './services/servico-salas';
+import { RepositorioSalasMysql } from './repositories/mysql/repositorio-salas-mysql';
+import { RepositorioUsuariosAdministrativosMysql } from './repositories/mysql/repositorio-usuarios-administrativos-mysql';
+import { ServicoUsuariosAdministrativos } from './services/servico-usuarios-administrativos';
+import { AcessoAdministrativo } from './security/acesso-administrativo';
 async function main(): Promise<void> {
   const config = validateEnvironment(process.env);
   const security = validarConfigAutenticacao(process.env);
@@ -21,11 +26,16 @@ async function main(): Promise<void> {
   const usuarios = new RepositorioUsuariosMysql(config.db);
   const sessoes = new RepositorioSessoesMysql(config.db);
   const unidades = new RepositorioUnidadesMysql(config.db);
+  const salas = new RepositorioSalasMysql(config.db);
   const autenticacao = new ServicoAutenticacao(usuarios, senhas, new ServicoSessoes(sessoes), ficticio);
+  const admin = new RepositorioUsuariosAdministrativosMysql(config.db);
   const app = await createApplication(database, {
     service: new ServicoCadastro(usuarios, senhas), lifecycle: usuarios,
     auth: { service: autenticacao, config: security, lifecycle: sessoes }
-  }, { service: new ServicoUnidades(unidades), auth: autenticacao, https: security.https, lifecycle: unidades });
+  }, { service: new ServicoUnidades(unidades), auth: autenticacao, https: security.https, lifecycle: unidades,
+    salas: { service: new ServicoSalas(salas), lifecycle: salas } }, {
+    service: new ServicoUsuariosAdministrativos(admin, new AcessoAdministrativo(autenticacao), senhas), https: security.https, lifecycle: admin
+  });
   app.enableShutdownHooks();
   try { await app.listen(config.port, config.host); }
   catch { await app.close(); throw new Error('Não foi possível iniciar a API local.'); }

@@ -76,7 +76,7 @@ describe('App — rotas sob demanda e permissões', () => {
     ['/cadastro', null, 'Criar Conta'],
     ['/recuperar-senha', null, 'Recuperar Senha'],
     ['/unidades', 'client', 'Escolha sua unidade'],
-    ['/salas?unidade=unit-1', 'client', 'Salas disponíveis'],
+    ['/salas?unidade=unit-1', 'client', 'Salas da unidade'],
     ['/agendamento?sala=room-1-1', 'client', 'Sala Executive'],
     ['/meus-agendamentos', 'client', 'Meus Agendamentos'],
     ['/servicos', 'client', 'Serviços para o seu negócio'],

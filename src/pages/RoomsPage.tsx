@@ -7,16 +7,18 @@ import { useRooms } from '../hooks/useRooms';
 export function RoomsPage() {
   const [params] = useSearchParams();
   const unitId = params.get('unidade');
-  const { unit, rooms } = useRooms(unitId);
+  const { unit, rooms, loading, error, reload } = useRooms(unitId);
 
   if (unit === null) return <Navigate to="/unidades" replace />;
-  if (!unit) return <main className="rooms-page"><p>Carregando salas...</p></main>;
+  if (error) return <main className="rooms-page"><BackLink to="/unidades" /><div role="alert"><p>{error}</p>
+    <button type="button" className="btn btn-primary" onClick={() => { void reload(); }}>Tentar novamente</button></div></main>;
+  if (loading || !unit) return <main className="rooms-page"><p role="status">Carregando salas...</p></main>;
 
   return (
     <main className="rooms-page">
       <BackLink to="/unidades" />
       <header className="rooms-header">
-        <h1>Salas disponíveis</h1>
+        <h1>Salas da unidade</h1>
         <div className="unit-summary" aria-label="Unidade selecionada">
           <span className="unit-summary__pin" aria-hidden="true">
             <MapPinIcon width="20" height="20" />
@@ -28,7 +30,7 @@ export function RoomsPage() {
           <span className="unit-summary__badge">{rooms.length} {rooms.length === 1 ? 'sala' : 'salas'}</span>
         </div>
       </header>
-      <section className="rooms-grid" aria-label="Salas disponíveis">
+      <section className="rooms-grid" aria-label="Salas da unidade">
         {rooms.length > 0 ? (
           <div className="rooms-columns">
             <div className="rooms-column rooms-column--primary">
@@ -44,7 +46,7 @@ export function RoomsPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <h2>Nenhuma sala disponível</h2>
+            <h2>Nenhuma sala cadastrada</h2>
             <p>Esta unidade ainda não possui salas cadastradas.</p>
           </div>
         )}

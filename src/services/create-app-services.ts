@@ -2,6 +2,8 @@ import type { AppServices } from './contracts';
 import { createLocalStorageServices } from './local-storage';
 import { AuthHttpGateway } from './auth-http';
 import { UnidadesHttpGateway } from './unidades-http';
+import { SalasHttpGateway } from './salas-http';
+import { UsuariosHttpGateway } from './usuarios-http';
 import { businessServices } from './mock-business-services';
 import type { CheckoutDraft } from '../types/domain';
 const unavailable = async (): Promise<never> => { throw new Error('Funcionalidade ainda não integrada à API.'); };
@@ -11,15 +13,19 @@ export function createAppServices(authApi: boolean, fetcher?: typeof fetch): App
   let draft: CheckoutDraft | null = null;
   const auth = new AuthHttpGateway(fetcher);
   const unidades = new UnidadesHttpGateway(fetcher, () => auth.checkCurrentSession());
+  const salas = new SalasHttpGateway(fetcher, () => auth.checkCurrentSession());
+  const usuarios = new UsuariosHttpGateway(fetcher, () => auth.checkCurrentSession());
   return {
     auth,
-    users: { listUsers: unavailable, listUsersWithHoursPlanInfo: unavailable, createUser: unavailable, updateUser: unavailable,
-      updateUserRole: unavailable, updateUserStatus: unavailable, searchClients: unavailable, updateUserHoursPlan: unavailable, confirmHoursPlanRenewal: unavailable },
+    users: { listUsers: unavailable, listUsersWithHoursPlanInfo: unavailable, listUsersPage: query => usuarios.listUsersPage(query),
+      createUser: input => usuarios.createUser(input), updateUser: (id, input, version) => usuarios.updateUser(id, input, version),
+      updateUserRole: (id, role, version) => usuarios.updateUserRole(id, role, version), updateUserStatus: (id, active, version) => usuarios.updateUserStatus(id, active, version),
+      searchClients: unavailable, updateUserHoursPlan: unavailable, confirmHoursPlanRenewal: unavailable },
     catalog: {
       getUnits: () => unidades.getUnits(),
       getUnitById: id => unidades.getUnitById(id),
-      getRoomsByUnitId: unavailable,
-      getRoomById: unavailable,
+      getRoomsByUnitId: id => salas.getRoomsByUnitId(id),
+      getRoomById: id => salas.getRoomById(id),
       createUnit: unavailable, updateUnit: unavailable, deleteUnit: unavailable, createRoom: unavailable, updateRoom: unavailable, deleteRoom: unavailable
     },
     bookings: { getByUserAndStatus: unavailable, getCounts: unavailable, getAll: unavailable, create: unavailable, cancel: unavailable, confirmBooking: unavailable,

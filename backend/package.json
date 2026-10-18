@@ -7,6 +7,8 @@
     "node": ">=24.15 <25"
   },
   "scripts": {
+    "check:admin-usuarios": "npm run build && node --env-file=.env dist/src/check-admin-usuarios.js",
+    "check:salas": "npm run build && node --env-file=.env dist/src/check-salas.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node --test dist/test/*.spec.js",

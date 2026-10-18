@@ -17,12 +17,13 @@ export interface AuthGateway {
 }
 
 export interface UserManagementGateway {
+  listUsersPage(query: import('../types/domain').ManagedUsersQuery): Promise<import('../types/domain').ManagedUsersPage>;
   listUsers(): Promise<User[]>;
   listUsersWithHoursPlanInfo(): Promise<User[]>;
   createUser(input: CreateManagedUserInput): Promise<User>;
-  updateUser(id: string, input: UpdateManagedUserInput): Promise<User>;
-  updateUserRole(id: string, role: UserRole): Promise<User>;
-  updateUserStatus(id: string, active: boolean): Promise<User>;
+  updateUser(id: string, input: UpdateManagedUserInput, expectedVersion?: string): Promise<User>;
+  updateUserRole(id: string, role: UserRole, expectedVersion?: string): Promise<User>;
+  updateUserStatus(id: string, active: boolean, expectedVersion?: string): Promise<User>;
   searchClients(query: string): Promise<ClientSummary[]>;
   updateUserHoursPlan(userId: string, input: UpdateUserHoursPlanInput): Promise<User>;
   confirmHoursPlanRenewal(userId: string): Promise<User>;

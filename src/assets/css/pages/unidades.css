@@ -417,8 +417,9 @@ body {
 .units-map .leaflet-control-attribution { background: color-mix(in srgb, var(--color-surface) 90%, transparent); color: var(--color-text-secondary); }
 .units-map .leaflet-control-attribution a { color: var(--color-accent); }
 .units-map-marker-wrap { background: transparent; border: 0; }
-.units-map-marker { position: relative; display: grid; width: 42px; height: 42px; place-items: center; border: 3px solid var(--color-accent); border-radius: 50% 50% 50% 8px; background: #0a0a0a; transform: rotate(-45deg); box-shadow: 0 4px 8px rgb(0 0 0 / 28%); }
-.units-map-marker img { width: 24px; height: 24px; object-fit: contain; transform: rotate(45deg); }
+.units-map-marker { display: block; width: 42px; height: 50px; fill: var(--color-accent); stroke: var(--color-accent-text); stroke-width: 2; stroke-linejoin: round; }
+.units-map-marker circle { fill: var(--color-accent-text); stroke: none; }
+.units-nearest__logo { display: block; width: 24px; height: 24px; object-fit: contain; }
 .units-map .leaflet-popup-content-wrapper,
 .units-map .leaflet-popup-tip { background: var(--color-surface-raised); color: var(--color-text-primary); }
 .units-map .leaflet-popup-content { margin: 12px 14px; font-family: var(--font-body); font-size: .7rem; }
@@ -431,7 +432,7 @@ body {
 .units-nearest__list { display: flex; flex-direction: column; }
 .units-nearest__list > button { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: var(--space-3); min-height: 62px; padding: 8px var(--space-4); border: 0; border-bottom: 1px solid var(--color-border); background: transparent; color: var(--color-text-primary); text-align: left; }
 .units-nearest__list > button:hover { background: var(--color-surface-raised); }
-.units-nearest__list > button > span:first-child { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 999px; background: #0a0a0a; color: var(--color-accent); font-family: var(--font-display); font-size: .62rem; font-weight: 800; }
+.units-nearest__list > button > span:first-child { display: grid; width: 34px; height: 34px; place-items: center; }
 .units-nearest__list button > span:nth-child(2) { display: flex; min-width: 0; flex-direction: column; }
 .units-nearest__list strong { font-size: .7rem; }
 .units-nearest__list small { overflow: hidden; color: var(--color-text-secondary); font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }

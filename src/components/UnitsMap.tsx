@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import logo from '../assets/img/cwlogo.ico';
 import type { Unit } from '../types/domain';
 
 interface UnitsMapProps {
@@ -38,7 +37,13 @@ export function UnitsMap({ units, selectedUnitId, userPosition, onSelect }: Unit
       typeof unit.latitude === 'number' && typeof unit.longitude === 'number',
     );
     locatedUnits.forEach((unit) => {
-      const icon = L.divIcon({ className: 'units-map-marker-wrap', html: `<span class="units-map-marker"><img src="${logo}" alt="" /></span>`, iconSize: [42, 50], iconAnchor: [21, 48], popupAnchor: [0, -44] });
+      const icon = L.divIcon({
+        className: 'units-map-marker-wrap',
+        html: '<svg class="units-map-marker" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 42 50" aria-hidden="true"><path d="M21 48C18 44 3 30 3 21a18 18 0 0 1 36 0c0 9-15 23-18 27Z"/><circle cx="21" cy="21" r="7"/></svg>',
+        iconSize: [42, 50],
+        iconAnchor: [21, 48],
+        popupAnchor: [0, -44],
+      });
       const popup = document.createElement('div');
       const name = document.createElement('strong');
       const address = document.createElement('span');

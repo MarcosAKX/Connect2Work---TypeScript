@@ -18,7 +18,7 @@ export function useAdminUsersPage(currentUser: User | null, refreshUser: () => P
   async function saveUser(value: UserFormValue) {
     if (formUser) {
       const input: UpdateManagedUserInput = { ...value, password: value.password || undefined };
-      if (await admin.updateUser(formUser.id, input)) {
+      if (await admin.updateUser(formUser.id, input, formUser.version)) {
         if (formUser.id === currentUser?.id) await refreshUser();
         setFormUser(undefined);
       }
@@ -29,7 +29,7 @@ export function useAdminUsersPage(currentUser: User | null, refreshUser: () => P
   }
 
   async function confirmDeactivate() {
-    if (deactivatingUser && await admin.updateStatus(deactivatingUser.id, false)) setDeactivatingUser(null);
+    if (deactivatingUser && await admin.updateStatus(deactivatingUser.id, false, deactivatingUser.version)) setDeactivatingUser(null);
   }
 
 

@@ -383,6 +383,14 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
       },
     },
     users: {
+      async listUsersPage(query) {
+        const all = readArray<StoredUser>(KEYS.users).map(sanitizeUser);
+        const term = query.search?.trim().toLocaleLowerCase('pt-BR') ?? '';
+        const filtered = all.filter(u => (!term || `${u.name} ${u.email}`.toLocaleLowerCase('pt-BR').includes(term)) && (!query.role || u.role === query.role) && (query.active === undefined || u.active === query.active)).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR') || a.id.localeCompare(b.id));
+        return { items: filtered.slice((query.page - 1) * query.pageSize, query.page * query.pageSize).map(u => ({ ...u, version: JSON.stringify([u.updatedAt ?? u.createdAt, u.name, u.email, u.role, u.active]) })),
+          page: query.page, pageSize: query.pageSize, total: filtered.length,
+          summary: { total: all.length, active: all.filter(u => u.active).length, inactive: all.filter(u => !u.active).length, admin: all.filter(u => u.role === 'admin').length, client: all.filter(u => u.role === 'client').length, secretaria: all.filter(u => u.role === 'secretaria').length } };
+      },
       async listUsers() {
         return readArray<StoredUser>(KEYS.users).map(sanitizeUser);
       },

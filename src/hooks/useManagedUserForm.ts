@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { User, UserRole } from '../types/domain';
+import { emailError, professionError, phoneError, passwordError } from '../utils/validators';
 
 export interface UserFormValue {
   name: string;
@@ -32,11 +33,11 @@ export function useManagedUserForm(
   }
 
   function submit() {
-    if (value.name.trim().length < 2) {
+    if (value.name.trim().length < 2 || value.name.trim().length > 100 || /\p{N}/u.test(value.name)) {
       setValidationError('Informe um nome válido.');
       return;
     }
-    if (!value.email.includes('@')) {
+    if (emailError(value.email)) {
       setValidationError('Informe um e-mail válido.');
       return;
     }
@@ -48,6 +49,8 @@ export function useManagedUserForm(
       setValidationError('A nova senha deve ter pelo menos 6 caracteres.');
       return;
     }
+    const fieldError = (value.profession.trim() ? professionError(value.profession) : null) || (value.phone.trim() ? phoneError(value.phone) : null) || ((!isEditing || value.password) ? passwordError(value.password) : null);
+    if (fieldError) { setValidationError(fieldError); return; }
     void onSubmit(value);
   }
 

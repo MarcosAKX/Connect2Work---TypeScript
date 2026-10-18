@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../state/AuthContext';
 
 export function useLogin() {
-  const { user, login, loginWithGoogle, status: authStatus, error: authError, refreshUser } = useAuth();
+  const { user, login, loginWithGoogle, status: authStatus, error: authError, refreshUser, mode } = useAuth();
+  const adminDestination = mode === 'http' ? '/admin/usuarios' : '/admin';
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +23,7 @@ export function useLogin() {
     setIsLoading(true);
     try {
       const authenticatedUser = await login(email, password);
-      navigate(authenticatedUser.role === 'admin' ? '/admin' : authenticatedUser.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades', { replace: true });
+      navigate(authenticatedUser.role === 'admin' ? adminDestination : authenticatedUser.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades', { replace: true });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Não foi possível entrar.');
     } finally {
@@ -35,7 +36,7 @@ export function useLogin() {
     setError('');
     try {
       const authenticatedUser = await loginWithGoogle();
-      navigate(authenticatedUser.role === 'admin' ? '/admin' : authenticatedUser.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades', { replace: true });
+      navigate(authenticatedUser.role === 'admin' ? adminDestination : authenticatedUser.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades', { replace: true });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Não foi possível entrar com Google.');
     } finally {
@@ -44,7 +45,7 @@ export function useLogin() {
   }
 
   const destination = user
-    ? user.role === 'admin' ? '/admin' : user.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades'
+    ? user.role === 'admin' ? adminDestination : user.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades'
     : null;
   return { destination, email, password, error, isLoading, authStatus, authError, refreshUser, setEmail, setPassword, handleSubmit, handleGoogleLogin };
 }

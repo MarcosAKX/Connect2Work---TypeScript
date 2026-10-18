@@ -52,7 +52,7 @@ export function AdminUsersPage() {
 
       <section className="admin-users-list">
         <header>
-          <div><h2>Usuários cadastrados</h2><p>{admin.users.length} usuários encontrados</p></div>
+          <div><h2>Usuários cadastrados</h2><p>{admin.total} usuários encontrados</p></div>
         </header>
         <UserFilters admin={admin} />
         <UserTable
@@ -61,6 +61,11 @@ export function AdminUsersPage() {
           setFormUser={model.setFormUser}
           setDeactivatingUser={model.setDeactivatingUser}
         />
+        {admin.total > admin.pageSize && <nav aria-label="Paginação de usuários" className="admin-users-pagination">
+          <button type="button" className="btn btn-secondary" disabled={admin.loading || Boolean(admin.savingId) || admin.page <= 1} onClick={() => admin.setPage(admin.page - 1)}>Anterior</button>
+          <span aria-live="polite">Página {admin.page} de {Math.ceil(admin.total / admin.pageSize)}</span>
+          <button type="button" className="btn btn-secondary" disabled={admin.loading || Boolean(admin.savingId) || admin.page * admin.pageSize >= admin.total} onClick={() => admin.setPage(admin.page + 1)}>Próxima</button>
+        </nav>}
       </section>
 
       {formUser !== undefined && (
