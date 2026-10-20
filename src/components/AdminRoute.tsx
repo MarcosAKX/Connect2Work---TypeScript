@@ -9,5 +9,5 @@ export function AdminRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
   if (status === 'checking' || status === 'error') return <AuthRouteStatus status={status} error={error} onRetry={refreshUser} />;
   if (!user) return <Navigate to="/login" replace />;
   if (!allowedRoles.includes(user.role)) return <Navigate to={user.role === 'secretaria' ? '/admin/painel-do-dia' : '/unidades'} replace />;
-  return <AdminShell blocked={mode === 'http' && !['/admin/usuarios', '/admin/unidades', '/admin/salas', '/admin/agendamentos', '/admin/painel-do-dia', '/admin/servicos', '/admin/tarefas'].includes(pathname)} />;
+  return <AdminShell blocked={mode === 'http' && !['/admin', '/admin/usuarios', '/admin/unidades', '/admin/salas', '/admin/agendamentos', '/admin/painel-do-dia', '/admin/servicos', '/admin/tarefas'].includes(pathname)} />;
 }

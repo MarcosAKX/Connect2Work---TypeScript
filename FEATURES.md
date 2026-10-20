@@ -134,3 +134,11 @@ A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na cr
 e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
 continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
 alterar as tabelas existentes.
+
+
+## Entrada administrativa
+
+O login de admin redireciona para `/admin` (Dashboard), inclusive com sessão já
+ativa. No modo API, a página mostra os atalhos administrativos e informa que os
+indicadores aguardam integração, sem consultar ou apresentar dados de demonstração.
+Secretaria continua no Painel do Dia e cliente em Unidades.

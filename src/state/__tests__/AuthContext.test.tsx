@@ -141,8 +141,8 @@ describe('AuthContext e proteção assíncrona', () => {
     mocks.restore.mockResolvedValue(session());
     await render('/meus-agendamentos'); expect(container.textContent).toContain('módulo pendente');
   });
-  it('admin real não abre página administrativa mock', async () => {
+  it('admin real pode abrir a rota inicial do dashboard', async () => {
     mocks.restore.mockResolvedValue({ ...session(), user: { ...user, role: 'admin' } });
-    await render('/admin'); expect(container.textContent).toContain('admin pendente');
+    await render('/admin'); expect(container.textContent).toContain('admin privado');
   });
 });
