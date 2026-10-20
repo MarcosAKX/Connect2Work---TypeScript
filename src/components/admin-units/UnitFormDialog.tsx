@@ -11,11 +11,12 @@ interface UnitFormDialogProps {
   onSave(input: CreateUnitInput, unitId?: string): Promise<boolean>;
 }
 
-export function UnitFormDialog({ unit, isSaving, gatewayError, onCancel, onSave }: UnitFormDialogProps) {
+export function UnitFormDialog({ unit, isSaving: gatewaySaving, gatewayError, onCancel, onSave }: UnitFormDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { name, setName, address, setAddress, description, setDescription,
     latitude, setLatitude, longitude, setLongitude, imageUrl, setImageUrl,
-    validationError, handleImageChange, handleSubmit } = useUnitForm({ unit, onCancel, onSave });
+    validationError, handleImageChange, handleSubmit, isSubmitting, hasImageWithoutPreview } = useUnitForm({ unit, onCancel, onSave });
+  const isSaving = gatewaySaving || isSubmitting;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -38,7 +39,7 @@ export function UnitFormDialog({ unit, isSaving, gatewayError, onCancel, onSave 
       }}
       onClick={handleBackdropClick}
     >
-      <form className="admin-unit-form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+      <form className="admin-unit-form" onSubmit={(event) => void handleSubmit(event)} noValidate inert={isSaving} aria-busy={isSaving}>
         <header>
           <div>
             <h2 id="unit-form-title">{unit ? 'Editar Unidade' : 'Nova Unidade'}</h2>
@@ -82,8 +83,9 @@ export function UnitFormDialog({ unit, isSaving, gatewayError, onCancel, onSave 
             </div>
           </div>
           <div className="admin-unit-form__image-field">
-            <label htmlFor="unit-image"><UploadIcon width="17" height="17" />Imagem da unidade <span>(até 5 MB)</span></label>
-            <input id="unit-image" type="file" accept="image/*" onChange={(event) => void handleImageChange(event)} />
+            <label htmlFor="unit-image"><UploadIcon width="17" height="17" />Imagem da unidade <span>(até 10 MB)</span></label>
+            <input id="unit-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void handleImageChange(event)} />
+            {hasImageWithoutPreview && <p>Imagem existente sem prévia. <button type="button" onClick={() => setImageUrl(null)}>Remover imagem existente</button></p>}
             {imageUrl && (
               <div className="admin-unit-form__preview">
                 <img src={imageUrl} alt={`Prévia da unidade ${name || 'sem nome'}`} />

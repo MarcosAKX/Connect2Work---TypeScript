@@ -16,6 +16,13 @@ import { RepositorioSalasMysql } from './repositories/mysql/repositorio-salas-my
 import { RepositorioUsuariosAdministrativosMysql } from './repositories/mysql/repositorio-usuarios-administrativos-mysql';
 import { ServicoUsuariosAdministrativos } from './services/servico-usuarios-administrativos';
 import { AcessoAdministrativo } from './security/acesso-administrativo';
+import { validarConfigCloudinary } from './config/cloudinary-environment';
+import { CloudinaryImagens } from './storage/cloudinary-imagens';
+import { RepositorioArquivosImagensMysql } from './repositories/mysql/repositorio-arquivos-imagens-mysql';
+import { RepositorioCatalogoAdministrativoMysql } from './repositories/mysql/repositorio-catalogo-administrativo-mysql';
+import { ServicoImagens } from './services/servico-imagens';
+import { ServicoCatalogoAdministrativo } from './services/servico-catalogo-administrativo';
+import { LimpezaImagens } from './services/limpeza-imagens';
 async function main(): Promise<void> {
   const config = validateEnvironment(process.env);
   const security = validarConfigAutenticacao(process.env);
@@ -25,20 +32,29 @@ async function main(): Promise<void> {
   const database = new DatabaseService(createDatabasePool(config.db));
   const usuarios = new RepositorioUsuariosMysql(config.db);
   const sessoes = new RepositorioSessoesMysql(config.db);
-  const unidades = new RepositorioUnidadesMysql(config.db);
-  const salas = new RepositorioSalasMysql(config.db);
+  const cloudConfig = process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_SECRET ? validarConfigCloudinary(process.env) : undefined;
+  const storage = cloudConfig ? new CloudinaryImagens(cloudConfig) : undefined;
+  const unidades = new RepositorioUnidadesMysql(config.db, storage);
+  const salas = new RepositorioSalasMysql(config.db, storage);
   const autenticacao = new ServicoAutenticacao(usuarios, senhas, new ServicoSessoes(sessoes), ficticio);
   const admin = new RepositorioUsuariosAdministrativosMysql(config.db);
+  const access = new AcessoAdministrativo(autenticacao);
+  const arquivos = cloudConfig ? new RepositorioArquivosImagensMysql(config.db, cloudConfig.namespace) : undefined;
+  const catalogoAdmin = storage ? new RepositorioCatalogoAdministrativoMysql(config.db, storage) : undefined;
+  const imagens = arquivos && storage ? new ServicoImagens(arquivos, storage, access) : undefined;
+  const cleanup = arquivos && storage ? new LimpezaImagens(arquivos, storage) : undefined;
   const app = await createApplication(database, {
     service: new ServicoCadastro(usuarios, senhas), lifecycle: usuarios,
     auth: { service: autenticacao, config: security, lifecycle: sessoes }
   }, { service: new ServicoUnidades(unidades), auth: autenticacao, https: security.https, lifecycle: unidades,
     salas: { service: new ServicoSalas(salas), lifecycle: salas } }, {
-    service: new ServicoUsuariosAdministrativos(admin, new AcessoAdministrativo(autenticacao), senhas), https: security.https, lifecycle: admin
+    service: new ServicoUsuariosAdministrativos(admin, access, senhas), https: security.https, lifecycle: admin,
+    ...(catalogoAdmin && imagens && arquivos && cleanup ? { catalogo: { service: new ServicoCatalogoAdministrativo(catalogoAdmin, access, imagens), imagens, acesso: access, lifecycles: [cleanup, catalogoAdmin, arquivos] } } : {})
   });
   app.enableShutdownHooks();
   try { await app.listen(config.port, config.host); }
   catch { await app.close(); throw new Error('Não foi possível iniciar a API local.'); }
+  cleanup?.iniciar();
   console.info(`API local: http://${config.host}:${config.port}. Acesse /ready para verificar o MySQL.`);
 }
 void main().catch(() => {

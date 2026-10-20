@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { test } from 'node:test';
+import sharp from 'sharp';
+import { NestFactory } from '@nestjs/core';
+import { AdministracaoModule } from '../src/modules/administracao.module';
+import { AcessoAdministrativo } from '../src/security/acesso-administrativo';
+import { TokenSessao } from '../src/security/token-sessao';
+import { protecaoHttp } from '../src/security/protecao-http';
+import { ServicoUsuariosAdministrativos } from '../src/services/servico-usuarios-administrativos';
+import { ServicoCatalogoAdministrativo } from '../src/services/servico-catalogo-administrativo';
+import { ServicoImagens } from '../src/services/servico-imagens';
+import type { RepositorioArquivosImagens } from '../src/repositories/contracts/repositorio-arquivos-imagens';
+test('HTTP catálogo/upload: guarda precede multipart, campos/formatos/CSRF e papel são validados', async () => {
+  let logged = false; let role: 'admin' | 'client' = 'admin'; let uploads = 0; const token = new TokenSessao().gerar().token;
+  const user = { id: randomUUID(), name: 'Teste', email: 'a@example.invalid', profession: '', phone: '', active: true, createdAt: new Date().toISOString(), role: 'admin' as const, hasHoursPlan: false, hoursBalance: 0 };
+  const acesso = new AcessoAdministrativo({ async consultar() { return logged ? { user: { ...user, role }, idleExpiresAt: '', absoluteExpiresAt: '' } : null; } });
+  const repo: RepositorioArquivosImagens = { async registrar() { return { id: randomUUID(), proprietarioId: user.id, chaveTemporaria: 'temp', chavePublica: 'public', estado: 'preparando', version: null, expiraEm: new Date(Date.now() + 86400000), leaseId: randomUUID() }; }, async atualizar() {}, async falhou() {}, async obter() { return []; }, async reivindicarLimpeza() { return null; }, async reivindicarPublicacao() { throw new Error('Não utilizado'); } };
+  const imagens = new ServicoImagens(repo, { async enviarTemporaria(chave) { uploads++; return { chave, version: '1', formato: 'webp', bytes: 100, largura: 32, altura: 24 }; }, async publicar() { throw new Error('Não utilizado'); }, async consultar() { return null; }, async remover() {}, url() { return ''; } }, acesso);
+  const service = new ServicoUsuariosAdministrativos({ async listar(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize, summary: { total: 0, active: 0, inactive: 0, admin: 0, client: 0, secretaria: 0 } }; }, async gravar() { throw new Error('Não utilizado'); }, async equipe() { return []; }, async clientes() { return []; } }, acesso, { async gerar() { return 'hash'; } });
+  const catalogo = new ServicoCatalogoAdministrativo({ async listarUnidades(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async listarSalas(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async opcoes() { return []; }, async gravar() { return null; } }, acesso, imagens);
+  const app = await NestFactory.create(AdministracaoModule.register({ service, https: false, catalogo: { service: catalogo, imagens, acesso, lifecycles: [] } }), { logger: false });
+  app.use(protecaoHttp({ https: false, origins: ['http://localhost:5173'] })); await app.listen(0, '127.0.0.1');
+  try {
+    const base = await app.getUrl(); const headers = { Cookie: 'c2w_session=' + token, Origin: 'http://localhost:5173', 'X-C2W-Request': '1' };
+    const bytes = await sharp({ create: { width: 32, height: 24, channels: 3, background: '#ffc400' } }).png().toBuffer();
+    const form = () => { const body = new FormData(); body.set('file', new Blob([new Uint8Array(bytes)], { type: 'image/png' }), 'foto.png'); return body; };
+    const send = (body: FormData, extra = headers, path = '/admin/imagens') => fetch(base + path, { method: 'POST', headers: extra, body });
+    assert.equal((await send(form())).status, 401); assert.equal(uploads, 0);
+    logged = true; role = 'client'; assert.equal((await send(form())).status, 403); assert.equal(uploads, 0); role = 'admin';
+    assert.equal((await send(form(), { ...headers, Origin: 'https://outro.invalid' })).status, 403);
+    assert.equal((await send(form(), headers, '/admin/unidades')).status, 403);
+    const unexpected = form(); unexpected.set('owner', 'outro'); assert.equal((await send(unexpected)).status, 400);
+    const svg = new FormData(); svg.set('file', new Blob(['<svg/>'], { type: 'image/png' }), 'foto.png'); assert.equal((await send(svg)).status, 400);
+    const sent = await send(form()); assert.equal(sent.status, 201); const body = await sent.text(); assert.ok(!body.includes('url')); assert.equal(uploads, 1);
+    const largeBytes = await sharp({ create: { width: 1500, height: 1500, channels: 3, background: 'white' } }).png({ compressionLevel: 0 }).toBuffer(); assert.ok(largeBytes.length > 5242880);
+    const largeForm = new FormData(); largeForm.set('file', new Blob([new Uint8Array(largeBytes)], { type: 'image/png' }), 'imagem-grande.png'); assert.equal((await send(largeForm)).status, 201); assert.equal(uploads, 2);
+    assert.equal((await fetch(base + '/admin/unidades', { headers })).status, 200);
+  } finally { await app.close(); }
+});

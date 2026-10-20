@@ -243,3 +243,11 @@ Após preenchimento e correção pelo usuário, ping autenticado GET /ping confi
 ## Gestão de usuários MySQL — 18/10/2026
 
 Gestão de usuários reais conectada sem migração DDL. usuarios, perfis, sessoes e registros_auditoria existentes são reutilizados; senha_hash nunca sai da API. Versão opaca preserva microssegundos de atualizado_em. Alteração e auditoria são atômicas, e senha/perfil/inativação revogam sessões. Nenhuma conta real do usuário foi alterada pelos testes. Fixtures próprias são removidas ao terminar. Fotos continuarão referenciadas por chave no MySQL com arquivos no Cloudinary; nenhum BLOB foi adicionado e upload permanece pendente.
+
+## Catálogo real e storage — 18/10/2026
+
+O mock continua sendo demonstração explícita. No modo HTTP, unidades/salas do admin usam exclusivamente MySQL, galeria usa Cloudinary e nenhum File ou preview base64 é persistido no armazenamento local. Credenciais do Cloudinary pertencem ao backend/.env ignorado. Exclusão de uma sala com reservas ou unidade com salas é rejeitada; regras do mock não substituem as transações da API. Módulos ainda sem API continuam bloqueados.
+
+O upload do mock e o envio real aceitam original até10MiB; a API continua validando conteúdo e otimizando antes do storage. Os limites do banco se referem à saída otimizada, não ao arquivo original.
+
+Atualização de 19/10/2026: fotos originais aceitam até 10 MiB e 40 megapixels. O limite de resolução foi ampliado para permitir fotografias de câmeras de 24 MP; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.

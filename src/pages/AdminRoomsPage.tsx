@@ -31,7 +31,8 @@ export function AdminRoomsPage() {
       )}
       <section className="admin-rooms-card" aria-labelledby="registered-rooms-title" aria-busy={data.isLoading}>
         <header>
-          <div><h2 id="registered-rooms-title">Salas Cadastradas</h2><p>Total de {data.rooms.length} salas</p></div>
+          <div><h2 id="registered-rooms-title">Salas Cadastradas</h2><p>Total de {data.total || data.filteredRooms.length} salas</p></div>
+          {data.canSearchUnits && <div className="field"><input aria-label="Buscar unidade para filtrar salas" value={data.unitSearch} onChange={event => data.setUnitSearch(event.target.value)} placeholder="Buscar unidade pelo nome" /></div>}
           <label>
             <span className="sr-only">Filtrar por unidade</span>
             <select value={data.selectedUnitId} onChange={(event) => data.setSelectedUnitId(event.target.value)}>
@@ -41,9 +42,11 @@ export function AdminRoomsPage() {
           </label>
         </header>
         <RoomTable data={data} openEdit={model.openEdit} openDelete={model.openDelete} />
+        {data.total > 20 && <nav aria-label="Paginação de salas"><button className="btn btn-secondary" disabled={data.isLoading || data.isSaving || data.page <= 1} onClick={() => data.setPage(data.page - 1)}>Anterior</button><span> Página {data.page} de {Math.ceil(data.total / 20)} </span><button className="btn btn-secondary" disabled={data.isLoading || data.isSaving || data.page * 20 >= data.total} onClick={() => data.setPage(data.page + 1)}>Próxima</button></nav>}
       </section>
       {formOpen && (
         <RoomFormDialog
+          {...(data.canSearchUnits ? { unitSearch: data.unitSearch, onUnitSearch: data.setUnitSearch } : {})}
           room={editingRoom}
           units={data.units}
           isSaving={data.isSaving}

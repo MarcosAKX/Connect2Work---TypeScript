@@ -125,3 +125,11 @@ Layout de cards preservado. Título Salas da unidade identifica catálogo, sem a
 ## Gestão de usuários MySQL — 18/10/2026
 
 A gestão de usuários preserva o sistema visual existente. Paginação usa botões Anterior/Próxima, rótulo de página e bloqueio durante carregamento/gravação; contagem de resultados vem do servidor, enquanto indicadores mantêm o resumo global. Rotas administrativas ainda não integradas mantêm a tela de indisponibilidade. Conferência visual executada no navegador disponível; emulação específica de celular não está disponível nessa ferramenta.
+
+## Formulários de catálogo — 18/10/2026
+
+A integração preserva layout, tokens e componentes existentes. Em modo HTTP, a galeria recebe arquivos pelo controle de upload; URL externa nova não é oferecida. Miniaturas indicam ordem e permitem mover uma posição antes ou remover. Formulário bloqueia interação durante upload/gravação e apresenta erro sem fechar quando falha. Listas administrativas passam a mostrar total do servidor e navegação de páginas. A consulta cliente mantém o fallback Fotos em breve e usa WebP limitado; cards usam variante de 640px e galeria até 1600px.
+
+A validação e as mensagens de upload usam limite de10MiB para o original. O preview segue no formulário; o arquivo só é enviado ao salvar.
+
+Atualização de 19/10/2026: fotos originais aceitam até 10 MiB e 40 megapixels. O limite de resolução foi ampliado para permitir fotografias de câmeras de 24 MP; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.

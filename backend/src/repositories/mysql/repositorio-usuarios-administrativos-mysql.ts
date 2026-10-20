@@ -8,6 +8,7 @@ import type { ConsultaUsuarios, DadosUsuario, PaginaUsuarios, Papel, ResumoUsuar
 import type { AtorAdministrativo } from '../../security/acesso-administrativo';
 import { RelogioSistema, type Relogio } from '../../security/relogio';
 import { INATIVIDADE_MS } from '../../services/servico-sessoes';
+import { bloquearAcessoAdministrativo } from '../../security/transacao-administrativa';
 import type { OperacaoUsuario, RepositorioUsuariosAdministrativos } from '../contracts/repositorio-usuarios-administrativos';
 interface LinhaUsuario extends RowDataPacket { id: string; nome: string; email: string; profissao: string | null; telefone: string | null; codigo: string; ativo: number; criado_em: Date; atualizado_em: Date; versao: string; plano_ativo: number; saldo: string; }
 const COLUNAS = `u.id,u.nome,u.email,u.profissao,u.telefone,u.ativo,u.criado_em,u.atualizado_em,p.codigo,
@@ -62,14 +63,7 @@ export class RepositorioUsuariosAdministrativosMysql implements RepositorioUsuar
     return this.usar(async c => {
       await c.query({ sql: 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED', timeout: 2000 }); await c.beginTransaction();
       try {
-        // Linha estável serializa mudanças administrativas, inclusive proteção do último admin.
-        const [perfis] = await c.execute<RowDataPacket[]>({ sql: "SELECT id FROM perfis WHERE codigo='admin' FOR UPDATE", timeout: 2000 }); if (!perfis.length) throw new Error('Perfil ausente');
-        const [locked] = await c.execute<LinhaUsuario[]>({ sql: 'SELECT id,nome,ativo,perfil_id FROM usuarios WHERE id IN (?,?) ORDER BY id FOR UPDATE', timeout: 2000 }, [ator.id, op.id]);
-        const actorRow = locked.find(r => r.id === ator.id); if (!actorRow || actorRow.ativo !== 1) throw new UnauthorizedException('Sessão encerrada. Faça login novamente.');
-        const actor = await this.buscar(c, ator.id); if (actor.role !== 'admin') throw new ForbiddenException('Acesso não permitido.');
-        const [sessions] = await c.execute<RowDataPacket[]>({ sql: 'SELECT criado_em,ultima_atividade_em,expira_em,revogado_em FROM sessoes WHERE token_hash=? AND usuario_id=? FOR UPDATE', timeout: 2000 }, [ator.tokenHash, ator.id]);
-        const session = sessions[0]; const now = this.relogio.agora();
-        if (!session || session.revogado_em !== null || !(session.expira_em instanceof Date) || session.expira_em <= now || !(session.ultima_atividade_em instanceof Date) || session.ultima_atividade_em.getTime() <= now.getTime() - INATIVIDADE_MS || session.ultima_atividade_em > now) throw new UnauthorizedException('Sessão encerrada. Faça login novamente.');
+        const actor = await bloquearAcessoAdministrativo(c, ator, this.relogio, [op.id]); const now = actor.agora;
         let previous: UsuarioGerenciadoDto | null = null;
         if (op.kind !== 'create') {
           previous = await this.buscar(c, op.id);

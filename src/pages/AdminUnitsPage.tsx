@@ -11,7 +11,7 @@ export function AdminUnitsPage() {
     units, isLoading, isSaving, error, mutationError, reload,
     isFormOpen, editingUnit, deletingUnit, statusMessage,
     openCreateForm, openEditForm, handleSave, handleDelete,
-    closeForm, openDelete, closeDelete,
+    closeForm, openDelete, closeDelete, page, setPage, total,
   } = useAdminUnitsPage();
   return (
     <main className="admin-units-page">
@@ -34,9 +34,10 @@ export function AdminUnitsPage() {
       )}
 
       <section className="admin-units-card" aria-labelledby="registered-units-title" aria-busy={isLoading}>
-        <header><h2 id="registered-units-title">Unidades Cadastradas</h2><p>Total de {units.length} unidades</p></header>
+        <header><h2 id="registered-units-title">Unidades Cadastradas</h2><p>Total de {total || units.length} unidades</p></header>
 
         <UnitTable units={units} isLoading={isLoading} openCreateForm={openCreateForm} openEditForm={openEditForm} openDelete={openDelete} />
+        {total > 20 && <nav aria-label="Paginação de unidades"><button className="btn btn-secondary" disabled={isLoading || isSaving || page <= 1} onClick={() => setPage(page - 1)}>Anterior</button><span> Página {page} de {Math.ceil(total / 20)} </span><button className="btn btn-secondary" disabled={isLoading || isSaving || page * 20 >= total} onClick={() => setPage(page + 1)}>Próxima</button></nav>}
       </section>
 
       {isFormOpen && (

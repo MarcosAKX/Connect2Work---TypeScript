@@ -4,7 +4,7 @@ export const IMAGE_UPLOAD_LIMIT_BYTES = 10 * 1024 * 1024;
 
 export async function prepareImageUpload(file: File, maxDimension = 1600): Promise<string> {
   if (!ACCEPTED_IMAGE_TYPES.has(file.type)) throw new Error('Use uma imagem JPEG, PNG ou WebP.');
-  if (file.size > IMAGE_UPLOAD_LIMIT_BYTES) throw new Error('A imagem deve ter no máximo 5 MB.');
+  if (file.size > IMAGE_UPLOAD_LIMIT_BYTES) throw new Error('A imagem deve ter no máximo 10 MiB.');
 
   const source = await createImageBitmap(file);
   const scale = Math.min(1, maxDimension / Math.max(source.width, source.height));

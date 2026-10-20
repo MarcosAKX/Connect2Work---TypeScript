@@ -55,6 +55,8 @@ export interface RegisterInput {
 }
 
 export interface Unit {
+  version?: string;
+  imageId?: string | null;
   id: string;
   name: string;
   address: string;
@@ -68,6 +70,8 @@ export interface Unit {
 }
 
 export interface CreateUnitInput {
+  imageId?: string | null;
+  requestId?: string;
   name: string;
   address: string;
   description?: string;
@@ -79,6 +83,11 @@ export interface CreateUnitInput {
 export type UpdateUnitInput = CreateUnitInput;
 
 export interface Room {
+  imageIds?: string[];
+  imageCardUrls?: string[];
+  version?: string;
+  images?: { id: string; url: string }[];
+  unitName?: string;
   id: string;
   unitId: string;
   name: string;
@@ -92,6 +101,8 @@ export interface Room {
 }
 
 export interface CreateRoomInput {
+  imageIds?: string[];
+  requestId?: string;
   unitId: string;
   name: string;
   capacity: number;
