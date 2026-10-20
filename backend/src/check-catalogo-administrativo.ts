@@ -18,7 +18,7 @@ async function check(): Promise<void> {
   const actorId = randomUUID(), unitId = randomUUID(), roomId = randomUUID(), secondRoomId = randomUUID(), bookingId = randomUUID(), sessionId = randomUUID(); const token = new TokenSessao().gerar();
   const actor: AtorAdministrativo = { id: actorId, name: 'Teste Catálogo', role: 'admin', tokenHash: token.hash };
   const amenities = ['Teste Comodidade ' + randomUUID(), 'Teste Comodidade ' + randomUUID()]; const fileIds: string[] = [];
-  const rollbackId = randomUUID(); const auditId = randomUUID(); const rollbackRepo = new RepositorioCatalogoAdministrativoMysql(config.db, storage, undefined, () => auditId);
+  const serviceId = randomUUID(); const rollbackId = randomUUID(); const auditId = randomUUID(); const rollbackRepo = new RepositorioCatalogoAdministrativoMysql(config.db, storage, undefined, () => auditId);
   try {
     await pool.execute('INSERT INTO usuarios(id,perfil_id,nome,email,ativo) SELECT ?,id,?,?,1 FROM perfis WHERE codigo=?', [actorId, actor.name, actorId + '@example.invalid', 'admin']);
     const now = new Date(); await pool.execute('INSERT INTO sessoes(id,usuario_id,token_hash,criado_em,ultima_atividade_em,expira_em) VALUES(?,?,?,?,?,?)', [sessionId, actorId, token.hash, now, now, new Date(now.getTime() + 14400000)]);
@@ -33,6 +33,22 @@ async function check(): Promise<void> {
     await repo.gravar(actor, { entidade: 'unit', acao: 'update', id: unitId, expectedVersion: legacyUnit.version, data: { ...unit, imageId: legacyUnit.imageId } });
     const [legacyStored] = await pool.execute<RowDataPacket[]>('SELECT chave_imagem FROM unidades WHERE id=?', [unitId]); assert.equal(legacyStored[0]?.chave_imagem, 'unidades/fachada-antiga.jpg');
     await assert.rejects(repo.gravar(actor, { entidade: 'unit', acao: 'create', id: unitId, data: { ...unit, name: 'Outro' } }), { status: 409 });
+    const [existingTypes] = await pool.execute<RowDataPacket[]>('SELECT tipo FROM servicos_empresariais');
+    if (!existingTypes.some(row => row.tipo === 'endereco_fiscal')) {
+      const data = { type: 'service' as const, kind: 'fiscal_address' as const, name: 'Serviço Teste ' + serviceId, description: 'Descrição de teste', primaryFeatures: ['Primeiro', 'Segundo'], secondaryFeatures: ['Terceiro'], active: true, sortOrder: 0, imageId: null };
+      const createdService = await repo.gravar(actor, { entidade: 'service', acao: 'create', id: serviceId, data });
+      assert.ok(createdService && 'kind' in createdService);
+      assert.deepEqual(createdService.primaryFeatures, ['Primeiro', 'Segundo']);
+      assert.deepEqual(await repo.gravar(actor, { entidade: 'service', acao: 'create', id: serviceId, data }), createdService);
+      await assert.rejects(repo.gravar(actor, { entidade: 'service', acao: 'update', id: serviceId, expectedVersion: '2020-01-01 00:00:00.000001', data }), { status: 409 });
+      await assert.rejects(rollbackRepo.gravar(actor, { entidade: 'service', acao: 'update', id: serviceId, expectedVersion: createdService.version, data: { ...data, primaryFeatures: ['Falha'] } }), { status: 409 });
+      assert.deepEqual((await repo.listarServicos(true)).find(row => row.id === serviceId)?.primaryFeatures, ['Primeiro', 'Segundo']);
+      const hidden = await repo.gravar(actor, { entidade: 'service', acao: 'update', id: serviceId, expectedVersion: createdService.version, data: { ...data, active: false, primaryFeatures: ['Atualizado'] } });
+      assert.ok(hidden && 'kind' in hidden && !hidden.active);
+      assert.equal((await repo.listarServicos(false)).some(row => row.id === serviceId), false);
+      assert.deepEqual((await repo.listarServicos(true)).find(row => row.id === serviceId)?.primaryFeatures, ['Atualizado']);
+      console.info('Serviços MySQL: criação, benefícios ordenados, idempotência, versão, rollback e visibilidade OK.');
+    }
     const room: DadosSala = { type: 'room', name: 'Teste ' + roomId, unitId, capacity: 4, pricePerHour: 50, amenities, imageIds: [] };
     const r = await repo.gravar(actor, { entidade: 'room', acao: 'create', id: roomId, data: room }); assert.ok(r && 'amenities' in r); assert.deepEqual(r.amenities, amenities.slice().sort());
     const unitPage = await repo.listarUnidades({ search: unitId, page: 1, pageSize: 10 }); assert.equal(unitPage.items[0]?.availableRooms, 1);
@@ -68,6 +84,8 @@ async function check(): Promise<void> {
     const [audits] = await pool.execute<RowDataPacket[]>('SELECT id FROM registros_auditoria WHERE usuario_id=?', [actorId]); assert.ok(audits.length >= 6);
     console.log('Catálogo MySQL: CRUD, versão concorrente, idempotência, vínculos, imagens e auditoria OK.');
   } finally {
+    await pool.execute('DELETE FROM beneficios_servicos WHERE servico_id=?', [serviceId]);
+    await pool.execute('DELETE FROM servicos_empresariais WHERE id=?', [serviceId]);
     await pool.execute('DELETE FROM agendamentos WHERE id=?', [bookingId]);
     for (const id of [roomId, secondRoomId]) await pool.execute('DELETE FROM salas WHERE id=?', [id]);
     await pool.execute('DELETE FROM unidades WHERE id=?', [unitId]);

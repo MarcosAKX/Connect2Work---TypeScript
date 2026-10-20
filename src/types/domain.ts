@@ -117,6 +117,8 @@ export type UpdateRoomInput = CreateRoomInput;
 export type BusinessServiceKind = 'fiscal_address' | 'commercial_address' | 'hours_plan';
 
 export interface BusinessService {
+  version?: string;
+  imageId?: string | null;
   id: string;
   kind: BusinessServiceKind;
   name: string;
@@ -130,7 +132,7 @@ export interface BusinessService {
   updatedAt?: string;
 }
 
-export type CreateBusinessServiceInput = Omit<BusinessService, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateBusinessServiceInput = Omit<BusinessService, 'id' | 'createdAt' | 'updatedAt' | 'version'> & { requestId?: string };
 export type UpdateBusinessServiceInput = CreateBusinessServiceInput;
 
 export type BookingStatus = 'upcoming' | 'past' | 'cancelled';
@@ -138,6 +140,7 @@ export type BookingAdminStatus = 'pending' | 'confirmed' | 'cancelled';
 export type BookingPaymentStatus = 'pending' | 'completed';
 
 export interface Booking {
+  version?: string;
   id: string;
   userId: string;
   unitId: string;
@@ -190,6 +193,7 @@ export type TaskStatus = 'todo' | 'in_progress' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high';
 
 export interface Task {
+  version?: string;
   id: string;
   title: string;
   description?: string;
@@ -203,6 +207,7 @@ export interface Task {
 }
 
 export interface CreateTaskInput {
+  requestId?: string;
   title: string;
   description?: string;
   assignedTo?: string;
@@ -211,6 +216,10 @@ export interface CreateTaskInput {
   createdBy: string;
   status?: TaskStatus;
 }
+
+export interface TaskStaff { id: string; name: string; }
+export interface TaskBoardQuery { page: number; pageSize: number; ownership: 'all' | 'mine'; }
+export interface TaskBoardPage { items: Task[]; total: number; page: number; pageSize: number; counts: Record<TaskStatus, number>; }
 
 export type UpdateTaskInput = Pick<Task, 'title' | 'description' | 'assignedTo' | 'priority' | 'dueDate'>;
 
@@ -258,3 +267,11 @@ export interface BackupPayload {
     hoursPlanTransactions: HoursPlanTransaction[];
   };
 }
+
+export interface AdminBookingRecord { booking: Booking; clientName: string; roomName: string; unitName: string; total?: number; adminStatus: BookingAdminStatus; }
+export interface AdminBookingsQuery { page: number; pageSize: number; search?: string; unitId?: string; status?: BookingAdminStatus; dateFrom?: string; dateTo?: string; operational?: string; period?: string; }
+export interface AdminBookingsSummary { total: number; confirmed: number; pending: number; cancelled: number; today: number; checkInsToday: number; revenue?: number; }
+export interface AdminBookingsPage { items: AdminBookingRecord[]; total: number; page: number; pageSize: number; summary: AdminBookingsSummary; today: string; serverNow: string; }
+export interface AdminDailyBookings { agenda: AdminBookingsPage; counts: { present: number; payments: number; waiting: number; today: number; checkIns: number }; firstPayment: AdminBookingRecord|null; firstWaiting: AdminBookingRecord|null; nextArrival: AdminBookingRecord|null; upcomingDays: Array<{date: string;count: number}>; }
+export interface AdminBookingInput { requestId: string; clientId: string; roomId: string; date: string; timeSlot: string; total: string; paymentStatus: BookingPaymentStatus; }
+export type AdminClientOption = Pick<User,'id'|'name'|'email'>;

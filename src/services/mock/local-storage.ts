@@ -854,16 +854,9 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const index = tasks.findIndex((task) => task.id === id);
         const current = tasks[index];
         if (!current) throw new Error('Tarefa não encontrada.');
-        const actor = getStaffUser(actorUserId);
+        getStaffUser(actorUserId);
         const normalized = normalizeTaskInput(input);
-        if (actor.role === 'secretaria') {
-          if (current.createdBy !== actorUserId) {
-            throw new Error('A secretária pode editar somente as tarefas que criou.');
-          }
-          if (normalized.dueDate !== current.dueDate) {
-            throw new Error('A data estimada só pode ser definida durante a criação da tarefa.');
-          }
-        }
+        if (normalized.dueDate !== current.dueDate) throw new Error('A data estimada só pode ser definida durante a criação da tarefa.');
         const updated: Task = { ...current, ...normalized, updatedAt: now().toISOString() };
         tasks[index] = updated;
         localStorage.setItem(KEYS.tasks, JSON.stringify(tasks));
@@ -888,10 +881,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
         const tasks = readArray<Task>(KEYS.tasks);
         const current = tasks.find((task) => task.id === id);
         if (!current) throw new Error('Tarefa não encontrada.');
-        const actor = getStaffUser(actorUserId);
-        if (actor.role !== 'admin' && current.createdBy !== actorUserId) {
-          throw new Error('Somente quem criou a tarefa pode excluí-la.');
-        }
+        getStaffUser(actorUserId);
         localStorage.setItem(KEYS.tasks, JSON.stringify(tasks.filter((task) => task.id !== id)));
         appendAudit(now, 'delete', 'task', id, undefined, actorUserId);
         notifyTasksChanged();

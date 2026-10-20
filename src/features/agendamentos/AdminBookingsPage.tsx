@@ -1,3 +1,4 @@
+import { BookingPagination } from './BookingPagination';
 import { useSearchParams } from 'react-router-dom';
 import { BackLink } from '../../components/BackLink';
 import { CalendarIcon, PlusIcon } from '../../components/icons';
@@ -82,7 +83,7 @@ export function AdminBookingsPage() {
         <header>
           <div>
             <h2 id="admin-bookings-list-title">Lista de Agendamentos</h2>
-            <p>{data.bookings.length} agendamentos encontrados</p>
+            <p>{data.total} agendamentos encontrados</p>
           </div>
           <div className="admin-bookings-list-summary">
             <span>
@@ -109,6 +110,7 @@ export function AdminBookingsPage() {
           confirm={model.confirm}
         />
       </section>
+      {data.remoteMode && <BookingPagination {...data} />}
       {cancelling && (
         <CancelBookingDialog
           item={cancelling}

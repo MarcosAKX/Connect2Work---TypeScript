@@ -3,7 +3,7 @@ import { ConflictException, NotFoundException, type OnModuleDestroy } from '@nes
 import { createPool, type Pool, type PoolConnection, type RowDataPacket } from 'mysql2/promise';
 import type { DatabaseConfig } from '../../config/environment';
 import { buildPoolOptions } from '../../database/database.service';
-import type { CatalogoDto, ConsultaCatalogo, DadosSala, DadosUnidade, SalaAdministrativaDto, UnidadeAdministrativaDto } from '../../dto/catalogo-administrativo.dto';
+import type { CatalogoDto, ServicoEmpresarialDto, DadosServico, TipoServico, ConsultaCatalogo, DadosSala, DadosUnidade, SalaAdministrativaDto, UnidadeAdministrativaDto } from '../../dto/catalogo-administrativo.dto';
 import type { AtorAdministrativo } from '../../security/acesso-administrativo';
 import { bloquearAcessoAdministrativo } from '../../security/transacao-administrativa';
 import { RelogioSistema, type Relogio } from '../../security/relogio';
@@ -18,6 +18,7 @@ interface Foto extends RowDataPacket { id: string; sala_id: string; chave_arquiv
 interface Comodidade extends RowDataPacket { sala_id: string; nome: string; }
 interface Contagem extends RowDataPacket { total: number; }
 const VERSION = "DATE_FORMAT(atualizado_em,'%Y-%m-%d %H:%i:%s.%f')";
+const tipos: Record<TipoServico, string> = { fiscal_address: 'endereco_fiscal', commercial_address: 'endereco_comercial', hours_plan: 'plano_horas' };
 const legacy = (key: string) => /^(https:\/\/|\/(?!\/))/.test(key);
 export class RepositorioCatalogoAdministrativoMysql implements RepositorioCatalogoAdministrativo, OnModuleDestroy {
   private readonly pool: Pool;
@@ -43,10 +44,11 @@ export class RepositorioCatalogoAdministrativoMysql implements RepositorioCatalo
     await c.beginTransaction(); try { const where = "LOCATE(?,CONCAT(s.nome,' ',u.nome))>0" + (q.unitId ? ' AND s.unidade_id=?' : ''); const params = [q.search, ...(q.unitId ? [q.unitId] : [])]; const [count] = await c.execute<Contagem[]>({ sql: 'SELECT COUNT(*) total FROM salas s JOIN unidades u ON u.id=s.unidade_id WHERE ' + where, timeout: 2000 }, params); const items = await this.salas(c, where, params, `LIMIT ${q.pageSize} OFFSET ${(q.page - 1) * q.pageSize}`); await c.commit(); return { items, total: Number(count[0]?.total ?? 0), page: q.page, pageSize: q.pageSize }; } catch (error: unknown) { await c.rollback(); throw error; }
   }); }
   async opcoes(search: string) { return bancoAdministrativo(this.pool, async c => { const [rows] = await c.execute<Unidade[]>({ sql: 'SELECT id,nome FROM unidades WHERE LOCATE(?,nome)>0 ORDER BY nome,id LIMIT 100', timeout: 2000 }, [search]); return rows.map(r => ({ id: r.id, name: r.nome })); }); }
-  private async buscar(c: PoolConnection, op: OperacaoCatalogo): Promise<CatalogoDto | null> { return op.entidade === 'unit' ? (await this.unidades(c, 'u.id=?', [op.id]))[0] ?? null : (await this.salas(c, 's.id=?', [op.id]))[0] ?? null; }
+  private async buscar(c: PoolConnection, op: OperacaoCatalogo): Promise<CatalogoDto | null> { if (op.entidade === 'service') return (await this.servicos(c, true, op.id))[0] ?? null; return op.entidade === 'unit' ? (await this.unidades(c, 'u.id=?', [op.id]))[0] ?? null : (await this.salas(c, 's.id=?', [op.id]))[0] ?? null; }
   private async chaves(c: PoolConnection, op: OperacaoCatalogo): Promise<Map<string, string>> {
     const map = new Map<string, string>();
-    if (op.entidade === 'unit') { const [rows] = await c.execute<Unidade[]>('SELECT chave_imagem FROM unidades WHERE id=?', [op.id]); const key = rows[0]?.chave_imagem; if (key) map.set('legacy:' + op.id, key); }
+    if (op.entidade === 'service') { const [rows] = await c.execute<Unidade[]>('SELECT chave_imagem FROM servicos_empresariais WHERE id=?', [op.id]); const key = rows[0]?.chave_imagem; if (key) map.set('legacy:' + op.id, key); }
+    else if (op.entidade === 'unit') { const [rows] = await c.execute<Unidade[]>('SELECT chave_imagem FROM unidades WHERE id=?', [op.id]); const key = rows[0]?.chave_imagem; if (key) map.set('legacy:' + op.id, key); }
     else { const [rows] = await c.execute<Foto[]>('SELECT id,chave_arquivo FROM imagens_salas WHERE sala_id=? ORDER BY posicao,id', [op.id]); for (const r of rows) map.set('legacy:' + r.id, r.chave_arquivo); }
     return map;
   }
@@ -93,7 +95,7 @@ export class RepositorioCatalogoAdministrativoMysql implements RepositorioCatalo
   async gravar(actor: AtorAdministrativo, op: OperacaoCatalogo): Promise<CatalogoDto | null> { return bancoAdministrativo(this.pool, async c => {
     await c.query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED'); await c.beginTransaction();
     try {
-      const auth = await bloquearAcessoAdministrativo(c, actor, this.clock); const now = auth.agora; const table = op.entidade === 'unit' ? 'unidades' : 'salas';
+      const auth = await bloquearAcessoAdministrativo(c, actor, this.clock); const now = auth.agora; const table = op.entidade === 'unit' ? 'unidades' : op.entidade === 'room' ? 'salas' : 'servicos_empresariais';
       await c.execute(`SELECT id FROM ${table} WHERE id=? FOR UPDATE`, [op.id]);
       const before = await this.buscar(c, op); const fingerprint = createHash('sha256').update(JSON.stringify(op.data ?? null)).digest('hex');
       if (op.acao === 'create' && !before) { const [history] = await c.execute<RowDataPacket[]>("SELECT id FROM registros_auditoria WHERE entidade=? AND entidade_id=? AND acao='create' LIMIT 1", [op.entidade, op.id]); if (history.length) throw new ConflictException('Operação já concluída e cadastro removido. Atualize a lista.'); }
@@ -110,15 +112,53 @@ export class RepositorioCatalogoAdministrativoMysql implements RepositorioCatalo
       if (op.acao === 'delete') { await c.execute(`DELETE FROM ${table} WHERE id=?`, [op.id]); next = []; }
       else {
         const data = op.data; if (!data || data.type !== op.entidade) throw new Error('Operação inválida.');
-        const imageIds = data.type === 'unit' ? data.imageId === undefined ? undefined : data.imageId === null ? [] : [data.imageId] : data.imageIds;
+        const imageIds = data.type !== 'room' ? data.imageId === undefined ? undefined : data.imageId === null ? [] : [data.imageId] : data.imageIds;
         if (imageIds !== undefined) next = await this.validarImagens(c, imageIds, old, actor, now);
         if (data.type === 'unit') await this.salvarUnidade(c, op.id, data, op.acao === 'create', next, now);
-        else await this.salvarSala(c, op.id, data, op.acao === 'create', next, now);
+        else if (data.type === 'room') await this.salvarSala(c, op.id, data, op.acao === 'create', next, now);
+        else {
+          if (before && 'kind' in before && before.kind !== data.kind) throw new ConflictException('O tipo do serviço não pode ser alterado.');
+          await this.salvarServico(c, op.id, data, op.acao === 'create', next, now);
+        }
       }
       await this.registrarImagens(c, [...old.values()], next, now);
       await c.execute('INSERT INTO registros_auditoria(id,usuario_id,nome_usuario,acao,entidade,entidade_id,detalhes,ocorrido_em) VALUES(?,?,?,?,?,?,?,?)', [this.novoIdAuditoria(), auth.id, auth.name, op.acao, op.entidade, op.id, JSON.stringify({ source: 'administracao', fingerprint, requestId: op.acao === 'create' ? op.id : null }), now]);
       const result = op.acao === 'delete' ? null : await this.buscar(c, op); await c.commit(); return result;
     } catch (error: unknown) { await c.rollback(); throw error; }
   }); }
+  private async servicos(c: PoolConnection, includeInactive: boolean, id?: string): Promise<ServicoEmpresarialDto[]> {
+    interface Servico extends RowDataPacket { id: string; tipo: string; nome: string; descricao: string; chave_imagem: string | null; ativo: number; ordem: number; versao: string; }
+    interface Beneficio extends RowDataPacket { servico_id: string; categoria: string; descricao: string; }
+    const [rows] = await c.execute<Servico[]>({ sql: `SELECT *,${VERSION} versao FROM servicos_empresariais WHERE ${id ? 'id=?' : includeInactive ? '1=1' : 'ativo=1'} ORDER BY ordem,id LIMIT 3`, timeout: 2000 }, id ? [id] : []);
+    if (!rows.length) return [];
+    const [benefits] = await c.execute<Beneficio[]>({ sql: `SELECT servico_id,categoria,descricao FROM beneficios_servicos WHERE servico_id IN (${rows.map(() => '?').join(',')}) ORDER BY servico_id,categoria,ordem,id`, timeout: 2000 }, rows.map(row => row.id));
+    const resolved = await resolverImagens(c, rows.flatMap(row => row.chave_imagem ? [row.chave_imagem] : []), this.storage);
+    return rows.map(row => {
+      const kind = (Object.keys(tipos) as TipoServico[]).find(key => tipos[key] === row.tipo);
+      if (!kind) throw new Error('Tipo de serviço inválido.');
+      const image = row.chave_imagem ? resolved.get(row.chave_imagem) : undefined;
+      return { id: row.id, kind, name: row.nome, description: row.descricao, active: row.ativo === 1, sortOrder: row.ordem,
+        primaryFeatures: benefits.filter(b => b.servico_id === row.id && b.categoria === 'principal').map(b => b.descricao),
+        secondaryFeatures: benefits.filter(b => b.servico_id === row.id && b.categoria === 'secundario').map(b => b.descricao),
+        version: row.versao, imageUrl: image?.url ?? (row.chave_imagem && legacy(row.chave_imagem) ? row.chave_imagem : null),
+        ...(includeInactive ? { version: row.versao, imageId: image?.id ?? (row.chave_imagem ? 'legacy:' + row.id : null) } : {}) };
+    });
+  }
+  async listarServicos(includeInactive: boolean) {
+    return bancoAdministrativo(this.pool, async c => {
+      await c.beginTransaction();
+      try { const items = await this.servicos(c, includeInactive); await c.commit(); return items; }
+      catch (error: unknown) { await c.rollback(); throw error; }
+    });
+  }
+  private async salvarServico(c: PoolConnection, id: string, data: DadosServico, create: boolean, keys: string[], now: Date): Promise<void> {
+    const values = [tipos[data.kind], data.name, data.description, keys[0] ?? null, data.active ? 1 : 0, data.sortOrder];
+    if (create) await c.execute('INSERT INTO servicos_empresariais(id,tipo,nome,descricao,chave_imagem,ativo,ordem,criado_em,atualizado_em) VALUES(?,?,?,?,?,?,?,?,?)', [id, ...values, now, now]);
+    else await c.execute('UPDATE servicos_empresariais SET tipo=?,nome=?,descricao=?,chave_imagem=?,ativo=?,ordem=?,atualizado_em=GREATEST(?,DATE_ADD(atualizado_em,INTERVAL 1 MICROSECOND)) WHERE id=?', [...values, now, id]);
+    await c.execute('DELETE FROM beneficios_servicos WHERE servico_id=?', [id]);
+    for (const [category, items] of [['principal', data.primaryFeatures], ['secundario', data.secondaryFeatures]] as const) {
+      for (const [position, description] of items.entries()) await c.execute('INSERT INTO beneficios_servicos(id,servico_id,categoria,descricao,ordem) VALUES(?,?,?,?,?)', [randomUUID(), id, category, description, position]);
+    }
+  }
   async onModuleDestroy(): Promise<void> { await this.pool.end(); }
 }

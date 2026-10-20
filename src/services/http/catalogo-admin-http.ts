@@ -1,5 +1,5 @@
-import type { AdminCatalogGateway, CatalogPage, CatalogQuery, ImageGateway } from '../contracts';
-import type { CreateRoomInput, CreateUnitInput, Room, Unit } from '../../types/domain';
+import type { BusinessServiceGateway, AdminCatalogGateway, CatalogPage, CatalogQuery, ImageGateway } from '../contracts';
+import type { BusinessService, CreateBusinessServiceInput, UpdateBusinessServiceInput, CreateRoomInput, CreateUnitInput, Room, Unit } from '../../types/domain';
 import { parseUnit } from './unidades-http';
 import { parseRoom } from './salas-http';
 const failure = 'Não foi possível consultar o catálogo. Atualize a lista.';
@@ -8,13 +8,13 @@ function text(v: unknown): string { if (typeof v !== 'string') throw new Error(f
 function version(v: unknown): string { const s = text(v); if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}$/.test(s)) throw new Error(failure); return s; }
 function unit(v: unknown): Unit { const o = object(v); return { ...parseUnit(v), version: version(o.version), imageId: o.imageId === null ? null : text(o.imageId) }; }
 function room(v: unknown): Room { const o = object(v); if (!Array.isArray(o.images) || o.images.length > 6 || !Array.isArray(o.imageIds) || o.imageIds.length > 6) throw new Error(failure); const images = o.images.map((v: unknown) => { const i = object(v); const url = text(i.url); if (!/^(https:\/\/|\/(?!\/))/.test(url)) throw new Error(failure); return { id: text(i.id), url }; }); const imageIds = o.imageIds.map((id: unknown) => text(id)); if (new Set(imageIds).size !== imageIds.length || images.some(image => !imageIds.includes(image.id))) throw new Error(failure); return { ...parseRoom(v), version: version(o.version), unitName: text(o.unitName), images, imageIds }; }
-export class CatalogoAdminHttpGateway implements AdminCatalogGateway, ImageGateway {
+export class CatalogoAdminHttpGateway implements AdminCatalogGateway, ImageGateway, BusinessServiceGateway {
   constructor(private readonly fetcher: typeof fetch = (input, init) => fetch(input, init), private readonly unauthorized: () => void | Promise<unknown> = () => {}) {}
-  private async request(path: string, method = 'GET', body?: unknown): Promise<unknown> {
+  private async request(path: string, method = 'GET', body?: unknown, publicRead = false): Promise<unknown> {
     const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), body instanceof FormData ? 60000 : method === 'GET' ? 10000 : 120000);
     try {
       let response: Response; const multipart = body instanceof FormData;
-      try { response = await this.fetcher('/api/admin/' + path, { method, credentials: 'include', cache: 'no-store', signal: controller.signal, headers: { 'X-C2W-Request': '1', ...(multipart ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: multipart ? body : JSON.stringify(body) }) }); }
+      try { response = await this.fetcher((publicRead ? '/api/' : '/api/admin/') + path, { method, credentials: 'include', cache: 'no-store', signal: controller.signal, headers: { 'X-C2W-Request': '1', ...(multipart ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: multipart ? body : JSON.stringify(body) }) }); }
       catch { throw new Error(method === 'GET' ? failure : 'Não foi possível confirmar o salvamento. Atualize a lista antes de repetir.'); }
       if (response.status === 401) { try { await this.unauthorized(); } catch { /* Mantém mensagem de sessão. */ } throw new Error('Sessão encerrada. Faça login novamente.'); }
       if (response.status === 403) throw new Error('Você não tem permissão para esta operação.');
@@ -52,5 +52,39 @@ export class CatalogoAdminHttpGateway implements AdminCatalogGateway, ImageGatew
   async updateRoom(id: string, i: CreateRoomInput, expectedVersion?: string) { return room(await this.request('salas/' + encodeURIComponent(id), 'PATCH', { ...this.roomBody(i), expectedVersion: version(expectedVersion) })); }
   async deleteUnit(id: string, expectedVersion?: string) { await this.request('unidades/' + encodeURIComponent(id), 'DELETE', { expectedVersion: version(expectedVersion) }); }
   async deleteRoom(id: string, expectedVersion?: string) { await this.request('salas/' + encodeURIComponent(id), 'DELETE', { expectedVersion: version(expectedVersion) }); }
+  async listServices(options?: { includeInactive?: boolean }): Promise<BusinessService[]> {
+    const value = await this.request('servicos', 'GET', undefined, !options?.includeInactive);
+    if (!Array.isArray(value) || value.length > 3) throw new Error(failure);
+    const items = value.map(parseBusinessService);
+    if (new Set(items.map(item => item.kind)).size !== items.length || new Set(items.map(item => item.id)).size !== items.length || (!options?.includeInactive && items.some(item => !item.active))) throw new Error(failure);
+    return items;
+  }
+  private serviceBody(input: CreateBusinessServiceInput) {
+    return { kind: input.kind, name: input.name, description: input.description, primaryFeatures: input.primaryFeatures, secondaryFeatures: input.secondaryFeatures, active: input.active, sortOrder: input.sortOrder,
+      ...(input.imageId === undefined ? {} : { imageId: input.imageId }) };
+  }
+  async createService(input: CreateBusinessServiceInput) {
+    if (!input.requestId) throw new Error('Reabra o formulário para criar.');
+    return parseBusinessService(await this.request('servicos', 'POST', { ...this.serviceBody(input), requestId: input.requestId }));
+  }
+  async updateService(id: string, input: UpdateBusinessServiceInput, expectedVersion?: string) {
+    return parseBusinessService(await this.request('servicos/' + encodeURIComponent(id), 'PATCH', { ...this.serviceBody(input), expectedVersion: version(expectedVersion) }));
+  }
+  async deleteService(): Promise<void> { throw new Error('Desative o serviço para ocultá-lo da vitrine.'); }
   async upload(file: File) { const body = new FormData(); body.set('file', file); const o = object(await this.request('imagens', 'POST', body)); const expiresAt = text(o.expiresAt); if (!Number.isFinite(Date.parse(expiresAt))) throw new Error(failure); return { id: text(o.id), expiresAt }; }
+}
+
+function parseBusinessService(value: unknown): BusinessService {
+  const o = object(value);
+  const kind = o.kind;
+  if (kind !== 'fiscal_address' && kind !== 'commercial_address' && kind !== 'hours_plan') throw new Error(failure);
+  const strings = (value: unknown): string[] => {
+    if (!Array.isArray(value) || value.length > 30) throw new Error(failure);
+    return value.map(item => { const s = text(item); if (!s || s.length > 500) throw new Error(failure); return s; });
+  };
+  if (typeof o.active !== 'boolean' || typeof o.sortOrder !== 'number' || !Number.isInteger(o.sortOrder) || o.sortOrder < 0 || o.sortOrder > 65535) throw new Error(failure);
+  const imageUrl = o.imageUrl === null ? null : text(o.imageUrl);
+  if (imageUrl !== null && !/^(https:\/\/|\/(?!\/))/.test(imageUrl)) throw new Error(failure);
+  return { id: text(o.id), kind, name: text(o.name), description: text(o.description), primaryFeatures: strings(o.primaryFeatures), secondaryFeatures: strings(o.secondaryFeatures), active: o.active, sortOrder: o.sortOrder, imageUrl, version: version(o.version),
+    ...(o.imageId === undefined ? {} : { imageId: o.imageId === null ? null : text(o.imageId) }) };
 }

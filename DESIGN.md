@@ -58,7 +58,7 @@ Fonte: `src/assets/css/base.css`.
 - Os temas escuro e claro compartilham tokens semânticos; login, cliente, admin e secretaria usam o mesmo componente de alternância, com dimensões, ícone, estados, rótulo acessível e tooltip idênticos. No modo claro, o controle usa superfície levemente solar; sobre o painel escuro de autenticação, preserva fundo escuro e ícone solar.
 - Nos cabeçalhos autenticados, identidade, tema e saída são ações visualmente separadas e seguem a mesma composição para cliente, admin e secretaria.
 - O quadro de tarefas usa três colunas operacionais, badges semânticos de prioridade, prazos legíveis e alertas de atraso que não dependem apenas da cor.
-- Para secretárias, tarefas criadas por outro usuário exibem “Somente visualização” e não abrem o formulário. Ao editar uma tarefa própria, a data estimada permanece visivelmente bloqueada; administradores mantêm edição completa.
+- Admin e secretaria abrem e editam tarefas de qualquer autor da equipe. O prazo aparece desabilitado em toda edição, com indicação de que é definido na criação.
 - O formulário de tarefas mantém rótulos na mesma linha de base, campos alinhados em grade e ações destrutivas separadas das ações de confirmação.
 - Em telas pequenas, o controle de tema mantém área de toque mínima de 44 px.
 - Em telas de até 720 px, o cabeçalho administrativo oculta a navegação horizontal e usa exclusivamente o drawer; filtros empilham, modais ocupam a largura disponível com rolagem interna e ações fixadas ao final. Em até 480 px, grades de métricas passam para uma coluna.
@@ -138,3 +138,13 @@ Fotos originais aceitam até 10 MiB e 40 megapixels; continua havendo validaçã
 
 [Organização](PROJECT_STRUCTURE.md) · [Status das funcionalidades](FEATURES.md) ·
 [Histórico de decisões](docs/historico/evolucao-ate-2026-10-19.md).
+
+Na integração administrativa real, pagamento é identificado como registro manual. Listas usam paginação do servidor; indicadores do Painel do Dia preservam os totais de hoje mesmo com filtros. Valores não autorizados ficam ausentes. Datas e horas operacionais usam São Paulo.
+
+Serviços administrativos exibem ações de cadastro apenas para os tipos ausentes.
+O formulário preserva sua composição; upload segue o limite de 10 MiB do catálogo.
+A vitrine mostra estado vazio ou erro com nova tentativa conforme a resposta real.
+
+No quadro real, cada cartão também oferece seletor de situação para teclado e
+touch. Edição e exclusão preservam versão capturada; campos e ações ficam
+bloqueados durante gravação. Falhas aparecem no diálogo e permitem atualizar o quadro.

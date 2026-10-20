@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import type { ConsultaCatalogo, DadosSala, DadosUnidade } from '../dto/catalogo-administrativo.dto';
+import type { ConsultaCatalogo, DadosSala, DadosUnidade, DadosServico } from '../dto/catalogo-administrativo.dto';
 import { objeto, texto, uuid } from './validacao-usuario-administrativo';
 function invalid(): never { throw new BadRequestException('Dados do catálogo inválidos. Confira os campos.'); }
 function name(value: unknown, max: number): string { const result = texto(value, max); if (!result) invalid(); return result; }
@@ -23,4 +23,16 @@ export function consultaCatalogo(input: unknown): ConsultaCatalogo {
   const body = objeto(input, ['page','pageSize','search','unitId']);
   const number = (v: unknown, fallback: number, max: number) => { if (v === undefined) return fallback; if (typeof v !== 'string' || !/^\d{1,5}$/.test(v) || Number(v) < 1 || Number(v) > max) invalid(); return Number(v); };
   return { page: number(body.page, 1, 10000), pageSize: number(body.pageSize, 50, 100), search: body.search === undefined ? '' : texto(body.search, 254), ...(body.unitId === undefined ? {} : { unitId: uuid(texto(body.unitId, 36)) }) };
+}
+
+export function dadosServico(body: Record<string, unknown>): DadosServico {
+  const kind = body.kind;
+  if (kind !== 'fiscal_address' && kind !== 'commercial_address' && kind !== 'hours_plan') invalid();
+  if (typeof body.active !== 'boolean' || typeof body.sortOrder !== 'number' || !Number.isInteger(body.sortOrder) || body.sortOrder < 0 || body.sortOrder > 65535) invalid();
+  const features = (v: unknown): string[] => {
+    if (!Array.isArray(v) || v.length > 30) invalid();
+    return v.map((item: unknown) => name(item, 500));
+  };
+  return { type: 'service', kind, name: name(body.name, 150), description: name(body.description, 5000), primaryFeatures: features(body.primaryFeatures), secondaryFeatures: features(body.secondaryFeatures), active: body.active, sortOrder: body.sortOrder,
+    ...(body.imageId === undefined ? {} : { imageId: body.imageId === null ? null : imagemId(body.imageId) }) };
 }

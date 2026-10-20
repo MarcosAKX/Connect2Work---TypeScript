@@ -7,7 +7,7 @@ import { TokenSessao } from '../src/security/token-sessao';
 import type { OperacaoCatalogo, RepositorioCatalogoAdministrativo } from '../src/repositories/contracts/repositorio-catalogo-administrativo';
 test('catálogo administrativo valida valores e não aceita ator, preço inválido ou URL como imagem', async () => {
   const operations: OperacaoCatalogo[] = []; const token = new TokenSessao().gerar().token;
-  const repo: RepositorioCatalogoAdministrativo = { async listarUnidades(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async listarSalas(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async opcoes() { return []; }, async gravar(_actor, op) { operations.push(op); return null; } };
+  const repo: RepositorioCatalogoAdministrativo = { async listarUnidades(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async listarSalas(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async listarServicos() { return []; }, async opcoes() { return []; }, async gravar(_actor, op) { operations.push(op); return null; } };
   let role: 'admin' | 'client' = 'admin';
   const access = new AcessoAdministrativo({ async consultar() { return { user: { id: randomUUID(), name: 'Admin Teste', email: 'a@example.invalid', role, profession: '', phone: '', active: true, createdAt: new Date().toISOString(), hasHoursPlan: false, hoursBalance: 0 }, idleExpiresAt: '', absoluteExpiresAt: '' }; } });
   const service = new ServicoCatalogoAdministrativo(repo, access, { async prepararVinculo() {} });

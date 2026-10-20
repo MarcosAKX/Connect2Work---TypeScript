@@ -3,7 +3,7 @@
 > Planejamento pendente ou parcialmente implementado; não comprova entrega.
 > Estrutura vigente: `PROJECT_STRUCTURE.md`, na raiz do projeto.
 
-Data: 18/10/2026. Status atual em 19/10/2026: etapas 1 (usuários) e 2 (catálogo/Cloudinary) entregues; demais etapas pendentes. O texto abaixo preserva a especificação, não indica que tudo esteja implementado.
+Data: 18/10/2026. Status atual em 20/10/2026: etapas 1 (usuários), 2 (catálogo/Cloudinary) e 4 (agendamentos/Painel do Dia) entregues; etapa 3 entregue (Serviços e Tarefas); etapa 5 pendente. O texto abaixo preserva a especificação, não indica que tudo esteja implementado.
 
 ## Objetivo e escopo solicitado
 
@@ -82,7 +82,7 @@ Falha na gravação mantém a referência e o arquivo anterior. Após commit, re
 
 Serviços: leitura real para cliente dos ativos e listagem administrativa incluindo inativos; admin edita os três tipos existentes e seus benefícios principal/secundário/ordem na mesma transação. Tipos traduzidos entre DTO e banco, unicidade preservada. Quando a base estiver vazia, apresentar vazio e permitir cadastro dos tipos previstos, sem reimportação automática de mock. O conteúdo comercial do tipo plano_horas pode existir no catálogo; isso não ativa plano, cobrança, saldo ou renovação.
 
-Tarefas: admin e secretaria leem o quadro compartilhado e criam tarefas. Responsável deve ser equipe ativa. Admin edita/exclui qualquer tarefa. Secretaria edita/exclui somente tarefas criadas por ela, sem alterar prazo depois da criação; mudança de situação de qualquer tarefa compartilhada segue o comportamento existente. Autor real vem da sessão. Data válida, prioridades e estados mapeados para valores existentes do MySQL. Mudança de status usa versão para evitar rollback otimista sobrescrevendo outra operação. Auditoria em cada ação.
+Tarefas: admin e secretaria leem o quadro compartilhado e criam tarefas. Responsável deve ser equipe ativa. Admin e secretaria compartilham gestão. Decisão atualizada pelo usuário em 20/10: admin e secretaria editam/excluem qualquer tarefa da equipe. Prazo definido na criação fica imutável para ambos, inclusive quando vazio; mudança de situação é compartilhada. Autor real vem da sessão. Data válida, prioridades e estados mapeados para valores existentes do MySQL. Mudança de status usa versão para evitar rollback otimista sobrescrevendo outra operação. Auditoria em cada ação.
 
 Liberar rotas por módulo testado, preservando o restante bloqueado.
 
@@ -118,3 +118,57 @@ Concluir revisão das permissões e fluxos de todas as rotas liberadas, inclusiv
 ## Revisão deste documento
 
 Escopo e exclusões conferidos contra o pedido. Dependências de plano removidas dos módulos incluídos. Pagamento manual distinguido de processamento financeiro. Decisão final incorporada: Cloudinary substituível com referências no MySQL, sem BLOB. Dados existentes preservados. Desenvolvimento dividido em módulos com liberações verificáveis. Próximo passo: revisão do plano detalhado da etapa 1 antes da implementação.
+
+## Execução da etapa 4 — prioridade confirmada em 19/10/2026
+
+Usuário escolheu Admin — Agendamentos e Painel do Dia. Execução local pelo
+implementador principal, sem commit/push/deploy. Etapa de cliente fica pendente.
+
+- [x] Domínio comercial (fuso, calendário, intervalo e centavos), reutilizável nas duas origens.
+- [x] API administrativa paginada e painel com resumo/contadores próprios; admin e secretaria autorizados no servidor. Valores acordados não são expostos na listagem da secretaria.
+- [x] Criação administrativa idempotente, serializada pela sala, com valor acordado e pagamento manual; confirmação/cancelamento/check-in transacionais e auditados, versão concorrente e sessão revalidada após locks. Bloquear cancelamento de reservas que consumiram plano até integrar estorno.
+- [x] Gateway HTTP específico e integração dos dois hooks/telas, sem getAll público ou consultas individuais de clientes; filtros/paginação no servidor, controle de respostas atrasadas, sem checkout ou saldo mock.
+- [x] Testes de domínio, HTTP, gateway/hooks, concorrência/rollback no MySQL com fixtures; revisão independente e atualização do guia/status.
+
+Contratos: GET /admin/agendamentos (página/filtros), GET /admin/painel-do-dia
+(agenda paginada, métricas do dia e próximos dias), POST /admin/agendamentos,
+PATCH /admin/agendamentos/:id/{confirmacao,pagamento,cancelamento,chegada}.
+Mutações exigem expectedVersion; criação usa requestId UUID estável. Identidade e
+operador vêm da sessão. GET não renova atividade. Valores e situações de pagamento
+são administrativos, sem integração financeira externa. Confirmações já aplicadas
+são idempotentes; uma versão incompatível não sobrescreve estado concorrente.
+
+Painel usa America/Sao_Paulo e relógio do servidor; métricas não podem ser contagens
+apenas da página. A lista não pode expor senhas, hashes, token ou dados completos de
+contas. Consultas devem ser parametrizadas, limitadas e sem DDL. Testar negação de
+cliente/sem sessão, transições inválidas, concorrência na sala, resposta perdida,
+versões obsoletas, filtros com respostas fora de ordem e redaction financeira.
+
+Etapa 4 validada em 20/10/2026: testes de domínio/HTTP/gateway/hooks, check MySQL
+com limpeza de fixtures, revisão independente e criação/pagamento/check-in/painel/
+cancelamento no navegador. Corrigidos centavos, busca atrasada, fuso e vínculo
+do fetch no browser. Sem migration nova ou deploy.
+
+## Entrega parcial da etapa 3 — Serviços em 20/10/2026
+
+Serviços empresariais conectados ao MySQL/Cloudinary: criação dos três tipos
+previstos quando ausentes, edição com versão, benefícios ordenados, ativo e imagem.
+Cliente recebe somente ativos; admin lista todos e é o único que grava. Reutiliza
+transações e protocolo de imagens do catálogo, com auditoria e requestId.
+Não há importação automática do mock, SQL novo ou ativação de plano/contratação.
+Tarefas e etapa 5 continuam pendentes. Testes, check MySQL e navegador com imagem
+validados; fixtures removidas. Revisão independente corrigiu aviso perdido após
+falha no recarregamento da lista, mantendo o sucesso confirmado da escrita.
+
+Conferência visual desta etapa realizada em desktop. A ferramenta não conseguiu
+capturar a viewport móvel; estilos e composição responsiva existentes foram preservados.
+
+## Entrega de Tarefas — decisão de 20/10/2026
+
+Admin e secretaria autorizados a criar/editar/mover/excluir tarefas de outro autor.
+Prazo bloqueado em todas as edições e recusado no corpo HTTP, inclusive para admin;
+SQL nunca atualiza prazo/autor. Responsável deve ser equipe ativa. Quadro paginado,
+equipe mínima, contador operacional, versão e auditoria atômica. Criação idempotente.
+Mock alinhado. Sem nova tabela, migração de mock, commit ou deploy. Revisão
+independente sem achados bloqueantes; testes HTTP/MySQL e navegador com dados
+próprios, removidos ao terminar. Etapa 3 entregue; consulta de auditoria pendente.

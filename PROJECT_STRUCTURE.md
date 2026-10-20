@@ -287,3 +287,74 @@ nenhum teste foi removido ou desativado nesta etapa.
 Validação do agrupamento: typecheck, os mesmos 191 testes em 26 arquivos e build
 frontend aprovados; comparação confirmou que os corpos dos testes foram preservados,
 com alteração apenas dos caminhos de módulos.
+
+## Agendamentos administrativos — integração de 20/10/2026
+
+- Interface: `src/features/agendamentos/` e `src/features/painel-do-dia/`.
+- Estado/ações: `useAdminBookings`, `useAdminBookingsPage`, `useAdminDailyPanel`
+  e `useCreateBookingForAdmin`; contratos em `src/services/contracts.ts`.
+- HTTP: `src/services/http/agendamentos-admin-http.ts`; sem fallback mock,
+  sem carregar todas as reservas ou buscar contas individualmente.
+- API: `backend/src/controllers/agendamentos-administrativos.controller.ts`,
+  serviço/validação em `services/`, contrato e implementação em `repositories/`.
+- Regras de calendário/fuso e centavos: `backend/src/domain/`.
+- Rotas: GET `/admin/agendamentos`, GET `/admin/painel-do-dia`, POST
+  `/admin/agendamentos`, PATCH `/admin/agendamentos/:id/` com `confirmacao`,
+  `pagamento`, `cancelamento` ou `chegada`. Frontend usa proxy `/api`.
+- Criação recebe requestId; ações recebem expectedVersion. Operador vem da sessão.
+- Testes frontend nas pastas `__tests__` correspondentes; backend em `backend/test/`.
+  `backend/src/check-agendamentos-admin.ts` verifica MySQL com fixtures e limpeza.
+
+Para testar localmente, mantenha frontend e backend abertos, entre como admin e
+acesse Agendamentos. Crie uma reserva futura para um cliente ativo/sala cadastrada,
+consulte pelo filtro de datas e teste pagamento manual/cancelamento. Check-in só
+vale no dia comercial da reserva, antes do término. Painel do Dia mostra hoje.
+Não é necessário executar SQL novo para esta etapa.
+
+## Serviços empresariais — integração de 20/10/2026
+
+A interface permanece em `src/features/servicos/`: página, hooks e formulário.
+`CatalogoAdminHttpGateway` também implementa `BusinessServiceGateway`, reutilizando
+o upload de imagens. `create-app-services.ts` seleciona HTTP ou mock explicitamente.
+Backend reaproveita o catálogo por camadas: DTO/validação, serviço, contrato e
+`RepositorioCatalogoAdministrativoMysql`. Não há módulo ou galeria duplicados.
+
+GET `/servicos` exige sessão e retorna ativos; GET `/admin/servicos` retorna todos
+somente para admin. POST `/admin/servicos` recebe requestId; PATCH
+`/admin/servicos/:id` exige expectedVersion. O servidor traduz os três tipos para
+os códigos existentes do banco. Benefícios principal/secundário mantêm ordem.
+Imagem usa imageId e Cloudinary; nenhum base64, URL arbitrário ou segredo é aceito
+na escrita. Novos tipos não são inventados; o banco vazio apresenta opções de cadastro.
+
+Testes: `backend/test/servicos-empresariais.spec.ts`, testes HTTP do catálogo,
+`src/services/http/__tests__/servicos-http.test.ts` e
+`src/features/servicos/__tests__/useBusinessServicesHttp.test.tsx`. O check
+`check:catalogo-admin` também testa serviços com fixtures quando o tipo fiscal está
+livre, preservando registros já existentes. Validação de upload e exibição com
+perfil cliente conferida no navegador; serviço/arquivo temporários removidos.
+
+## Tarefas — integração de 20/10/2026
+
+Interface em `src/features/tarefas/`; `useAdminTasks` coordena leitura paginada e
+mutações, `useAdminTasksPage` mantém formulário/modais. `TarefasHttpGateway`, em
+`src/services/http/tarefas-http.ts`, implementa os contratos de tarefas sem listar
+contas completas ou carregar toda a base. Equipe usa apenas id/nome.
+
+Backend: `controllers/tarefas.controller.ts`, `services/servico-tarefas.ts` e
+`validacao-tarefas.ts`, `dto/tarefa.dto.ts`, contrato `repositories/contracts/`
+e implementação `repositories/mysql/repositorio-tarefas-mysql.ts`. Composição no
+módulo administrativo existente. Não há alteração de schema nem migration nova.
+
+GET `/admin/tarefas` recebe page/pageSize/ownership. GET `/admin/tarefas/equipe`
+retorna equipe ativa; GET `/admin/tarefas/atencao` retorna contador. POST cria com
+requestId; PATCH `/:id` edita conteúdo; PATCH `/:id/situacao` move; DELETE `/:id`
+exclui. Mutações de registros existentes exigem expectedVersion. Toda rota exige
+admin/secretaria; autoria vem da sessão. O SQL de edição não inclui prazo/autor.
+Prazo vazio também permanece vazio após criar. Auditoria acompanha a transação.
+
+`npm run check:tarefas --prefix backend` usa fixtures próprias com limpeza em
+finally e recusa produção. Verifica edição entre cargos, prazo preservado, autoria,
+versões, concorrência, repetição, paginação, rollback e sessão revogada. Testes
+frontend/backend nas pastas correspondentes. Conferência no navegador incluiu
+criação pela secretaria, edição de outro autor, movimento e prazo bloqueado para
+ambos os cargos. Dados temporários removidos. Para testar, acesse `/admin/tarefas`.

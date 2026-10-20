@@ -4,17 +4,17 @@ import type { AdminTasksViewModel } from './useAdminTasksPage';
 type TaskEditorProps = Pick<
   AdminTasksViewModel,
   | 'editorRef' | 'editingTask' | 'form' | 'setForm' | 'formError' | 'staff'
-  | 'isSecretaryEditing' | 'saving' | 'submitTask' | 'closeEditor'
+  | 'dueDateLocked' | 'saving' | 'submitTask' | 'closeEditor'
   | 'onEditorClosed' | 'requestDelete'
 >;
 
 export function TaskEditorDialog({
-  editorRef, editingTask, form, setForm, formError, staff, isSecretaryEditing,
+  editorRef, editingTask, form, setForm, formError, staff, dueDateLocked,
   saving, submitTask, closeEditor, onEditorClosed, requestDelete,
 }: TaskEditorProps) {
   return (
-    <dialog ref={editorRef} className="admin-task-modal" onClose={onEditorClosed}>
-      <form method="dialog" onSubmit={(event) => { void submitTask(event); }}>
+    <dialog ref={editorRef} className="admin-task-modal" onClose={onEditorClosed} onCancel={event => { if (saving) event.preventDefault(); }}>
+      <form inert={saving} method="dialog" onSubmit={(event) => { void submitTask(event); }}>
         <header>
           <div>
             <h2>{editingTask ? 'Editar Tarefa' : 'Nova Tarefa'}</h2>
@@ -50,6 +50,7 @@ export function TaskEditorDialog({
               onChange={(event) => setForm((current) => ({ ...current, assignedTo: event.target.value }))}
             >
               <option value="">Sem responsável</option>
+              {form.assignedTo && !staff.some(person => person.id === form.assignedTo) && <option value={form.assignedTo}>Responsável indisponível — selecione outro</option>}
               {staff.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
             </select>
           </label>
@@ -70,13 +71,13 @@ export function TaskEditorDialog({
           </label>
           <label>
             <span className="admin-task-field-label">
-              Prazo <small>{isSecretaryEditing ? '(definido na criação)' : '(opcional)'}</small>
+              Prazo <small>{dueDateLocked ? '(definido na criação)' : '(opcional)'}</small>
             </span>
             <input
               type="date"
               value={form.dueDate}
-              disabled={isSecretaryEditing}
-              title={isSecretaryEditing ? 'A data estimada não pode ser alterada após a criação' : undefined}
+              disabled={dueDateLocked}
+              title={dueDateLocked ? 'A data estimada não pode ser alterada após a criação' : undefined}
               onChange={(event) => setForm((current) => ({ ...current, dueDate: event.target.value }))}
             />
           </label>

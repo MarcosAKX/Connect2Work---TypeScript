@@ -120,7 +120,7 @@ export function AdminBookingTable({
                 <td data-label="Horário">{item.booking.timeSlot}</td>
                 {showBookingValue && (
                   <td data-label="Valor">
-                    <strong>{money.format(item.total)}</strong>
+                    <strong>{item.total === undefined ? '—' : money.format(item.total)}</strong>
                   </td>
                 )}
                 <td data-label="Pagamento">

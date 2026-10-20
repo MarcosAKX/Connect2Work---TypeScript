@@ -20,7 +20,7 @@ const adminNavigation = [
 ] satisfies Array<{ to: string; label: string; icon: typeof DashboardIcon; end: boolean; roles: UserRole[] }>;
 
 export function AdminShell({ blocked = false }: { blocked?: boolean }) {
-  const { user, logout, mode } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isLeaving, setIsLeaving] = useState(false);
   const [logoutError, setLogoutError] = useState('');
@@ -29,7 +29,7 @@ export function AdminShell({ blocked = false }: { blocked?: boolean }) {
   const hoverModeRef = useRef(false);
   const closeTimerRef = useRef<number | null>(null);
   const role = user?.role ?? 'client';
-  const taskAttentionCount = useTaskAttentionCount(!blocked && mode !== 'http');
+  const taskAttentionCount = useTaskAttentionCount(!blocked);
   const visibleNavigation = adminNavigation.filter((item) => (item.roles as UserRole[]).includes(role));
 
   useEffect(() => () => {

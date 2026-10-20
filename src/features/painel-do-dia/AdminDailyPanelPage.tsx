@@ -1,3 +1,4 @@
+import { BookingPagination } from '../agendamentos/BookingPagination';
 import { ClockIcon } from '../../components/icons';
 import { useAuth } from '../../state/AuthContext';
 import { useAdminDailyPanel } from './useAdminDailyPanel';
@@ -94,6 +95,7 @@ export function AdminDailyPanelPage() {
           </div>
         </div>
       </section>
+      {data.remoteMode && <BookingPagination {...data} />}
       {confirmingPayment && (
         <DailyConfirmPaymentDialog
           item={confirmingPayment}

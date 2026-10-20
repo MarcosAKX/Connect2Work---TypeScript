@@ -3,22 +3,24 @@ import type { AdminTasksViewModel } from './useAdminTasksPage';
 
 type TaskDeleteProps = Pick<
   AdminTasksViewModel,
-  'deleteRef' | 'deleteTarget' | 'setDeleteTarget' | 'saving' | 'confirmDelete'
+  'deleteRef' | 'deleteTarget' | 'setDeleteTarget' | 'saving' | 'confirmDelete' | 'error'
 >;
 
 export function TaskDeleteDialog({
-  deleteRef, deleteTarget, setDeleteTarget, saving, confirmDelete,
+  deleteRef, deleteTarget, setDeleteTarget, saving, confirmDelete, error,
 }: TaskDeleteProps) {
   return (
     <dialog
       ref={deleteRef}
       className="admin-task-modal admin-task-modal--delete"
+      onCancel={event => { if (saving) event.preventDefault(); }}
       onClose={() => setDeleteTarget(null)}
     >
-      <div>
+      <div inert={saving}>
         <TrashIcon width="24" height="24" />
         <h2>Excluir tarefa?</h2>
         <p>Tem certeza que deseja excluir <strong>{deleteTarget?.title}</strong>? Esta ação não pode ser desfeita.</p>
+        {error && <p role="alert">{error}</p>}
         <footer>
           <button type="button" className="btn btn-secondary" onClick={() => setDeleteTarget(null)}>
             Cancelar

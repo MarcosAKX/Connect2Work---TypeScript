@@ -1,18 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { businessWallDate } from '../../utils/business-time';
 import { services } from '../../services';
-import type { Booking, BookingAdminStatus, Room, Unit } from '../../types/domain';
+import type { Booking, BookingAdminStatus, Room, Unit, AdminBookingRecord, AdminBookingsPage, AdminDailyBookings, AdminBookingsQuery } from '../../types/domain';
 import { formatStorageDate, parseTimeSlot } from '../../utils/booking';
 
 export type AdminBookingStatusFilter = BookingAdminStatus | '';
 
-export interface AdminBookingRow {
-  booking: Booking;
-  clientName: string;
-  roomName: string;
-  unitName: string;
-  total: number;
-  adminStatus: BookingAdminStatus;
-}
+export type AdminBookingRow = AdminBookingRecord;
+export interface DailyBookingOptions { daily: true; search: string; unitId: string; operational: string; period: string; }
 
 function getAdminStatus(booking: Booking): BookingAdminStatus {
   if (booking.status === 'cancelled' || booking.adminStatus === 'cancelled') return 'cancelled';
@@ -26,8 +21,21 @@ function getBookingTotal(booking: Booking, room: Room | undefined) {
   return (room?.pricePerHour ?? 0) * hours;
 }
 
-export function useAdminBookings() {
-  const today = formatStorageDate(new Date());
+export function useAdminBookings(options?: DailyBookingOptions) {
+  const real = Boolean(services.adminBookings);
+  const clockOffset = useRef(0);
+  const [now, setNow] = useState(() => real ? businessWallDate(new Date().toISOString()) : new Date());
+  const today = formatStorageDate(now);
+  const [page, setPage] = useState(1);
+  const [remote, setRemote] = useState<AdminBookingsPage | null>(null);
+  const [dailyRemote, setDailyRemote] = useState<AdminDailyBookings | null>(null);
+  const sequence = useRef(0);
+  const saving = useRef(false);
+  const daily = options?.daily ?? false;
+  const dailySearch = options?.search ?? '';
+  const dailyUnit = options?.unitId ?? '';
+  const operational = options?.operational ?? 'all';
+  const period = options?.period ?? 'all';
   const [bookings, setBookings] = useState<AdminBookingRow[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [search, setSearch] = useState('');
@@ -39,12 +47,27 @@ export function useAdminBookings() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [mutationError, setMutationError] = useState('');
-  const [now, setNow] = useState(() => new Date());
 
   const load = useCallback(async (showLoading = true) => {
+    const request = ++sequence.current;
     if (showLoading) setIsLoading(true);
     setError('');
     try {
+      if (services.adminBookings) {
+        const query: AdminBookingsQuery = { page, pageSize: 20,
+          ...((daily ? dailySearch : search) ? { search: daily ? dailySearch : search } : {}),
+          ...((daily ? dailyUnit : unitId) ? { unitId: daily ? dailyUnit : unitId } : {}),
+          ...(daily ? {operational, period} : {...(status ? {status} : {}), ...(dateFrom ? {dateFrom} : {}), ...(dateTo ? {dateTo} : {})}) };
+        const catalogUnits = await services.catalog.getUnits();
+        const panel = daily ? await services.adminBookings.daily(query) : null;
+        const result = panel ? panel.agenda : await services.adminBookings.list(query);
+        if (request !== sequence.current) return;
+        setUnits(catalogUnits); setBookings(result.items); setRemote(result); setDailyRemote(panel);
+        clockOffset.current = Date.parse(result.serverNow) - Date.now();
+        setNow(businessWallDate(result.serverNow));
+        if (!result.items.length && page > 1) setPage(page - 1);
+        return;
+      }
       const [catalogUnits, allBookings] = await Promise.all([
         services.catalog.getUnits(), services.bookings.getAll(),
       ]);
@@ -68,19 +91,25 @@ export function useAdminBookings() {
         };
       }));
     } catch {
-      setError('Não foi possível carregar os agendamentos.');
+      if (request === sequence.current) setError('Não foi possível carregar os agendamentos.');
     } finally {
-      if (showLoading) setIsLoading(false);
+      if (request === sequence.current) setIsLoading(false);
     }
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
+  }, [page, search, unitId, status, dateFrom, dateTo, daily, dailySearch, dailyUnit, operational, period]);
+  const latestLoad = useRef(load); useEffect(() => { latestLoad.current = load; }, [load]);
+  useEffect(() => { setPage(1); }, [search, unitId, status, dateFrom, dateTo, dailySearch, dailyUnit, operational, period]);
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    if (!real) { void load(); return; }
+    setIsLoading(true); const timer = window.setTimeout(() => void load(), 250);
+    return () => { window.clearTimeout(timer); sequence.current++; };
+  }, [load, real]);
+  useEffect(() => {
+    const timer = window.setInterval(() => {setNow(real ? businessWallDate(new Date(Date.now() + clockOffset.current).toISOString()) : new Date());if(real)void latestLoad.current(false);}, 60_000);
     return () => window.clearInterval(timer);
   }, []);
 
   const filteredBookings = useMemo(() => {
+    if (real) return bookings;
     const term = search.trim().toLocaleLowerCase('pt-BR');
     // Para grandes volumes no backend real, substituir este filtro em memória por paginação ou virtualização.
     return bookings.filter((item) => {
@@ -94,15 +123,18 @@ export function useAdminBookings() {
     }).sort((first, second) => `${first.booking.date} ${first.booking.timeSlot}`.localeCompare(`${second.booking.date} ${second.booking.timeSlot}`));
   }, [bookings, dateFrom, dateTo, search, status, unitId]);
 
-  const stats = useMemo(() => ({
+  const mockStats = useMemo(() => ({
     total: bookings.length,
     confirmed: bookings.filter(({ adminStatus }) => adminStatus === 'confirmed').length,
     pending: bookings.filter(({ adminStatus }) => adminStatus === 'pending').length,
     cancelled: bookings.filter(({ adminStatus }) => adminStatus === 'cancelled').length,
     today: bookings.filter(({ booking }) => booking.date === today).length,
     checkInsToday: bookings.filter(({ booking }) => booking.date === today && Boolean(booking.checkedInAt)).length,
-    revenue: bookings.filter(({ adminStatus, booking }) => adminStatus === 'confirmed' && (booking.paymentStatus ?? 'completed') === 'completed').reduce((sum, booking) => sum + booking.total, 0),
+    revenue: bookings.filter(({ adminStatus, booking }) => adminStatus === 'confirmed' && (booking.paymentStatus ?? 'completed') === 'completed').reduce((sum, booking) => sum + (booking.total ?? 0), 0),
   }), [bookings, today]);
+
+  const stats = real && remote ? { ...remote.summary, revenue: remote.summary.revenue ?? 0,
+    ...(dailyRemote ? {today: dailyRemote.counts.today, checkInsToday: dailyRemote.counts.checkIns} : {}) } : mockStats;
 
   const dayPanel = useMemo(() => {
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -130,45 +162,55 @@ export function useAdminBookings() {
       .sort((first, second) => `${first.booking.date} ${first.booking.timeSlot}`.localeCompare(`${second.booking.date} ${second.booking.timeSlot}`));
 
     return {
+      presentCount: dailyRemote?.counts.present ?? presentNow.length,
+      paymentsCount: dailyRemote?.counts.payments ?? pendingPayments.length,
+      waitingCount: dailyRemote?.counts.waiting ?? waitingArrival.length,
+      firstPayment: dailyRemote ? dailyRemote.firstPayment : pendingPayments[0] ?? null,
+      firstWaiting: dailyRemote ? dailyRemote.firstWaiting : waitingArrival[0] ?? null,
+      upcomingDays: dailyRemote?.upcomingDays,
       now,
       todayBookings,
       waitingArrival,
       presentNow,
       pendingPayments,
-      pendingPaymentTotal: pendingPayments.reduce((sum, item) => sum + item.total, 0),
-      nextArrival,
+      pendingPaymentTotal: pendingPayments.reduce((sum, item) => sum + (item.total ?? 0), 0),
+      nextArrival: dailyRemote ? dailyRemote.nextArrival : nextArrival,
       upcomingBookings,
       tomorrowDate,
       nextWeekDate,
     };
-  }, [bookings, now, today]);
+  }, [bookings, now, today, dailyRemote]);
 
-  const confirmBooking = useCallback(async (bookingId: string) => {
+  const confirmBooking = useCallback(async (bookingId: string, expectedVersion?: string) => {
+    if (saving.current) return false; saving.current = true;
     setIsSaving(true); setMutationError('');
-    try { await services.bookings.confirmBooking(bookingId); await load(false); return true; }
+    try { services.adminBookings ? await services.adminBookings.action(bookingId, 'confirmacao', expectedVersion ?? '') : await services.bookings.confirmBooking(bookingId); await latestLoad.current(false); return true; }
     catch (caughtError) { setMutationError(caughtError instanceof Error ? caughtError.message : 'Não foi possível confirmar o agendamento.'); return false; }
-    finally { setIsSaving(false); }
+    finally { saving.current = false; setIsSaving(false); }
   }, [load]);
 
-  const cancelBooking = useCallback(async (bookingId: string, reason: string) => {
+  const cancelBooking = useCallback(async (bookingId: string, reason: string, expectedVersion?: string) => {
+    if (saving.current) return false; saving.current = true;
     setIsSaving(true); setMutationError('');
-    try { await services.bookings.cancelBookingAsAdmin(bookingId, reason); await load(false); return true; }
+    try { services.adminBookings ? await services.adminBookings.action(bookingId, 'cancelamento', expectedVersion ?? '', reason) : await services.bookings.cancelBookingAsAdmin(bookingId, reason); await latestLoad.current(false); return true; }
     catch (caughtError) { setMutationError(caughtError instanceof Error ? caughtError.message : 'Não foi possível cancelar o agendamento.'); return false; }
-    finally { setIsSaving(false); }
+    finally { saving.current = false; setIsSaving(false); }
   }, [load]);
 
-  const confirmPayment = useCallback(async (bookingId: string) => {
+  const confirmPayment = useCallback(async (bookingId: string, expectedVersion?: string) => {
+    if (saving.current) return false; saving.current = true;
     setIsSaving(true); setMutationError('');
-    try { await services.bookings.confirmPayment(bookingId); await load(false); return true; }
+    try { services.adminBookings ? await services.adminBookings.action(bookingId, 'pagamento', expectedVersion ?? '') : await services.bookings.confirmPayment(bookingId); await latestLoad.current(false); return true; }
     catch (caughtError) { setMutationError(caughtError instanceof Error ? caughtError.message : 'Não foi possível confirmar o pagamento.'); return false; }
-    finally { setIsSaving(false); }
+    finally { saving.current = false; setIsSaving(false); }
   }, [load]);
 
-  const checkInBooking = useCallback(async (bookingId: string, staffUserId: string) => {
+  const checkInBooking = useCallback(async (bookingId: string, staffUserId: string, expectedVersion?: string) => {
+    if (saving.current) return false; saving.current = true;
     setIsSaving(true); setMutationError('');
-    try { await services.bookings.checkInBooking(bookingId, staffUserId); await load(false); return true; }
+    try { services.adminBookings ? await services.adminBookings.action(bookingId, 'chegada', expectedVersion ?? '') : await services.bookings.checkInBooking(bookingId, staffUserId); await latestLoad.current(false); return true; }
     catch (caughtError) { setMutationError(caughtError instanceof Error ? caughtError.message : 'Não foi possível realizar o check-in.'); return false; }
-    finally { setIsSaving(false); }
+    finally { saving.current = false; setIsSaving(false); }
   }, [load]);
 
   function showToday() { setDateFrom(today); setDateTo(today); }
@@ -176,6 +218,7 @@ export function useAdminBookings() {
   function clearFilters() { setSearch(''); setUnitId(''); setStatus(''); setDateFrom(''); setDateTo(''); }
 
   return {
+    page, setPage, total: remote?.total ?? filteredBookings.length, remoteMode: real,
     bookings: filteredBookings, units, stats, dayPanel, today,
     search, setSearch, unitId, setUnitId, status, setStatus, dateFrom, setDateFrom, dateTo, setDateTo,
     isLoading, isSaving, error, mutationError, clearMutationError: () => setMutationError(''),

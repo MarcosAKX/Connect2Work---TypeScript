@@ -125,7 +125,7 @@ Adaptador de demonstração em `localStorage`, selecionado explicitamente no des
 - `BusinessServiceGateway` — listagem pública e CRUD dos serviços empresariais.
 - `BookingGateway` — consulta, contagem, criação com rejeição de intervalos sobrepostos, confirmação administrativa e cancelamento de cliente ou administrador.
 - `CheckoutGateway` — leitura, gravação e remoção do rascunho.
-- `TaskGateway` — listagem, criação e movimentação compartilhada; administrador edita/exclui qualquer tarefa, enquanto secretária edita/exclui somente as próprias e não pode alterar a data estimada depois da criação.
+- `TaskGateway` — listagem, criação, edição, movimentação e exclusão compartilhadas entre admin e secretaria. Prazo imutável após criar para ambos. HTTP usa listBoard paginado, listStaff mínimo e attentionCount, sem listTasks completo.
 - `AuditGateway` — consulta de ações recentes e extrato do plano por usuário.
 - `BackupGateway` — exportação e importação validada do estado local, restritas ao administrador.
 
@@ -171,3 +171,13 @@ de módulos integrados e [backend/README.md](backend/README.md) para execução 
 
 O histórico de alterações e registros intermediários foi preservado em
 [docs/historico/evolucao-ate-2026-10-19.md](docs/historico/evolucao-ate-2026-10-19.md).
+
+No modo API, Agendamentos administrativos e Painel do Dia usam MySQL por gateway próprio. Reserva/checkout do cliente e consumo de plano continuam pendentes.
+
+Serviços empresariais também usam API/MySQL no modo real, sem fallback ou
+reimportação do mock. O adaptador local permanece disponível no modo de demonstração.
+
+Tarefas no mock seguem a regra atual: qualquer admin/secretaria pode editar ou
+excluir tarefas da equipe; prazo só pode ser definido na criação, inclusive para
+admin. O modo API persiste no MySQL com versão e auditoria; dados mock não migram
+automaticamente.

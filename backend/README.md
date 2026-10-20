@@ -1,6 +1,6 @@
 # Connect2Work API
 
-API NestJS/TypeScript com MySQL e Cloudinary. Estado vigente em 19/10/2026;
+API NestJS/TypeScript com MySQL e Cloudinary. Estado vigente em 20/10/2026;
 consulte a [matriz de funcionalidades](../FEATURES.md) para o escopo real.
 
 ## Configurar e executar localmente
@@ -31,10 +31,12 @@ Ctrl+C e execute novamente. Não sobrescrever `.env` para reiniciar. O build fic
 - Cadastro, login, sessão, atividade e logout em `/auth/*`.
 - Leitura de unidades e salas autenticada.
 - Gestão administrativa de usuários, unidades, salas, comodidades e galeria.
+- Serviços empresariais: vitrine autenticada de ativos e cadastro/edição por admin.
 - Upload autenticado, publicação e limpeza reconciliável de imagens Cloudinary.
+- Agendamentos administrativos, Painel do Dia e Tarefas, para admin e secretaria.
 - Auditoria transacional para as mutações administrativas implementadas.
 
-Reservas/pagamento reais e demais módulos pendentes não são liberados por existir
+Reservas do cliente/provedor de pagamento e demais módulos pendentes não são liberados por existir
 uma tabela ou uma tela mock. Google, recuperação real de senha e sincronização
 Google Calendar ainda precisam de implementação. Implantação de produção é uma etapa própria.
 
@@ -128,3 +130,33 @@ no ambiente local, conforme registros anteriores; não reaplicar sem verificar.
 Hospedar apenas frontend na Vercel não hospeda API nem MySQL.
 
 [Relatos anteriores e evidências por etapa](../docs/historico/evolucao-ate-2026-10-19.md).
+
+## Check de agendamentos administrativos
+
+`npm run check:agendamentos-admin --prefix backend` verifica concorrência,
+adjacência, idempotência, versões, permissões, valores ocultos, pagamento manual,
+check-in, painel e rollback no MySQL local. Usa fixtures próprias com limpeza em
+finally e recusa produção. Não aplica DDL. Rotas no guia PROJECT_STRUCTURE.md.
+
+## Upload falha apenas na API local
+
+A API precisa de acesso HTTPS externo ao Cloudinary. Se ela for iniciada por uma
+ferramenta com rede restrita, o MySQL local pode funcionar enquanto o upload falha
+com EACCES. Execute a API em um terminal local com acesso à rede ou autorize a
+execução da ferramenta. Não altere permissões do banco nem exponha as credenciais
+no frontend. O check `check:cloudinary` precisa usar o mesmo ambiente de rede.
+
+Serviços reutilizam catálogo, armazenamento e controle de versão. GET `/servicos`,
+GET/POST `/admin/servicos` e PATCH `/admin/servicos/:id`. Não exigem migration nova.
+O check de catálogo inclui benefícios, idempotência, versão, rollback e visibilidade
+do serviço quando há tipo livre para fixture; não altera serviços reais existentes.
+
+## Tarefas
+
+GET/POST `/admin/tarefas`; PATCH/DELETE `/admin/tarefas/:id`;
+PATCH `/admin/tarefas/:id/situacao`; GET `/admin/tarefas/equipe` e `/atencao`.
+Somente equipe ativa; cliente é recusado antes de consultar o repositório.
+Prazo não faz parte do contrato de edição nem do UPDATE. Autor da sessão, versões,
+requestId e auditoria transacional protegem gravações. Não usar root nem SQL novo.
+`npm run check:tarefas --prefix backend` compila e verifica MySQL local com limpeza
+de fixtures; não usa tarefas/contas reais como alvo e recusa NODE_ENV=production.

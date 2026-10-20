@@ -9,7 +9,7 @@ import type { BusinessService } from '../../types/domain';
 export function ServicesPage() {
   const { user } = useAuth();
   const userName = user?.name.trim() || 'cliente';
-  const { fiscal, commercial, hours, isLoading } = useServices();
+  const { fiscal, commercial, hours, isLoading, error, retry } = useServices();
 
   function content(item: BusinessService, icon: ReactNode) {
     return (
@@ -30,6 +30,8 @@ export function ServicesPage() {
       <p>Soluções inteligentes que dão mais profissionalismo, economia e flexibilidade para sua empresa crescer.</p>
     </header>
 
+    {error && <div role="alert"><p>{error}</p><button className="btn btn-secondary" onClick={retry}>Tentar novamente</button></div>}
+    {!isLoading && !error && !fiscal && !commercial && !hours && <p>Nenhum serviço disponível no momento.</p>}
     <section className={`services-showcase${isLoading ? ' is-loading' : ''}`} aria-label="Serviços empresariais" aria-busy={isLoading}>
       {fiscal && (
         <article className="service-showcase service-showcase--fiscal">
