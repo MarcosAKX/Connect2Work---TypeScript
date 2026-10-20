@@ -1,2 +1,0 @@
--- Seed future Supabase environment through authenticated users first.
--- profiles.id must reference auth.users.id; never place mock passwords here.

@@ -6,7 +6,7 @@ alwaysApply: true
 # Antes da tarefa
 
 Ler `PRODUCT.md`, `DESIGN.md`, `FEATURES.md`, `PROJECT_STRUCTURE.md` e
-`MOCK_DATABASE.md`. Ler `MIGRATION.md` para entender limites do backend.
+`MOCK_DATABASE.md`. Ler `docs/planejamento/MIGRATION.md` para entender limites do backend.
 
 # Ao concluir
 
@@ -15,7 +15,7 @@ Ler `PRODUCT.md`, `DESIGN.md`, `FEATURES.md`, `PROJECT_STRUCTURE.md` e
 - Entidade, campo, chave ou contrato alterado: atualizar `MOCK_DATABASE.md`.
 - Token ou padrão visual alterado: atualizar `DESIGN.md`.
 - Escopo, público ou objetivo alterado: atualizar `PRODUCT.md`.
-- Estado da migração ou backend alterado: atualizar `MIGRATION.md`.
+- Estado da migração ou backend alterado: atualizar `docs/planejamento/MIGRATION.md`.
 
 Nunca marcar como implementado algo não testável. Sempre indicar “mock local”
 quando não houver backend real.

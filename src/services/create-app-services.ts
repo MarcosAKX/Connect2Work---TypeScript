@@ -1,11 +1,11 @@
 import type { AppServices } from './contracts';
-import { createLocalStorageServices } from './local-storage';
-import { AuthHttpGateway } from './auth-http';
-import { UnidadesHttpGateway } from './unidades-http';
-import { SalasHttpGateway } from './salas-http';
-import { UsuariosHttpGateway } from './usuarios-http';
-import { CatalogoAdminHttpGateway } from './catalogo-admin-http';
-import { businessServices } from './mock-business-services';
+import { createLocalStorageServices } from './mock/local-storage';
+import { AuthHttpGateway } from './http/auth-http';
+import { UnidadesHttpGateway } from './http/unidades-http';
+import { SalasHttpGateway } from './http/salas-http';
+import { UsuariosHttpGateway } from './http/usuarios-http';
+import { CatalogoAdminHttpGateway } from './http/catalogo-admin-http';
+import { businessServices } from './mock/mock-business-services';
 import type { CheckoutDraft } from '../types/domain';
 const unavailable = async (): Promise<never> => { throw new Error('Funcionalidade ainda não integrada à API.'); };
 // O modo real não inicializa usuários, credenciais ou dados privados do mock.

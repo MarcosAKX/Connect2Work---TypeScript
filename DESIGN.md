@@ -100,16 +100,16 @@ Fonte: `src/assets/css/base.css`.
 - Não usar gradiente em texto, glassmorphism decorativo ou cards excessivamente arredondados.
 
 
-## Estados de sessão — 11/10/2026
+## Estados de sessão
 
 Preservar tema e formulários. Verificação inicial usa carregamento; falha usa mensagem genérica e botão Tentar novamente. Módulos privados pendentes usam mensagem Funcionalidade em preparação dentro do Shell. Falha de logout aparece junto ao botão Sair e permite nova tentativa. Verificação em segundo plano conserva a página e suspende interação via inert/aria-busy até confirmação.
 
 
-## Unidades — integração MySQL em 17/10/2026
+## Unidades
 
 Preservar o layout e o mapa existentes. Exibir carregamento, ausência de unidades e falha com nova tentativa antes de montar o mapa. A contagem deve usar Salas na unidade / salas cadastradas: disponibilidade por horário depende da etapa de Agendamentos. Imagem não configurada usa placeholder existente. Sem coordenadas, o card permanece na lista.
 
-## Redirecionamento por expiração — 17/10/2026
+## Redirecionamento por expiração
 
 Quando o prazo já confirmado pela API é atingido, AuthContext encerra o acesso na interface e as rotas protegidas retornam ao login, sem exigir nova consulta HTTP. O prazo usa o menor entre inatividade e expiração absoluta, com o ajuste de relógio recebido da API. Um temporizador independente continua ativo mesmo se uma verificação falhar ou ficar pendente; respostas antigas não reabrem a sessão. Nova confirmação de atividade substitui o prazo anterior. A interface libera o estado inert ao expirar.
 
@@ -118,18 +118,23 @@ O backend continua sendo a autoridade para aceitar requisições: não houve alt
 Regressões cobrem expiração por inatividade e absoluta com rede indisponível, consulta pendente, resposta tardia, erro anterior ao vencimento e renovação do prazo. Não há alteração de tabelas, credenciais ou dados.
 
 
-## Salas — integração em 18/10/2026
+## Salas
 
 Layout de cards preservado. Título Salas da unidade identifica catálogo, sem afirmar disponibilidade de horário. Carregamento usa role=status; falha usa role=alert e Tentar novamente; vazio informa ausência de salas cadastradas. Falta de imagens mantém Fotos em breve. Unidade ausente retorna para Unidades. Agendamentos permanecem em preparação.
 
-## Gestão de usuários MySQL — 18/10/2026
+## Gestão de usuários MySQL
 
-A gestão de usuários preserva o sistema visual existente. Paginação usa botões Anterior/Próxima, rótulo de página e bloqueio durante carregamento/gravação; contagem de resultados vem do servidor, enquanto indicadores mantêm o resumo global. Rotas administrativas ainda não integradas mantêm a tela de indisponibilidade. Conferência visual executada no navegador disponível; emulação específica de celular não está disponível nessa ferramenta.
+A gestão de usuários preserva o sistema visual existente. Paginação usa botões Anterior/Próxima, rótulo de página e bloqueio durante carregamento/gravação; contagem de resultados vem do servidor, enquanto indicadores mantêm o resumo global. Rotas administrativas ainda não integradas mantêm a tela de indisponibilidade.
 
-## Formulários de catálogo — 18/10/2026
+## Formulários de catálogo
 
 A integração preserva layout, tokens e componentes existentes. Em modo HTTP, a galeria recebe arquivos pelo controle de upload; URL externa nova não é oferecida. Miniaturas indicam ordem e permitem mover uma posição antes ou remover. Formulário bloqueia interação durante upload/gravação e apresenta erro sem fechar quando falha. Listas administrativas passam a mostrar total do servidor e navegação de páginas. A consulta cliente mantém o fallback Fotos em breve e usa WebP limitado; cards usam variante de 640px e galeria até 1600px.
 
 A validação e as mensagens de upload usam limite de10MiB para o original. O preview segue no formulário; o arquivo só é enviado ao salvar.
 
-Atualização de 19/10/2026: fotos originais aceitam até 10 MiB e 40 megapixels. O limite de resolução foi ampliado para permitir fotografias de câmeras de 24 MP; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.
+Fotos originais aceitam até 10 MiB e 40 megapixels; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.
+
+## Referências
+
+[Organização](PROJECT_STRUCTURE.md) · [Status das funcionalidades](FEATURES.md) ·
+[Histórico de decisões](docs/historico/evolucao-ate-2026-10-19.md).

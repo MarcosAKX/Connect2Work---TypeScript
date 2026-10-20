@@ -2,7 +2,7 @@ import { createContext, useContext, useCallback, useEffect, useMemo, useRef, use
 import { services } from '../services';
 import type { AuthSession } from '../services/contracts';
 import type { User } from '../types/domain';
-import { useSessionActivity } from '../hooks/useSessionActivity';
+import { useSessionActivity } from './useSessionActivity';
 export type AuthStatus = 'checking' | 'authenticated' | 'anonymous' | 'error';
 interface AuthState { status: AuthStatus; session: AuthSession | null; error: string; }
 interface AuthContextValue {
