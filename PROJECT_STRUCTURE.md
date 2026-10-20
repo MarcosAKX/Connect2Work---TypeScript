@@ -1,462 +1,289 @@
 # Connect2Work — Estrutura do Projeto
 
+Guia vigente após a organização de 19/10/2026. Este é o documento central para
+localizar código, entender responsabilidades e registrar a refatoração.
+
+## Mapa geral
+
+```text
+connect2work-app/
+├── src/
+│   ├── app/                 # rotas, lazy loading, 404 e registro ordenado dos estilos
+│   ├── features/            # telas, componentes exclusivos, hooks e testes por funcionalidade
+│   ├── components/          # interface compartilhada: shells, proteção de rotas, ícones etc.
+│   ├── hooks/               # lógica reutilizada: seleção/envio de imagens
+│   ├── services/
+│   │   ├── http/            # adaptadores da API e respectivos testes
+│   │   ├── mock/            # demonstração local e seus dados/testes
+│   │   ├── contracts.ts     # contratos independentes da implementação
+│   │   ├── create-app-services.ts # composição explícita API ou mock
+│   │   ├── index.ts         # instância dos serviços usados pela aplicação
+│   │   ├── errors.ts        # erros compartilhados entre adaptadores
+│   │   └── ids.ts           # UUIDs e compatibilidade com IDs da demonstração
+│   ├── state/               # sessão, atividade da sessão e tema globais
+│   ├── __tests__/           # testes de integração que atravessam funcionalidades
+│   ├── types/               # tipos compartilhados do domínio
+│   ├── utils/               # funções puras compartilhadas entre áreas
+│   ├── assets/              # imagens e CSS; caminhos e ordem dos estilos preservados
+│   ├── main.tsx             # inicialização React e providers
+│   └── styles.css           # entrada dos estilos globais
+├── backend/                 # API NestJS/TypeScript organizada por camadas
+├── database/mysql/          # estrutura inicial, migrations e seeds MySQL
+├── docs/
+│   ├── planejamento/        # integrações e documentos ainda pendentes
+│   └── historico/           # relatos anteriores e planos concluídos/substituídos
+├── outputs/                 # materiais de apoio; não fazem parte da aplicação
+└── PROJECT_STRUCTURE.md     # este guia
+```
+
+Não existem mais as pastas genéricas `src/pages/` ou pastas de componentes por
+área dentro de `src/components/`. Não foram criados arquivos intermediários de
+reexportação para simular os caminhos antigos. Nomes dos arquivos foram mantidos,
+exceto pela eliminação dos quatro hooks de coordenação consolidados.
+
+## Funcionalidades e telas
+
+| Pasta em `src/features/` | Páginas | Ações/estado principais |
+|---|---|---|
+| `autenticacao/` | `LoginPage`, `RegisterPage`, `RecoverPasswordPage` | `useLogin`, `useRegister`, `useRecoverPassword` |
+| `unidades/` | `UnitsPage`, `AdminUnitsPage` | `useUnits`, `useAdminUnits`, `useUnitForm` |
+| `salas/` | `RoomsPage`, `AdminRoomsPage` | `useRooms`, `useAdminRooms`, `useRoomForm` |
+| `agendamentos/` | `BookingPage`, `BookingsPage`, `AdminBookingsPage` | `useBooking`, `useBookings`, `useAdminBookings`, `useAdminBookingsPage`, `useCreateBookingForAdmin` |
+| `pagamentos/` | `PaymentPage`, `PaymentConfirmationPage` | `usePayment`; validação específica em `payment.ts` |
+| `usuarios/` | `AdminUsersPage` | `useAdminUsers`, `useAdminUsersPage`, `useManagedUserForm` |
+| `servicos/` | `ServicesPage`, `AdminBusinessServicesPage` | `useServices`, `useAdminBusinessServices`, `useBusinessServiceForm` |
+| `planos-horas/` | `AdminHoursPlanPage` | `useAdminHoursPlan`, `useHoursPlanForm` |
+| `tarefas/` | `AdminTasksPage` | `useAdminTasks`, `useAdminTasksPage` |
+| `dashboard/` | `AdminDashboardPage` | `useAdminDashboard`, `useMonthlyBookingsChart` |
+| `painel-do-dia/` | `AdminDailyPanelPage` | `useAdminDailyPanel`; formatação específica em `daily-panel.ts` |
+| `auditoria/` | `AdminActivityPage` | `useAdminActivity`, `useHoursStatement` |
+| `backup/` | `AdminBackupPage` | `useAdminBackup` |
+
+Cada pasta também contém seus componentes exclusivos: tabelas, formulários,
+seções e diálogos. Telas do cliente e da administração ficam na mesma área,
+identificadas pelos nomes `Admin...` quando necessário. Não há subpastas vazias
+para funcionalidades futuras nem um arquivo `index` obrigatório por área.
+
+A página 404 fica em `src/app/NotFoundPage.tsx`, pois pertence à navegação geral.
+Ter uma tela nessa tabela não significa que ela já esteja integrada ao MySQL.
+
 ## Padrão para novas telas
 
-A aplicação usa React com serviços por contratos e separação View / ViewModel
-progressiva. O padrão orienta novas telas e refatorações; não exige converter
-todas as páginas nem implementar MVVM clássico com classes.
-
-- **Página (`src/pages/`):** compõe seções e conecta contexto de autenticação/rota ao fluxo da tela.
-- **ViewModel (`src/hooks/`):** concentra estado, validações do fluxo e coordenação das ações. Preferir `useNomeDaTela`; se já existir hook de dados compartilhado, compô-lo sem duplicar seus dados ou regras.
-- **Componentes (`src/components/<area>/`):** apresentam seções coerentes com props tipadas. Estado estritamente visual, referências DOM e ciclo de vida de dialogs podem permanecer locais.
-- **Domínio e regras puras:** tipos em `src/types/domain.ts`, funções reutilizáveis em `src/utils/`; não copiar regras entre telas.
-- **Dados:** operações passam pelos contratos de `src/services/contracts.ts` e seus adaptadores. Páginas/componentes não acessam banco, SDK ou armazenamento diretamente.
-- **Backend futuro:** uma API deverá implementar as validações, permissões e transações no servidor e acessar MySQL. A separação do frontend não substitui segurança de backend.
-
-Extrair apenas responsabilidades claras. Não criar hooks sem lógica, componentes
-triviais ou uma segunda cópia de estado apenas para cumprir nomenclatura. Manter
-os tokens, shells, proteções de rota e componentes compartilhados existentes.
-
-### Critérios de conclusão
-
-1. Testar comportamentos importantes (sucesso, erro, validação e perfis aplicáveis), com datas controladas em cenários temporais.
-2. Em refatoração estrutural, preservar textos, HTML relevante, classes, navegação, regras e formato dos dados; não acrescentar funcionalidades.
-3. Executar `npm run typecheck`, `npm run test` e `npm run build`. Informar limitações e avisos; comparação de HTML não equivale a teste visual no navegador.
-4. Atualizar esta documentação para mudanças estruturais; atualizar os demais documentos somente quando seu conteúdo for afetado.
-
-## Entrada e rotas
-
-Em 08/10/2026, os 22 arquivos `src/pages/*.test.tsx` foram removidos por solicitação do usuário. Referências a esses testes nas seções de refatoração abaixo registram validações históricas; esses arquivos não integram mais a suíte atual. Os testes fora de `src/pages` permanecem.
-
-- `src/main.tsx` — inicializa React, Router e autenticação.
-- `src/App.tsx` — rotas públicas, do cliente e administrativas.
-- `vite.config.ts` — Vite, React e Vitest.
-- `vercel.json` — fallback das rotas da SPA para `index.html` no Vercel.
-
-### Carregamento sob demanda das rotas
-
-- `src/App.tsx` declara as páginas com `React.lazy` e caminhos explícitos de `import()`, fora do componente. Novas páginas devem seguir esse padrão, mantendo os guards existentes.
-- `Suspense` em `App` cobre rotas públicas; `AppShell` e `AdminShell` possuem limites junto ao `Outlet`, preservando o cabeçalho enquanto a página é baixada. `RouteLoading` anuncia “Carregando página…” sem animação e usa os tokens dos dois temas.
-- O JavaScript de Leaflet acompanha `UnitsPage`, não a entrada do login. Componentes e utilitários compartilhados podem gerar arquivos comuns automaticamente pelo Vite; não há configuração manual de chunks nem alteração de dependências.
-- `src/route-styles.ts` mantém os estilos das páginas carregados antecipadamente na ordem anterior. Isto evita que seletores compartilhados mudem de prioridade conforme a navegação. Os estilos globais continuam em `src/styles.css`; otimizar/separar CSS exige outra revisão da cascata, não mover imports silenciosamente para as páginas lazy.
-- Falha no download de uma página chega ao `ErrorBoundary` existente, com ação manual “Recarregar aplicação”. Não há recarga automática nem descarte de dados/formulários por um mecanismo de retry. Uma recarga manual pode perder campos ainda não salvos, como já ocorre ao recarregar o site.
-- Lazy loading melhora distribuição do código; **não é controle de acesso**. Guards, regras dos gateways e necessidade de validação no futuro backend permanecem inalterados.
-- `src/App.test.tsx` cobre as rotas reais, perfis, redirecionamentos, parâmetros, rascunho do checkout, estado de confirmação e navegação sem remontar o cabeçalho. `RouteLoading.test.tsx` cobre espera e falha de download.
-
-Medição local em 21/09/2026 (build de produção): JavaScript único anterior de **626,63 kB / 176,38 kB gzip**; entrada nova de **282,70 kB / 87,12 kB gzip**. Somando entrada, runtime e dependências necessárias para abrir o login: **295,54 kB / 91,22 kB gzip**, redução aproximada de **53% sem compressão / 48% gzip**. `UnitsPage` com mapa: **155,94 kB / 45,98 kB gzip**, sob demanda. Nenhum chunk ultrapassou 500 kB, sem aumentar o limite do aviso. Estes números medem arquivos, não tempo de carregamento nem Core Web Vitals em produção.
-
-Validação visual/funcional local: login dos três perfis, mapa com tiles, fluxo cliente até o checkout sem confirmar pagamento, dashboard e modal via `novo=1`, restrição da secretária, recarga de rota privada, temas claro/escuro e navegação mobile. CSS anterior comparado byte a byte no build: idêntico, exceto pela regra nova `.route-loading`. Não substitui medição em aparelho/rede reais nem teste do próximo deploy.
-
-## Páginas
-
-- `src/pages/LoginPage.tsx` — `/login`.
-- `src/pages/RegisterPage.tsx` — `/cadastro`.
-- `src/pages/RecoverPasswordPage.tsx` — `/recuperar-senha`.
-- `src/pages/UnitsPage.tsx` — `/unidades`, protegida.
-- `src/pages/RoomsPage.tsx` — `/salas?unidade={id}`, protegida.
-- `src/pages/BookingPage.tsx` — `/agendamento?sala={id}`, protegida.
-- `src/pages/PaymentPage.tsx` — `/pagamento`, protegida; PIX, cartão demonstrativo e confirmação da reserva.
-- `src/pages/PaymentConfirmationPage.tsx` — `/pagamento-confirmado`, protegida; confirmação e resumo da reserva.
-- `src/pages/BookingsPage.tsx` — `/meus-agendamentos`, protegida; filtros por usuário e cancelamento inline.
-- `src/pages/ServicesPage.tsx` — `/servicos`, protegida; composição visual de endereço fiscal, endereço comercial e plano de horas, imagens derivadas do catálogo e consulta pelo WhatsApp.
-- `src/pages/AdminDashboardPage.tsx` — `/admin`, protegida por perfil; resumo administrativo e agenda.
-- `src/pages/AdminUnitsPage.tsx` — `/admin/unidades`, protegida por perfil; CRUD de unidades e upload local.
-- `src/pages/AdminRoomsPage.tsx` — `/admin/salas`, protegida por perfil; CRUD, filtro, imagens e comodidades.
-- `src/pages/AdminBusinessServicesPage.tsx` — `/admin/servicos`, exclusiva de administradores; conteúdo, imagem e visibilidade dos serviços empresariais.
-- `src/pages/AdminBookingsPage.tsx` — `/admin/agendamentos`, protegida por perfil; métricas, filtros e ações operacionais.
-- `src/pages/AdminDailyPanelPage.tsx` — `/admin/painel-do-dia`; visão diária e tela inicial da secretaria.
-- `src/pages/AdminUsersPage.tsx` — `/admin/usuarios`, exclusiva de administradores; cadastro, edição, acessos e permissões.
-- `src/pages/AdminHoursPlanPage.tsx` — `/admin/planos-horas`; gestão operacional de planos por admin e secretaria.
-- `src/pages/AdminTasksPage.tsx` — `/admin/tarefas`; quadro compartilhado por admin e secretaria.
-- `src/state/ThemeContext.tsx` — preferência global de tema, detecção do sistema e persistência local.
-- `src/assets/css/theme.css` — ajustes ópticos e de contraste específicos do modo claro.
-
-## Componentes
-
-- `src/components/AppShell.tsx` — header autenticado e logout.
-- `src/components/ProtectedRoute.tsx` — exige sessão.
-- `src/components/AdminRoute.tsx` — exige sessão e aceita lista explícita de papéis permitidos.
-- `src/components/AdminShell.tsx` — header e navegação da área administrativa.
-- `src/components/AdminSidebar.tsx` — drawer das ferramentas administrativas.
-- `src/components/BackLink.tsx` — retorno reutilizável.
-- `src/components/ThemeToggle.tsx` — controle único de tema usado por login, cliente, admin e secretaria.
-- `src/components/PublicAuthLayout.tsx` — composição compartilhada de fachada e painel usada por login, cadastro e recuperação de senha.
-- `src/components/UnitsMap.tsx` — mapa Leaflet/OpenStreetMap, marcadores das unidades e posição opcional do cliente.
-- `src/components/NetworkBackground.tsx` — fundo animado legado, disponível para futuras composições públicas.
-- `src/components/icons.tsx` — ícones SVG reutilizáveis.
-
-## Dados e serviços
-
-- `src/types/domain.ts` — entidades e entradas tipadas.
-- `src/services/contracts.ts` — contratos independentes do backend.
-- `src/services/index.ts` — composição dos serviços ativos.
-- `src/services/local-storage.ts` — adaptador local provisório.
-- `src/services/errors.ts` — erros de domínio estáveis entre adaptadores.
-- `src/services/ids.ts` — geração e validação de UUID para novos registros.
-- `src/services/supabase/mappers.ts` — fronteira entre linhas `snake_case` e domínio TypeScript.
-- `supabase/migrations/` — schema PostgreSQL inicial, índices e RLS habilitado.
-- `supabase/seed.sql` — ponto seguro para seeds futuros, sem senhas do mock.
-- `CheckoutGateway` — rascunho temporário entre agendamento e pagamento.
-- `src/services/mock-data.ts` — unidades e salas locais.
-- `src/services/mock-business-services.ts` — seeds de Endereço Fiscal, Endereço Comercial e Plano de Horas.
-- `src/hooks/useAdminBusinessServices.ts` — leitura e atualização administrativa dos serviços empresariais.
-- `src/state/AuthContext.tsx` — estado da sessão para React.
-- `src/hooks/useAdminDashboard.ts` — composição dos dados administrativos via gateways.
-- `src/hooks/useAdminUnits.ts` — listagem, contagem de salas e mutações administrativas de unidades.
-- `src/hooks/useAdminRooms.ts` — listagem filtrada e mutações administrativas de salas.
-- `src/hooks/useAdminBookings.ts` — enriquecimento, filtros, estatísticas e ações administrativas de agendamentos.
-- `src/hooks/useCreateBookingForAdmin.ts` — clientes, catálogo, horários, conflito e criação manual.
-- `src/hooks/useAdminUsers.ts` — listagem, filtros, métricas e mutações administrativas de usuários.
-- `src/hooks/useAdminHoursPlan.ts` — listagem, filtros, métricas, ajustes e renovação de planos de horas.
-- `src/hooks/useAdminTasks.ts` — quadro, responsáveis, filtro pessoal, CRUD, movimentação otimista e indicador de prazos.
-- `src/utils/validators.ts` — validações e máscara de telefone.
-- `src/utils/booking.ts` — datas, horários, conflitos, status automático e janela de cancelamento.
-- `src/utils/booking.ts` também centraliza validade e divisão de consumo/cobrança do plano de horas.
-- `src/utils/room-images.ts` — normalização e remoção de imagens duplicadas da galeria de salas.
-- `src/utils/tasks.ts` — comparação local de prazos, formatação e contagem de tarefas que exigem atenção.
-
-## Visual
-
-- `src/styles.css` — entrada dos estilos e pequenos ajustes compartilhados.
-- `src/assets/css/base.css` — tokens, reset e tipografia.
-- `src/assets/css/components.css` — componentes compartilhados.
-- `src/assets/css/pages/` — estilos por tela.
-- `src/assets/css/pages/pagamento.css` — checkout responsivo e estados de pagamento.
-- `src/assets/css/pages/pagamento-confirmado.css` — confirmação responsiva após pagamento.
-- `src/assets/css/pages/servicos.css` — comparação de serviços e etapas de contratação.
-- `src/assets/css/pages/admin-business-services.css` — cards e formulário administrativo dos serviços empresariais.
-- `src/assets/css/pages/admin-dashboard.css` — shell, métricas, agenda e responsividade administrativa.
-- `src/assets/css/pages/admin-units.css` — tabela, modais, upload e responsividade da gestão de unidades.
-- `src/assets/css/pages/admin-rooms.css` — tabela, filtro, modal e responsividade da gestão de salas.
-- `src/assets/css/pages/admin-bookings.css` — painel diário, filtros, tabela e modal da gestão de agendamentos.
-- `src/assets/css/pages/admin-users.css` — painel responsivo de usuários, filtros, tabela e modais.
-- `src/assets/css/pages/admin-hours-plan.css` — gestão responsiva de saldo, ciclos e renovação dos planos.
-- `src/assets/css/pages/admin-operations-polish.css` — acabamento compartilhado das três telas operacionais críticas.
-- `src/assets/css/pages/admin-tasks.css` — quadro Kanban, cards, estados de prazo e modais de tarefas.
-- `src/assets/css/admin-sidebar.css` — drawer administrativo, overlay e estados ativos.
-- `src/assets/css/ui-foundations.css` — foco, tabelas, tipografia administrativa, placeholders e movimento reduzido compartilhados.
-- `src/assets/css/mobile-phase-one.css` — correções estruturais mobile compartilhadas: header administrativo compacto, filtros empilhados, modais responsivos, alvos de toque e grades de métricas.
-- `src/assets/img/` — imagens próprias da aplicação, incluindo a logo compacta `cwlogo.ico`.
-
-## Testes
-
-- `src/hooks/useBooking.test.tsx` — seleção de períodos, conflitos, plano integral/parcial/vencido, rascunho e erros de pagamento, com relógio controlado.
-- `src/pages/BookingPage.test.tsx` — integração React da página: calendário, carrossel, resumo e navegação ao checkout.
-- `src/pages/AdminBookingsPage.test.tsx` — integração da listagem administrativa: filtros, contexto da URL, criação, cancelamento com motivo, pagamento, check-in com responsável e diferenças entre admin/secretaria.
-- `src/pages/AdminDailyPanelPage.test.tsx` — filtros operacionais/período, métricas globais, limite temporal da presença, pagamento/check-in de admin e secretaria, erros, estados vazios e links dos próximos sete dias.
-- `src/pages/AdminTasksPage.test.tsx` — quadro por responsável, criação, edição/exclusão por autor e papel, prazo bloqueado para secretária, teclado, drag-and-drop, rollback e erros de persistência.
-- `src/pages/AdminUsersPage.test.tsx` — busca e filtros, cadastro, validação, edição de dados/senha/papel, autoproteção administrativa, atualização da sessão, ativação/desativação e erros de persistência.
-
-## Piloto de separação View / ViewModel — Agendamento
-
-- `src/pages/BookingPage.tsx` compõe a View, lê a rota e mantém carregamento/redirecionamento.
-- `src/hooks/useBooking.ts` é o ViewModel: estado único da reserva, coordenação dos gateways, disponibilidade apresentada, saldo, total e ações de confirmação/pagamento.
-- `src/components/booking/RoomGallery.tsx`, `BookingCalendar.tsx`, `BookingTimeSlots.tsx` e `BookingSummary.tsx` são seções visuais. A galeria mantém apenas seu índice local de imagem.
-- Regras de conflito, datas e plano permanecem em `src/utils/booking.ts` e nos serviços. O hook aceita `AppServices` para testes sem acoplar a View ao armazenamento.
-- Primeiro piloto aplicado a Agendamento; Gerenciar Agendamentos, Painel do Dia, Tarefas e Gerenciar Usuários seguem as separações descritas abaixo. As demais telas ainda seguem sua organização anterior. CSS e rotas foram preservados.
-- A futura API com MySQL deverá implementar os contratos de serviços; esta separação não instala nem integra um backend.
-
-- Cenários temporais de disponibilidade e listagem de reservas usam datas explícitas nas funções e no relógio injetável do adaptador local, sem depender do dia de execução. Cobrem datas passadas, início do horário, cancelamento e transição para histórico.
-
-- `src/services/local-storage.test.ts` — autenticação, persistência, propriedade e cancelamento.
-- `src/services/supabase/mappers.test.ts` — conversão tipada entre Supabase e domínio.
-- `src/utils/booking.test.ts` — conflito, horário, status e limite exato de 24 horas.
-
-## Separação View / ViewModel — Gerenciar Agendamentos
-
-- `src/pages/AdminBookingsPage.tsx` compõe a View e recebe usuário/consulta da rota, sem coordenar mutações ou manter o estado dos modais.
-- `src/hooks/useAdminBookingsPage.ts` coordena modais, filtros recebidos pela URL, ações operacionais e notificações de cinco segundos. Compõe o `useAdminBookings` existente, sem duplicar dados ou regras.
-- `src/hooks/useAdminBookings.ts` permanece inalterado: leitura via gateways, filtros, métricas e mutações continuam compartilhados com Painel do Dia.
-- `src/components/admin-bookings/AdminBookingStats.tsx`, `AdminBookingFilters.tsx` e `AdminBookingTable.tsx` apresentam métricas, filtros, estados de carregamento/vazio e tabela, mantendo HTML e classes existentes.
-- `CancelBookingDialog.tsx`, `CancellationReasonDialog.tsx`, `ConfirmPaymentDialog.tsx` e `CreateBookingDialog.tsx`, na mesma pasta, separam os modais. Estado local do campo de motivo e ciclo de vida do elemento dialog permanecem nos componentes; criação reaproveita `useCreateBookingForAdmin`, sem alterar suas regras.
-- `src/components/admin-bookings/formatters.ts` contém apenas formatação de moeda, datas, horário de check-in e rótulos exibidos.
-- Refatoração interna: sem mudança de CSS, rotas, permissões, contratos, persistência ou regras de pagamento/cancelamento/check-in. Não integra MySQL nem modifica Painel do Dia.
-
-## Contexto para agentes
-
-### Separação View / ViewModel — Painel do Dia
-
-- `src/pages/AdminDailyPanelPage.tsx` compõe a View e fornece o usuário autenticado ao ViewModel; não mantém filtros, estado do modal ou coordenação de mutações.
-- `src/hooks/useAdminDailyPanel.ts` compõe `useAdminBookings` e concentra busca/unidade/situação/período, agenda filtrada, próximos sete dias, estado do modal, check-in, confirmação de pagamento e notificações temporárias.
-- `src/components/admin-daily-panel/` separa `DailyPanelMetrics`, `DailyPanelFilters`, `DailyPanelAgenda`, `DailyPanelAttention`, `DailyPanelUpcoming` e `DailyConfirmPaymentDialog`. Os componentes mantêm HTML, classes e textos existentes; o modal conserva o ciclo de vida do elemento dialog.
-- `src/utils/daily-panel.ts` reúne os auxiliares puros de formatação de datas e limites de horário antes locais à página.
-- Filtros continuam afetando somente a agenda, não as métricas globais. Presença exige check-in e horário em andamento; check-ins permanecem contabilizados após o fim do intervalo.
-- Refatoração sem alteração de CSS, rotas, contratos, persistência ou regras. `useAdminBookings`, compartilhado com Gerenciar Agendamentos, permanece inalterado.
-
-### Separação View / ViewModel — Tarefas
-
-- `src/pages/AdminTasksPage.tsx` compõe a View e fornece o usuário autenticado ao `useAdminTasksPage`.
-- `src/hooks/useAdminTasksPage.ts` coordena formulário, edição, exclusão, validação do título, referências dos dialogs e eventos de arrastar/soltar. Mantém o ciclo de abertura/fechamento existente.
-- `src/components/admin-tasks/TaskBoard.tsx` renderiza colunas e estados vazios/carregamento; `TaskCard.tsx` apresenta conteúdo, responsável, prioridade, prazo e interações existentes.
-- `TaskEditorDialog.tsx` e `TaskDeleteDialog.tsx`, na mesma pasta, apresentam os formulários e confirmações sem acessar armazenamento.
-- `src/hooks/useAdminTasks.ts` permanece inalterado: contratos de dados, filtro por responsável, mutações, notificações e rollback da movimentação continuam centralizados nele. O indicador de tarefas do menu não foi modificado.
-- Admin continua editando/excluindo qualquer tarefa; secretária somente as próprias, sem alterar prazo após criação. Movimentação entre colunas continua compartilhada. HTML, CSS, rotas e regras do gateway foram preservados.
-
-### Separação View / ViewModel — Gerenciar Usuários
-
-- `src/pages/AdminUsersPage.tsx` compõe a View e fornece usuário/atualização de sessão ao `useAdminUsersPage`.
-- `src/hooks/useAdminUsersPage.ts` coordena criação/edição, atualização da sessão ao editar a própria conta e confirmação de desativação. O estado `formUser` mantém os significados existentes: `undefined` fechado, `null` cadastro e `User` edição.
-- `src/hooks/useManagedUserForm.ts` mantém campos, validações de nome/e-mail/senha e indicadores de edição/autoproteção, sem acessar persistência. Senha vazia na edição continua preservando a atual.
-- `src/components/admin-users/` separa `UserStats`, `UserFilters`, `UserTable`, `UserFormDialog` e `DeactivateUserDialog`, mantendo HTML, classes, textos e ciclo de vida dos dialogs.
-- `src/hooks/useAdminUsers.ts` permanece inalterado: gateways, filtros, métricas, mutações e notificações existentes são reaproveitados. Rotas, permissões, CSS, contratos e formato dos dados não mudam.
-- A refatoração preserva o bloqueio de perda de permissão/desativação da própria conta administrativa; não acrescenta segurança de backend ao mock.
-
-### Separação View / ViewModel — Gerenciar Salas
-
-- `src/pages/AdminRoomsPage.tsx` compõe a View; `src/hooks/useAdminRoomsPage.ts` coordena modais, ações e notificações temporárias.
-- `src/hooks/useRoomForm.ts` concentra campos, validações, imagens e comodidades do formulário. Reaproveita `prepareImageUpload`, mantendo o limite de seis imagens.
-- `src/components/admin-rooms/` separa tabela, formulário, confirmação de exclusão e campos de imagens/comodidades, preservando HTML e classes.
-- `useAdminRooms` permanece inalterado: leitura, filtro e mutações continuam via CatalogGateway. Exclusão com reservas vinculadas permanece bloqueada no serviço.
-- `src/pages/AdminRoomsPage.test.tsx` cobre filtros, cadastro, edição, validação, galeria, comodidades, erros e exclusão protegida. O processamento de pixels do upload é simulado no teste de persistência; depende do canvas do navegador.
-- Sem alterações de CSS, rotas, permissões, contratos ou formato dos dados.
-
-### Separação View / ViewModel — Gerenciar Unidades
-
-- `src/pages/AdminUnitsPage.tsx` compõe a View; `src/hooks/useAdminUnitsPage.ts` coordena modais, ações e notificações de cinco segundos.
-- `src/hooks/useUnitForm.ts` mantém campos, validações de coordenadas e upload via `prepareImageUpload`.
-- `src/components/admin-units/` separa `UnitTable`, `UnitFormDialog` e `DeleteUnitDialog`, preservando HTML, classes e ciclo de vida dos dialogs.
-- `useAdminUnits` permanece inalterado: contagem real de salas, leitura e mutações via CatalogGateway. Exclusão de unidades com salas permanece bloqueada.
-- `src/pages/AdminUnitsPage.test.tsx` cobre contagem, cadastro, coordenadas, edição, exclusão protegida, falhas, imagem e estado vazio. Processamento de pixels é simulado na fronteira de upload; depende de canvas no navegador.
-- Sem mudanças de CSS, rotas, permissões, contratos ou formato dos dados.
-
-### Separação View / ViewModel — Planos de Horas
-
-- `src/pages/AdminHoursPlanPage.tsx` compõe a View e lê o usuário autenticado para preservar o retorno ao dashboard exclusivo do admin.
-- `src/hooks/useAdminHoursPlanPage.ts` coordena edição, renovação e conversão dos campos para a entrada do gateway; fecha os modais somente após sucesso.
-- `src/hooks/useHoursPlanForm.ts` mantém campos e validações do formulário. Saldo acima do pacote continua permitido com aviso, como antes.
-- `src/components/admin-hours-plan/` separa `HoursPlanStats`, `HoursPlanFilters`, `HoursPlanTable`, `PlanDialog` e `RenewalDialog`, mantendo HTML, classes e ciclo de vida dos dialogs.
-- `useAdminHoursPlan` permanece inalterado: busca, filtros, métricas globais, notificações e mutações via serviços. Regras de saldo, renovação, auditoria e extrato permanecem no gateway existente.
-- `src/pages/AdminHoursPlanPage.test.tsx` cobre filtros, ativação, validações, ajuste, desativação, renovação por admin/secretaria, falhas e recuperação de carregamento com relógio controlado.
-- Sem alterações de CSS, rotas, permissões, contratos ou dados persistidos.
-
-### Separação View / ViewModel — Gerenciar Serviços
-
-- `src/pages/AdminBusinessServicesPage.tsx` compõe a View, usando `ServiceCard` e `ServiceDialog` em `src/components/admin-business-services/`.
-- `src/hooks/useAdminBusinessServicesPage.ts` coordena edição, fechamento, erros e mensagem de sucesso. A mensagem permanece persistente como no comportamento anterior.
-- `src/hooks/useBusinessServiceForm.ts` concentra campos, validação, normalização dos benefícios por linha e upload via `prepareImageUpload`.
-- `useAdminBusinessServices` permanece inalterado, com leitura e atualização via gateway. Tipo, ordem, visibilidade e benefícios secundários são preservados ao salvar.
-- `src/pages/AdminBusinessServicesPage.test.tsx` cobre listagem, cancelamento, validação, edição, benefícios, visibilidade e erro de persistência.
-- Sem alterações de CSS, rotas, contratos ou regras de dados.
-
-### Separação View / ViewModel — Atividades
-
-- `src/pages/AdminActivityPage.tsx` compõe a View e fornece o usuário autenticado ao `useAdminActivity`.
-- `src/hooks/useAdminActivity.ts` concentra carregamento via gateways, clientes, busca e limite incremental de 30 registros. A leitura inicial mantém o limite de 500 registros.
-- `src/hooks/useHoursStatement.ts` coordena consulta do extrato pelo cliente e ator autenticado, preservando o comportamento existente.
-- `src/components/admin-activity/ActivityList.tsx` e `HoursStatement.tsx` apresentam registros e movimentos. Rótulos compartilhados ficam em `src/utils/activity-labels.ts`.
-- `src/pages/AdminActivityPage.test.tsx` cobre paginação, busca, seleção de cliente, identificação do ator, extrato vazio e falha inicial.
-- Sem mudanças de CSS, rotas, permissões, gateways ou dados. Tratamento de falhas/concorrência na consulta do extrato não foi ampliado nesta refatoração.
-
-### Separação View / ViewModel — Dashboard
-
-- `src/pages/AdminDashboardPage.tsx` compõe cabeçalho, estado de erro, indicadores, gráfico, pendências e agendas.
-- `src/components/admin-dashboard/` separa `DashboardOverview`, `DashboardAttention`, `DashboardSchedules`, `BookingList` e `MonthlyBookingsChart`.
-- `src/hooks/useMonthlyBookingsChart.ts` concentra período, unidade, séries visíveis e geometria derivada do gráfico. Links mensais e formatação permanecem na apresentação.
-- `useAdminDashboard` permanece inalterado: carregamento via gateways, agregações, datas e métricas não foram duplicados ou modificados.
-- `src/pages/AdminDashboardPage.test.tsx` cobre métricas, agenda limitada a quatro registros, nomes, links, período, unidade, séries, estados vazios e recuperação de erro, com relógio controlado.
-- Sem alterações de CSS, rotas, permissões ou regras. A comparação temporária de HTML/SVG passou nos estados inicial, 12 meses, unidade filtrada e série oculta; não substitui avaliação visual no navegador.
-
-### Separação View / ViewModel — Meus Agendamentos
-
-- `src/pages/BookingsPage.tsx` compõe a View e fornece o usuário autenticado ao `src/hooks/useBookings.ts`.
-- `useBookings` coordena catálogo, reservas por status, contagens, confirmação/cancelamento e feedback temporário. Leituras e mutações continuam pelos gateways.
-- `src/components/bookings/BookingTabs.tsx` mantém navegação acessível por teclado e referências de foco locais; `BookingList.tsx` apresenta cartões, datas, plano de horas e confirmação inline.
-- `canCancelBooking` e o gateway de cancelamento permanecem inalterados, inclusive proprietário e limite exato de 24 horas.
-- `src/pages/BookingsPage.test.tsx` cobre isolamento por usuário, categorias/contagens, 24h, erro, foco por teclado, aviso temporário e estado vazio.
-- Sem mudanças de CSS, rotas, contratos ou regras. Tratamento de erros/concorrência das leituras iniciais não foi ampliado nesta refatoração.
-
-### Separação View / ViewModel — Pagamento
-
-- `src/pages/PaymentPage.tsx` compõe a View e preserva redirecionamentos por rascunho ausente, de outro usuário ou catálogo indisponível.
-- `src/hooks/usePayment.ts` coordena catálogo, método, campos do cartão em memória, cópia PIX, checagem de conflito e confirmação demonstrativa pelos gateways.
-- `src/components/payment/` separa `PaymentPanel`, `PaymentSummary` e `DemoQrCode`; `src/utils/payment.ts` mantém as máscaras e validações existentes.
-- `src/pages/PaymentPage.test.tsx` cobre rascunhos inválidos, PIX/cartão, conflito, falha de persistência e consumo parcial do plano. Comparação temporária de HTML passou em PIX, cartão e validação.
-- Sem mudanças de CSS, cobrança real, regras de cartão, contratos ou dados. Campos de cartão não são enviados aos gateways.
-
-### Separação View / ViewModel — Salas do cliente
-
-- `src/pages/RoomsPage.tsx` mantém composição, parâmetro de unidade, redirecionamento e distribuição dos cartões nas duas colunas.
-- `src/hooks/useRooms.ts` coordena leitura da unidade e das salas pelo CatalogGateway, sem duplicar dados ou usar o campo estático `availableRooms` na contagem.
-- `src/components/rooms/RoomCard.tsx` apresenta fotos, comodidades, preço e link de reserva; índice do carrossel permanece local a cada cartão por ser estado de apresentação.
-- `src/pages/RoomsPage.test.tsx` cobre unidade ausente/inexistente, contagem real, colunas, preços, links, carrosséis independentes, placeholder e estado vazio.
-- Sem alterações de CSS, contratos, permissões ou regras. Comparação temporária de HTML passou no estado inicial e após avançar uma foto. Tratamento de falhas/concorrência das leituras foi preservado.
-
-### Separação View / ViewModel — Serviços do cliente
-
-- `src/pages/ServicesPage.tsx` compõe a vitrine editorial e fornece o nome do usuário autenticado aos conteúdos.
-- `src/hooks/useServices.ts` coordena o carregamento público pelo BusinessServiceGateway e deriva os três tipos de serviço, mantendo a proteção contra atualizações após desmontagem.
-- `src/components/services/ServiceContent.tsx` apresenta descrição, benefícios, modalidades e CTA; `ServiceMedia.tsx` apresenta imagem ou fallback administrativo.
-- `src/utils/service-contact.ts` preserva número do WhatsApp, saudação por horário local e codificação da mensagem com nome do cliente e serviço.
-- `src/pages/ServicesPage.test.tsx` cobre catálogo, ordem editorial, imagens, fallback, modalidades, mensagens/saudações, nome vazio, carregamento e catálogo vazio. Comparação temporária de HTML passou com o catálogo completo.
-- Sem mudanças de CSS, rotas, contratos ou dados. O tratamento de falha de leitura permanece como antes; não foi acrescentada recuperação de erro nesta refatoração estrutural.
-
-### Separação View / ViewModel — Unidades do cliente
-
-- `src/pages/UnitsPage.tsx` compõe catálogo, mapa e painel de proximidade.
-- `src/hooks/useUnits.ts` coordena leitura via CatalogGateway, seleção, solicitação explícita de geolocalização e estados de permissão. Distâncias e unidades ordenadas são derivadas sem duplicar estado.
-- `src/components/units/UnitLocationCard.tsx` apresenta a unidade; `NearestUnits.tsx` apresenta proximidade, permissão e retorno à lista. A rolagem DOM permanece na apresentação.
-- `src/utils/coordinates.ts` preserva o cálculo de distância geográfica antes local à página. O componente `UnitsMap` e seu ciclo de vida Leaflet permanecem inalterados.
-- `src/pages/UnitsPage.test.tsx` cobre catálogo, seleção sincronizada, links, geolocalização explícita, ordenação, unidades sem coordenadas, erros de permissão/indisponibilidade e catálogo vazio. Leaflet é simulado na fronteira; testes não validam carregamento de tiles externos. Comparação temporária de HTML inicial passou.
-- Sem mudanças de CSS, rotas, permissões ou dados. Contagem continua usando `unit.availableRooms`, como antes nesta tela; tratamento de falhas de leitura não foi ampliado.
-
-### Separação View / ViewModel — Login
-
-- `src/pages/LoginPage.tsx` apresenta formulário e redirecionamento declarativo; visibilidade da senha permanece local por ser estado visual.
-- `src/hooks/useLogin.ts` concentra campos, validação obrigatória, loading, erros e coordenação de login/Google via AuthContext, preservando destinos por perfil e atualização da sessão.
-- `PublicAuthLayout`, tema, contratos, autenticação mock e rotas permanecem inalterados. Não foi criada integração real com Google nem novos componentes sem responsabilidade própria.
-- `src/pages/LoginPage.test.tsx` cobre sessões e login dos três perfis, validação, senha visível, links, loading, falha com nova tentativa, Google indisponível e tema. Comparação temporária de HTML passou nos estados inicial e de erro obrigatório.
-- Sem alterações de CSS, mensagens, regras, permissões ou persistência.
-
-### Separação View / ViewModel — Cadastro
-
-- `src/pages/RegisterPage.tsx` compõe o formulário e mantém visibilidade das duas senhas como estado visual independente.
-- `src/hooks/useRegister.ts` coordena campos, máscara, ordem das validações, loading, erros e cadastro via AuthGateway, preservando retorno ao login com `registered: true`.
-- `src/components/auth/RegisterFormField.tsx` apresenta os campos tipados e controles de visibilidade antes locais à página; validadores existentes são reaproveitados sem mudanças.
-- `src/pages/RegisterPage.test.tsx` cobre sequência de validação, telefone, dados enviados, retorno ao login, falha/repetição e visibilidade independente. Comparação temporária de HTML passou nos estados inicial e de validação.
-- Sem mudanças de CSS, contratos, permissões, regras ou persistência. Confirmação da senha não é enviada ao gateway.
-
-### Separação View / ViewModel — Recuperar senha
-
-- `src/pages/RecoverPasswordPage.tsx` apresenta formulário e confirmação, reaproveitando PublicAuthLayout.
-- `src/hooks/useRecoverPassword.ts` concentra e-mail, validação existente, loading, erro genérico e solicitação via AuthGateway. O e-mail continua enviado com `trim()`.
-- `src/pages/RecoverPasswordPage.test.tsx` cobre validação, confirmação uniforme para endereços distintos, loading, falha sem exposição do detalhe interno e nova tentativa. Comparação temporária de HTML passou nos estados inicial e de confirmação.
-- Sem mudanças de CSS, textos, contratos ou dados. O envio permanece simulado no adaptador local; não foi implementada integração de e-mail.
-
-### Revisão estrutural — Confirmação de pagamento
-
-- `src/pages/PaymentConfirmationPage.tsx` permanece uma View simples: recebe resumo da rota, apresenta detalhes, volta ao topo e fornece atalhos. Não coordena persistência ou pagamento.
-- Não foi criado ViewModel: extrair apenas leitura da rota e formatação local acrescentaria camada sem responsabilidade própria. A confirmação não substitui validação financeira no backend.
-- `src/pages/PaymentConfirmationPage.test.tsx` cobre estado ausente/sem ID, resumo, data, duração singular/plural, rolagem inicial, aviso de integrações futuras e navegação dos dois atalhos.
-- Código da página, CSS, dados, textos e comportamento permanecem inalterados.
-
-### Revisão estrutural — Página 404
-
-- `src/pages/NotFoundPage.tsx` permanece uma View simples, sem ViewModel artificial: exibe aviso e deriva destino de retorno do perfil autenticado.
-- `src/pages/NotFoundPage.test.tsx` cobre ausência de sessão e os perfis cliente, admin e secretaria, verificando mensagem, destino e navegação pelo link.
-- Página, CSS e rota curinga permanecem inalterados. Backup também foi revisado após autorização posterior, conforme seção abaixo. Otimização do bundle permanece etapa separada.
-
-### Separação View / ViewModel — Backup
-
-- `src/pages/AdminBackupPage.tsx` compõe cabeçalho, feedback e as seções de exportação/restauração, fornecendo usuário e logout do AuthContext.
-- `src/hooks/useAdminBackup.ts` coordena data do último backup, arquivo, confirmação, estados de operação, feedback temporário, download e restauração pelos gateways.
-- `src/components/admin-backup/BackupExport.tsx` e `BackupRestore.tsx` apresentam os controles; a referência DOM do arquivo permanece local à apresentação.
-- Mantidos limite de 20 MB, aceite de JSON, confirmação exata `RESTAURAR`, validação estrutural no gateway, logout após importação e retorno a `/login`. Persistência, permissões, schema e política de credenciais não mudaram.
-- `src/pages/AdminBackupPage.test.tsx` cobre exportação, aviso de cinco segundos, arquivo inválido/grande, confirmação, erros, limpeza ao trocar arquivo e sequência importação/logout/redirecionamento com gateways simulados. Comparação temporária de HTML passou antes e depois de selecionar arquivo.
-- Revisão estrutural das telas previstas concluída. Otimização do bundle e conferência do mapa externo no navegador continuam separadas. Tratamento de concorrência na leitura de arquivos não foi ampliado nesta refatoração.
-
-### Instruções e referências
-
-- `AGENTS.md` — instruções gerais.
-- `.cursor/rules/` — regras sempre aplicadas.
-- `.agents/skills/` — skills locais instaladas.
-- `PRODUCT.md` e `DESIGN.md` — produto e sistema visual.
-- `FEATURES.md`, `MOCK_DATABASE.md` e `MIGRATION.md` — estado funcional e técnico.
-### Governança e resiliência
-
-- `src/pages/AdminBackupPage.tsx`: exportação e restauração administrativa do mock local.
-- `src/pages/AdminActivityPage.tsx`: auditoria e extrato de movimentações do plano de horas.
-- `src/components/ErrorBoundary.tsx`: recuperação global de falhas de renderização.
-- `src/pages/NotFoundPage.tsx`: destino explícito para rotas inexistentes.
-- `src/utils/image-upload.ts`: validação, redimensionamento e normalização dos uploads locais.
-
-## SQL MySQL consolidado
-
-- database/mysql/estrutura-inicial.sql contém as 14 tabelas em português extraídas do banco local e ordenadas por dependências, somente com criações. Substitui o arquivo anterior de seis tabelas.
-- database/mysql/seeds/001_perfis.sql guarda os perfis iniciais sem credenciais.
-- database/mysql/README.md registra evidências e limitações. A restauração em outro schema ainda não foi validada. Frontend permanece no mock local.
-
-## Backend local — etapa 1
-
-- backend/ tem package.json, lockfile e TypeScript estrito próprios; configuração em src/config, infraestrutura MySQL em src/database e controller em src/controllers.
-- backend/src/application.ts compõe NestJS; main.ts inicia em loopback; check-database.ts testa acesso real sem alterar dados.
-- backend/test usa Node test runner; Vitest da raiz inclui somente src/**/*.test.{ts,tsx}, separando as suítes.
-- backend/.env, node_modules e dist são ignorados pelo Git. Frontend continua no mock. Leia backend/README.md para executar.
-
-## Cadastro real — etapa de backend (11/10/2026)
-
-POST /auth/register implementado com classes ServicoCadastro, ServicoSenha (Argon2id) e RepositorioUsuariosMysql. Senha de 6 a 128 unidades UTF-16, sem caracteres em branco; perfil client definido no servidor, consultas parametrizadas, respostas sem senha/hash. Migracao senha_hash confirmada pelo usuario. Teste HTTP/MySQL real validou criacao e duplicata; fixture temporaria removida.
-
-Frontend e MVVM existentes permanecem no mock. Integracao da tela, maxlength, login e sessao sao proximas etapas. Contrato HTTP, limites locais e verificacoes detalhados em backend/README.md.
-## Organizacao do backend por camadas — 11/10/2026
-
-Estrutura atual de backend/src:
-
-- controllers/: CadastroController e HealthController, entrada HTTP.
-- services/: ServicoCadastro, regras e coordenacao.
-- repositories/contracts/: contrato RepositorioUsuarios e dados de persistencia NovoUsuario.
-- repositories/mysql/: RepositorioUsuariosMysql, SQL parametrizado.
-- security/: contrato GeradorHash e implementacao ServicoSenha em servico-senha-argon2.ts.
-- dto/: UsuarioCadastradoDto, resposta publica explicitamente sem credenciais.
-- database/: infraestrutura de conexao e prontidao MySQL.
-- modules/: AuthModule e HealthModule, composicao dos providers existentes.
-- config/: validacao do ambiente.
-- app.module.ts: composicao raiz; application.ts: fabrica HTTP usada tambem nos testes; main.ts: inicializacao.
-
-Refatoracao estrutural: contratos extraidos e imports atualizados, sem alteracao de rotas, validacoes, SQL, politica de senha, limites ou permissao. Ciclo de vida dos pools preservado; os pools existentes de prontidao e usuarios continuam separados nesta etapa. Frontend e seu MVVM permanecem inalterados. Nao ha pasta auth/api/infrastructure antiga nem pastas vazias criadas para funcionalidades futuras.
-
-Validacao: 14 testes do backend e cadastro HTTP/MySQL real aprovados depois da reorganizacao; fixture temporaria removida pelo teste.
-## Integracao progressiva do cadastro — 11/10/2026
-
-CadastroHttpGateway implementa cadastro HTTP e AuthHttpGateway implementa login/sessão/logout. create-app-services.ts seleciona os adaptadores conforme modo, preservando View/RegisterPage e ViewModel/useRegister. Cadastro confirmado navega para /login sem iniciar sessão. Contas MySQL agora podem entrar no login real. Não copia contas/senhas para mock nem faz fallback se HTTP falhar.
-
-Integração atual: VITE_AUTH_API=true em .env.development.local ativa cadastro, login, sessão e logout HTTP no desenvolvimento. Produção usa API obrigatoriamente e falha fechada se /api estiver indisponível. Proxy Vite /api aponta para http://127.0.0.1:3001; implantação exige proxy HTTPS equivalente. Nenhuma credencial MySQL usa variável VITE_.
-
-Gateway envia somente os cinco campos do contrato, timeout de 10 segundos, sem cookies; valida resposta em runtime e seleciona apenas campos publicos. Erros sao traduzidos por status, sem exibir mensagem interna do servidor. Os dois inputs ja possuiam maxlength=128; mantidos e conferidos no navegador. Validacao de espacos e comprimento permanece no ViewModel e backend. Testes adicionados fora de pages, em hooks e services.
-## Classes de autenticação e sessão — 11/10/2026
-
-Backend permanece organizado por camadas: AutenticacaoController -> ServicoAutenticacao/ServicoSessoes -> contratos RepositorioAutenticacao/RepositorioSessoes -> implementações MySQL. DTOs sessao/usuario-publico selecionam respostas; security reúne CookieSessao, TokenSessao, PoliticaSenha, ServicoSenha e LimiteAutenticacao. Relogio substituível permite testar limites sem espera real. database/conexao-limitada.ts limita operação integral, inclusive transação e aquisição de conexão.
-
-check-authentication.ts valida HTTP/MySQL com conta fictícia aleatória e limpeza no finally. AuthGateway e AuthContext agora integram sessões reais; CadastroHttpGateway usa X-C2W-Request para proteção HTTP.
-
-## Integração de sessão no frontend — 11/10/2026
-
-Login e cadastro usam a API local/MySQL. AuthHttpGateway encapsula HTTP; AuthContext coordena estado; hooks coordenam ações e Views apresentam a interface, preservando MVVM no frontend e camadas/POO no backend. Token fica em cookie HttpOnly, sem localStorage. Sessão não persistente: 15 minutos sem atividade e limite absoluto de 4 horas. GET de sessão não renova; interação real em aba visível registra atividade no máximo uma vez por minuto.
-
-Rotas aguardam confirmação inicial da API. Falha de rede bloqueia acesso com mensagem genérica e nova tentativa. Verificação ao retornar à aba preserva a página, bloqueando interação até confirmar; prazo vencido bloqueia imediatamente. Logout só encerra visualmente após confirmação do servidor; falha permite tentar novamente. Respostas antigas não reabrem sessão encerrada.
-
-Em modo HTTP, catálogo de unidades/salas/serviços ainda é demonstração estática somente leitura. Reservas, pagamento, plano de horas, tarefas, auditoria, backup e administração aguardam integração e ficam bloqueados; não usam dados privados mock. Google e recuperação de senha ainda indisponíveis. Desenvolvimento sem VITE_AUTH_API usa mock explicitamente; produção sempre usa API. Sessões reais não são exportadas em backups.
-
-Validação: testes automatizados cobrem limites, falhas e concorrência; navegador confirmou senha incorreta, login real, recarga mantendo sessão, bloqueio de reservas e logout com rota privada redirecionada. Conta fictícia de teste e suas sessões removidas após validação. Não houve publicação.
-## Unidades no MySQL — 17/10/2026
-
-A tela /unidades agora consulta GET /api/unidades pelo UnidadesHttpGateway. A API exige sessão válida e usuário ativo, sem renovar atividade em consultas GET. UnidadesController → ServicoUnidades → RepositorioUnidades → RepositorioUnidadesMysql preserva a arquitetura por camadas; View UnitsPage e ViewModel useUnits continuam separados.
-
-A consulta lê unidades e conta salas por LEFT JOIN, incluindo unidades sem salas. O campo availableRooms do contrato legado significa quantidade de salas cadastradas; a interface usa esse rótulo, sem prometer disponibilidade por horário. Coordenadas DECIMAL são convertidas para números e validadas. Sem coordenadas, a unidade continua na lista e não recebe marcador no mapa. Imagens continuam provisórias: URL HTTPS ou caminho relativo à raiz são aceitos; chave ainda sem armazenamento configurado usa a imagem substituta da interface. Upload/resolução de chaves será uma etapa própria.
-
-Carregamento, lista vazia e falha com Tentar novamente são explícitos. Respostas atrasadas são ignoradas; não há fallback de unidades para seeds ou localStorage no modo HTTP. Um 401 revalida a sessão atual na fila de autenticação sem cancelar um login/logout em andamento. Salas ficam bloqueadas até a integração seguinte, evitando misturar IDs reais com salas demonstrativas. Serviços empresariais ainda são demonstrativos somente leitura; administração e reservas continuam pendentes.
-
-Nenhuma alteração de tabela ou migração foi necessária. Não foram importados dados demonstrativos permanentes. Teste HTTP/MySQL com fixtures próprias cobriu acesso sem sessão, contagem zero/um, coordenadas e rejeição após logout; fixtures removidas ao finalizar. Navegador conferiu card e mapa com dados temporários reais. Cadastro de unidades pela administração ainda não implementado no modo HTTP.
-## Cadastro inicial das unidades — 17/10/2026
-
-A pedido do usuário, as duas unidades do mockup foram cadastradas no MySQL local pelo arquivo comentado database/mysql/seeds/002_unidades.sql: Connect2Work 1 (Av. Osvaldo Perrone, 776, Parque Eldorado) e Connect2Work 2 (R. Lucas Evangelista, 368, Centro), ambas em Bebedouro/SP. Endereços, descrições e coordenadas aproximadas foram preservados do mock-data.ts, com novos UUIDs fixos. Nenhum usuário ou sala foi importado; imagens seguem sem arquivo configurado. A contagem de salas é calculada do banco e não copia o número cinco do mockup. O seed evita duplicação por ID/nome/endereço e não atualiza registros existentes. Aplicação local confirmou duas inclusões. Não houve publicação na Vercel.
-## Redirecionamento por expiração — 17/10/2026
-
-Quando o prazo já confirmado pela API é atingido, AuthContext encerra o acesso na interface e as rotas protegidas retornam ao login, sem exigir nova consulta HTTP. O prazo usa o menor entre inatividade e expiração absoluta, com o ajuste de relógio recebido da API. Um temporizador independente continua ativo mesmo se uma verificação falhar ou ficar pendente; respostas antigas não reabrem a sessão. Nova confirmação de atividade substitui o prazo anterior. A interface libera o estado inert ao expirar.
-
-O backend continua sendo a autoridade para aceitar requisições: não houve alteração dos limites de 15 minutos/4 horas nem das verificações no servidor. Esta mudança é conservadora no cliente: o prazo conhecido também pode encerrar essa aba quando outra aba tiver renovado a sessão sem sincronização local. Falhas de verificação antes de conhecer um prazo (por exemplo, primeira abertura com API indisponível) continuam exibindo Tentar novamente; expiração conhecida retorna ao login. Em abas suspensas, a interface atualiza quando o navegador retoma a execução.
-
-Regressões cobrem expiração por inatividade e absoluta com rede indisponível, consulta pendente, resposta tardia, erro anterior ao vencimento e renovação do prazo. Não há alteração de tabelas, credenciais ou dados.
-## Salas e comodidades no MySQL — 18/10/2026
-
-Concluída a integração de /salas?unidade=<UUID>. GET /unidades/:unidadeId/salas lista somente as salas da unidade, incluindo salas sem comodidades; UUID válido inexistente retorna lista vazia. GET /salas/:salaId retorna o detalhe ou 404. Ambas as rotas exigem sessão válida e usuário ativo, não renovam atividade e usam Cache-Control: no-store. Identificadores inválidos retornam 400 e falhas internas têm resposta genérica 503. DTO público não inclui dados de usuários ou credenciais.
-
-SalasController → ServicoSalas → RepositorioSalas → RepositorioSalasMysql segue as camadas existentes. Consulta parametrizada com LEFT JOIN sala_comodidades/comodidades e agrupamento por sala, sem GROUP_CONCAT e sem consultas por comodidade. Preço DECIMAL é convertido para número finito e não negativo; capacidade positiva. Prazo integral e descarte de conexões falhas seguem a infraestrutura atual.
-
-SalasHttpGateway implementa os contratos de listagem/detalhe, valida respostas em runtime e recusa mistura de unidades. Usa cookies, prazo de 10s e revalidação serial de sessão em 401 sem cancelar login novo. createAppServices agora conecta salas reais. useRooms coordena carregamento, vazio, erro/retry, unidade ausente e respostas antigas. Troca de URL não exibe salas da unidade anterior. RoomsPage mantém o layout e usa Salas da unidade, sem prometer disponibilidade por horário.
-
-O seed comentado database/mysql/seeds/003_salas_comodidades.sql foi aplicado localmente: 10 salas (cinco por unidade), 9 comodidades e 38 associações. Preserva nomes, capacidades e preços do mockup. Apenas inclusões, sem atualizar salas existentes; aplicação repetida confirmou zero novas inclusões. Requer os dois nomes de unidade únicos do seed002. Não altera tabelas nem cria contas. Imagens continuam em Fotos em breve; imagens_salas/armazenamento ainda serão integrados. Agendamentos, horários, pagamento e administração permanecem bloqueados até suas etapas. A implantação Vercel não foi alterada.
-
-Teste local npm run check:salas no backend inicia API isolada em porta aleatória, valida MySQL/HTTP com fixtures próprias e as remove em finally. Cobre unidade vazia, sala sem comodidades, N:N compartilhado, agrupamento de várias comodidades, filtro entre unidades, preço decimal, sessão, UUID inválido, detalhe ausente e logout. Navegador conferiu cinco salas de cada unidade, preços/comodidades e bloqueio de agendamentos. As alterações locais pré-existentes do usuário em CSS/mapa foram preservadas.
-## Gestão de usuários MySQL — 18/10/2026
-
-Backend: UsuariosAdministrativosController → ServicoUsuariosAdministrativos → RepositorioUsuariosAdministrativos → RepositorioUsuariosAdministrativosMysql. AdministracaoModule é opcional na composição; depende da autenticação configurada. DTOs, validação de entrada unknown, acesso administrativo e limitador ficam em arquivos próprios. Frontend: UsuariosHttpGateway implementa o contrato; useAdminUsers coordena página/filtros/versões, useAdminUsersPage coordena modais e Views preservam o layout. listUsersPage retorna items/total/summary; listUsers legado não é usado para buscar todas as contas no modo HTTP. expectedVersion continua opcional nos contratos compartilhados para chamadas legadas do mock, mas é obrigatório e validado na API real.
-
-## Estrutura da integração de catálogo — 18/10/2026
-
-Backend mantém controller → service → repository, com DTOs próprios. ServicoCatalogoAdministrativo valida operações; RepositorioCatalogoAdministrativoMysql aplica versão, referências e auditoria na transação. ServicoImagens coordena ProcessadorImagem, ArmazenamentoImagens/CloudinaryImagens e RepositorioArquivosImagensMysql; LimpezaImagens retoma intenções persistidas. Nenhuma chamada Cloudinary ocorre segurando locks SQL.
-
-Frontend mantém View/ViewModel: páginas/dialogs apresentam, hooks useAdminUnits/useAdminRooms e seus Page hooks coordenam ações, useImageSelection mantém File e object URLs apenas durante o formulário. CatalogoAdminHttpGateway e ImageGateway encapsulam HTTP pelos contratos. adminCatalog/images são capacidades opcionais em AppServices, disponíveis no modo HTTP; mock preserva fluxo anterior. A listagem real não faz uma consulta por unidade para obter salas. expectedVersion vem do objeto capturado na abertura do formulário/modal, e requestId permanece estável durante a criação.
-
-Limites do backend para imagens centralizados em backend/src/config/limites-imagens.ts: original10MiB, saída otimizada5MiB e margem16KiB para multipart. O limite de saída continua compatível com a migração004.
-
-Atualização de 19/10/2026: fotos originais aceitam até 10 MiB e 40 megapixels. O limite de resolução foi ampliado para permitir fotografias de câmeras de 24 MP; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.
+- **Página (`features/<area>/*Page.tsx`):** compõe a interface e conecta rota/contexto ao fluxo.
+- **Hook (`features/<area>/use*.ts`):** controla estado e ações, chamando os contratos dos serviços.
+- **Componente da área:** apresenta tabela, formulário, seção ou confirmação com responsabilidade própria.
+- **Gateway (`services/http/`):** encapsula HTTP, valida respostas e traduz erros.
+- **Função pura:** fica na área quando exclusiva; em `utils/` quando compartilhada.
+- **Estado global (`state/`):** somente informação global real, como sessão e tema.
+
+Estar na mesma pasta não significa misturar interface, validação, HTTP e SQL no
+mesmo arquivo. Componentes não acessam banco ou `localStorage` diretamente.
+Preservar TypeScript estrito; não usar `any`, `@ts-ignore` ou casts para esconder erros.
+
+Telas simples podem permanecer simples. Criar um novo arquivo quando ele tiver
+responsabilidade clara, complexidade própria ou reutilização real. Não extrair
+componentes ou criar camadas somente para seguir um modelo. Não criar um hook
+para cada ação nem concentrar todas as telas em um único arquivo.
+
+## Exemplo completo: Unidades
+
+```text
+src/features/unidades/
+├── UnitsPage.tsx             # tela do cliente
+├── useUnits.ts               # consulta e localização das unidades
+├── UnitsMap.tsx              # mapa exclusivo desta funcionalidade
+├── NearestUnits.tsx
+├── UnitLocationCard.tsx
+├── AdminUnitsPage.tsx        # compõe a tela administrativa
+├── UnitTable.tsx             # apresenta a listagem
+├── UnitFormDialog.tsx        # apresenta o formulário
+├── DeleteUnitDialog.tsx      # confirmação nativa, mantida separada
+├── useAdminUnits.ts          # consulta, paginação, edição, exclusão e controle dos diálogos
+├── useUnitForm.ts            # campos, validações e preparação da imagem
+└── __tests__/                # testes específicos da área
+```
+
+Para encontrar o salvamento de uma unidade:
+
+1. **Campos e botão:** `src/features/unidades/UnitFormDialog.tsx`.
+2. **Validação e imagem selecionada:** `src/features/unidades/useUnitForm.ts`.
+3. **Ação de salvar e versão capturada na edição:** `src/features/unidades/useAdminUnits.ts`.
+4. **Contrato:** `src/services/contracts.ts` (`AdminCatalogGateway` e tipos relacionados).
+5. **Requisição:** `src/services/http/catalogo-admin-http.ts` (`CatalogoAdminHttpGateway`).
+6. **Endpoint:** `backend/src/controllers/catalogo-administrativo.controller.ts`.
+7. **Regra de negócio:** `backend/src/services/servico-catalogo-administrativo.ts`.
+8. **Transação/SQL:** `backend/src/repositories/mysql/repositorio-catalogo-administrativo-mysql.ts`.
+9. **Persistência:** tabela `unidades`; imagens usam referências/controladores próprios e Cloudinary.
+
+A leitura pública usa `src/services/http/unidades-http.ts`, seguida de
+`unidades.controller.ts`, `servico-unidades.ts` e `repositorio-unidades-mysql.ts` no backend.
+
+## Junções realizadas e limites preservados
+
+| Antes em `src/hooks/` | Agora na funcionalidade |
+|---|---|
+| `useAdminUnits.ts` + `useAdminUnitsPage.ts` | `unidades/useAdminUnits.ts` |
+| `useAdminRooms.ts` + `useAdminRoomsPage.ts` | `salas/useAdminRooms.ts` |
+| `useAdminBusinessServices.ts` + `useAdminBusinessServicesPage.ts` | `servicos/useAdminBusinessServices.ts` |
+| `useAdminHoursPlan.ts` + `useAdminHoursPlanPage.ts` | `planos-horas/useAdminHoursPlan.ts` |
+
+Os quatro pares passaram de oito para quatro arquivos. Cada hook reúne os estados
+e ações de sua tela; não acessa o banco diretamente. Em salas/serviços, `data`
+continua agrupando os dados do catálogo; em planos, `plan` mantém esse papel.
+Esses objetos são derivados do estado já existente, não uma segunda cópia dele.
+
+Tabelas, formulários e confirmações com responsabilidade clara foram mantidos.
+Não houve junção de JSX com regras de negócio. A confirmação de exclusão continua
+separada para preservar seu ciclo de vida e acessibilidade sem sobrecarregar a página.
+
+`useAdminBookings` permanece separado da coordenação da página porque também
+atende o Painel do Dia. `useAdminTasks` mantém `useTaskAttentionCount`, consumido
+pelo AdminShell. `useAdminUsers` e sua coordenação permanecem separados pela
+complexidade de paginação, edição e permissões. Não houve junção automática de
+arquivos apenas pela semelhança dos nomes.
+
+## Integrações, sessão e imagens
+
+- `services/index.ts` continua sendo a entrada dos serviços; não criar instâncias nas páginas.
+- `services/create-app-services.ts` escolhe os adaptadores; HTTP não faz fallback silencioso para mock.
+- `services/http/` contém autenticação, cadastro, unidades, salas, usuários e catálogo administrativo.
+- `services/mock/` contém o adaptador `local-storage.ts`, seus testes e dados demonstrativos.
+- `hooks/useImageSelection.ts` é compartilhado entre formulários de unidades, salas e serviços.
+- `state/AuthContext.tsx` coordena a sessão; `state/useSessionActivity.ts` registra atividade.
+- Sessão real continua com cookie HttpOnly, 15 minutos de inatividade e 4 horas absolutas.
+- Imagens continuam no Cloudinary; MySQL armazena referências, ordem e controle de limpeza.
+- Upload continua validando JPEG/PNG/WebP, até 10 MiB e 40 MP, otimizando até 1600 px/5 MiB.
+- Segredos ficam no `.env` do backend, ignorado pelo Git; nunca usar variáveis `VITE_` para credenciais.
+
+No modo API estão integrados cadastro/login/sessão, leitura de unidades/salas e
+administração de usuários, unidades, salas, comodidades e galeria. Serviços públicos
+ainda usam conteúdo demonstrativo. Reservas/pagamentos e demais módulos pendentes
+continuam com suas restrições anteriores. Esta refatoração não implementa novas integrações.
+
+## Backend e banco
+
+O backend mantém a organização por camadas, sem mudanças nesta refatoração:
+
+| Pasta em `backend/src/` | Responsabilidade |
+|---|---|
+| `controllers/` | transporte HTTP, entrada e resposta |
+| `services/` | regras e coordenação de operações |
+| `repositories/contracts/` | contratos de persistência |
+| `repositories/mysql/` | consultas e transações parametrizadas |
+| `dto/` | formatos tipados de entrada/saída |
+| `security/` | sessão, senha, autorização, limites e proteção HTTP |
+| `storage/` | contrato e implementação Cloudinary |
+| `database/` | pool, conexão e prontidão |
+| `config/` | validação de ambiente e limites |
+| `modules/` | composição e injeção de dependências |
+
+Os comandos `check-*.ts` e `limpar-imagens.ts` continuam em `backend/src/`, vinculados
+aos scripts do pacote. Não foram movidos apenas por estética. Os testes ficam em
+`backend/test/`. Estrutura SQL, migrations e seeds oficiais ficam em `database/mysql/`.
+Não foi executada nenhuma migration, limpeza de dados ou alteração no Cloudinary.
+
+## Navegação, estilos e testes
+
+- `src/app/App.tsx` registra as mesmas URLs e páginas com `lazy`/`Suspense`.
+- `ProtectedRoute`/`AdminRoute`, `AppShell`/`AdminShell` e permissões foram preservados.
+- `src/app/route-styles.ts` mantém a mesma ordem dos imports CSS, evitando mudança da cascata.
+- CSS permanece em `src/assets/css/`; nenhuma classe, marcação de página ou layout foi redesenhado.
+- Testes exclusivos acompanham sua área; testes HTTP/mock acompanham o adaptador.
+- `src/__tests__/useAdminCatalog.test.tsx` e `useCatalogForms.test.tsx` atravessam unidades/salas/formulários.
+- `src/app/__tests__/App.test.tsx` verifica rotas/permissões; sessão e shells mantêm seus testes próprios.
+
+Verificações essenciais na raiz: `npm run typecheck`, `npm run test`, `npm run build`.
+No backend, executar os mesmos três comandos quando o trabalho afetar a API ou
+para confirmar a integridade da entrega completa. Testes não substituem revisão
+visual quando a interface mudar.
+
+## Plano de aplicação e registro da entrega
+
+- [x] Piloto Unidades: agrupar arquivos e consolidar o controle administrativo.
+- [x] Agrupar demais funcionalidades e consolidar os três pares locais restantes.
+- [x] Agrupar rotas em `app` e adaptadores em `services/http` e `services/mock`.
+- [x] Atualizar este guia e referências existentes sem criar outro manual concorrente.
+- [x] Finalizar validação completa e revisão independente.
+
+Foram realocados 157 arquivos e eliminados quatro arquivos de coordenação por
+consolidação. Comparação com o estado imediatamente anterior à refatoração confirmou
+214 arquivos com corpo preservado, descontando somente caminhos de módulos e os nomes
+dos hooks consolidados; os 29 arquivos CSS permaneceram idênticos. Os quatro hooks
+e o teste adicional do catálogo foram conferidos separadamente.
+
+O teste adicional verifica que atualização da lista não substitui a versão capturada
+na edição/exclusão de sala; a mesma proteção de unidades já tinha cobertura.
+Validação final: frontend com typecheck, 191 testes (26 arquivos) e build aprovados;
+backend com typecheck, 47 testes e build aprovados. `git diff --check` sem erros.
+O build preserva o mesmo CSS de 259,91 kB (mesmo hash), rotas em chunks separados e
+reduz os módulos transformados de 202 para 198, correspondendo às quatro junções.
+
+Conferência no navegador em origem local de demonstração separada (porta 5174):
+listagem/mapa do cliente, login/logout administrativo, listagens de unidades/salas
+e abertura/cancelamento dos formulários de edição. Não foram salvos dados reais.
+O servidor temporário foi encerrado; o ambiente normal da porta 5173 foi preservado.
+Revisão independente sem achados críticos, importantes ou menores. A revisão não
+certifica módulos pendentes nem a infraestrutura de produção, que não foram alterados.
+
+A execução ocorreu na pasta atual, preservando as mudanças anteriores de limpeza e
+integração. Não houve commit, push, publicação, alteração de credenciais ou operação
+no banco. Planos pendentes ficam em `docs/planejamento/`; entregas e propostas substituídas
+ficam em `docs/historico/`. Este guia é a referência atual para caminhos e organização.
+
+## Materiais auxiliares e limpeza anterior
+
+Caches TypeScript ficam em `node_modules/.cache/`, ignorados pelo Git. Comparações
+locais em `tmp/bundle-check/` e imagens em `tmp/pdfs/requirements-review/` também são
+ignoradas. `outputs/` preserva materiais de apoio, sem participação no runtime.
+A migration oficial de sessões é `database/mysql/migrations/003_sessoes.sql`;
+o rascunho duplicado `Untitled.sql` foi removido. O código/SQL e os documentos
+específicos da antiga proposta Supabase foram removidos; o Git preserva o histórico.
+
+## Organização da documentação — 19/10/2026
+
+A [tabela no README](README.md#documentação) é a entrada da documentação. Os cinco
+arquivos exigidos pelo `AGENTS.md` permanecem na raiz: `PRODUCT.md`, `DESIGN.md`,
+`FEATURES.md`, `PROJECT_STRUCTURE.md` e `MOCK_DATABASE.md`.
+
+- Guias atuais descrevem responsabilidades e estado vigente; não recebem novas
+  cópias do mesmo relato cronológico a cada etapa.
+- `backend/README.md` e `database/mysql/README.md` mantêm instruções junto dos módulos.
+- `docs/planejamento/MIGRATION.md` substitui o antigo `MIGRATION.md` da raiz como
+  roteiro de próximas integrações; não é um script SQL.
+- `docs/planejamento/especificacoes/` e `planos/` mantêm agendamentos e especificação
+  administrativa com as etapas ainda pendentes identificadas.
+- `docs/historico/especificacoes/` e `planos/` guardam os documentos de etapas
+  concluídas ou propostas substituídas, marcados como históricos.
+- `docs/historico/evolucao-ate-2026-10-19.md` preserva os sete guias anteriores à
+  separação entre instrução atual e relatos. Pode conter estados intermediários;
+  não deve orientar configuração ou execução.
+
+Foram realocados 13 documentos, sem apagar decisões. A matriz vigente deixou
+explícito o que funciona na API, o que é demonstração e o que ainda falta. A referência
+do mock foi corrigida para schema 3 e exportação atual sem credenciais, conforme o
+código já existente; isso não altera o comportamento do backup.
+
+Ao documentar mudanças: atualizar o guia responsável, ligar pelo índice quando
+necessário e registrar decisões de uma etapa uma única vez no histórico. Não
+duplicar a descrição completa da mesma implementação em todos os documentos.
+
+Validação desta organização documental: 39 links locais conferidos sem destinos
+ausentes; sete guias anteriores preservados integralmente no histórico. Tipos,
+191 testes frontend, 47 backend e ambos os builds novamente aprovados. Nenhum
+arquivo de implementação, banco ou configuração de execução foi alterado nesta etapa.
+
+## Agrupamento dos testes — 19/10/2026
+
+Os 26 arquivos frontend `.test.ts` e `.test.tsx` ficam em `__tests__/` dentro de
+cada funcionalidade ou módulo. Testes que atravessam áreas ficam em `src/__tests__/`.
+Exemplos: `src/features/unidades/__tests__/useUnits.test.tsx` e
+`src/services/http/__tests__/auth-http.test.ts`.
+
+A descoberta do Vitest continua automática; imports e mocks foram ajustados.
+O backend já possui uma pasta dedicada `backend/test/` e permanece nela, sem criar
+uma pasta redundante. A exclusão foi adiada pelo usuário para o final do projeto;
+nenhum teste foi removido ou desativado nesta etapa.
+
+Validação do agrupamento: typecheck, os mesmos 191 testes em 26 arquivos e build
+frontend aprovados; comparação confirmou que os corpos dos testes foram preservados,
+com alteração apenas dos caminhos de módulos.

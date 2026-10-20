@@ -8,7 +8,7 @@ import { BuildingIcon, CalendarIcon, DashboardIcon, DoorIcon, MenuIcon, TaskIcon
 import { AdminSidebar } from './AdminSidebar';
 import { ThemeToggle } from './ThemeToggle';
 import type { UserRole } from '../types/domain';
-import { useTaskAttentionCount } from '../hooks/useAdminTasks';
+import { useTaskAttentionCount } from '../features/tarefas/useAdminTasks';
 
 const adminNavigation = [
   { to: '/admin/agendamentos', label: 'Agendamentos', icon: CalendarIcon, end: false, roles: ['admin', 'secretaria'] },

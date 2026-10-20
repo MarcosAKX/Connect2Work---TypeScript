@@ -10,10 +10,10 @@ importar ou redirecionar para `../coworking-site/`.
 
 # Arquitetura
 
-- Páginas em `src/pages/`.
+- Páginas, componentes exclusivos e hooks em `src/features/<funcionalidade>/`; rotas em `src/app/`.
 - Componentes compartilhados em `src/components/`.
 - Tipos de domínio em `src/types/domain.ts`.
-- Regras puras em `src/utils/`.
+- Regras puras compartilhadas em `src/utils/`; as exclusivas ficam na funcionalidade.
 - Integrações atrás dos contratos de `src/services/contracts.ts`.
 - Componentes não acessam SDK de backend ou `localStorage` diretamente.
 - Manter `strict: true`; não usar `any`, `@ts-ignore` ou casts para ocultar erro.

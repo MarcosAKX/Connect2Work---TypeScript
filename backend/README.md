@@ -1,170 +1,130 @@
-# Connect2Work API — etapa 1
+# Connect2Work API
 
-API local em TypeScript/NestJS, separada do frontend. Apenas GET /health e GET /ready estão disponíveis. Não há login, cadastro, CRUD, pagamento ou integração das telas. /health verifica o processo; /ready testa a conexão MySQL e retorna 503 genérico quando indisponível.
+API NestJS/TypeScript com MySQL e Cloudinary. Estado vigente em 19/10/2026;
+consulte a [matriz de funcionalidades](../FEATURES.md) para o escopo real.
 
-## Configuração
+## Configurar e executar localmente
 
-Node.js 24.15 ou superior da linha 24. Dependências têm lockfile próprio. Execute a partir da raiz:
+Node.js da linha 24, versão mínima 24.15, conforme `package.json`.
+Na raiz do projeto:
 
 ```powershell
 npm ci --prefix backend
+npm run dev --prefix backend
 ```
 
-Copie backend/.env.example para backend/.env se o arquivo local não existir. Preencha DB_PASSWORD somente no arquivo local, com a senha de c2w_api. Não use root. Senhas com # ou espaços devem estar entre aspas; não copie o arquivo para o frontend ou Git. A API exige configuração válida antes de iniciar; restringe usuário a c2w_api e host SQL a localhost/127.0.0.1 nesta etapa.
+Antes de iniciar pela primeira vez, copie `.env.example` para `.env` dentro de
+`backend/` **somente se o arquivo local não existir**. Preencha as variáveis no
+arquivo local, nunca no frontend ou Git. A conta de execução é `c2w_api`, sem DDL;
+não usar root. A configuração atual de banco admite localhost/127.0.0.1.
+Credenciais Cloudinary também ficam exclusivamente nesse `.env`, sem prefixo `VITE_`.
 
-## Verificação e execução
+A API escuta em `http://127.0.0.1:3001`. `/health` verifica o processo; `/ready`
+verifica MySQL e deve retornar `{"status":"ready"}`. A raiz executa o frontend
+separadamente: `npm run dev`, em outro terminal. O proxy Vite `/api` encaminha para a API.
+
+`dev` compila uma vez e inicia; não é watcher. Alterou código backend? Pare com
+Ctrl+C e execute novamente. Não sobrescrever `.env` para reiniciar. O build fica em `dist/`.
+
+## O que está integrado
+
+- Cadastro, login, sessão, atividade e logout em `/auth/*`.
+- Leitura de unidades e salas autenticada.
+- Gestão administrativa de usuários, unidades, salas, comodidades e galeria.
+- Upload autenticado, publicação e limpeza reconciliável de imagens Cloudinary.
+- Auditoria transacional para as mutações administrativas implementadas.
+
+Reservas/pagamento reais e demais módulos pendentes não são liberados por existir
+uma tabela ou uma tela mock. Google, recuperação real de senha e sincronização
+Google Calendar ainda precisam de implementação. Implantação de produção é uma etapa própria.
+
+## Camadas
+
+`controllers/` recebe HTTP; `services/` executa regras; `repositories/contracts/`
+define persistência; `repositories/mysql/` implementa SQL/transações; `dto/` define
+formatos. `security/` trata sessão/autorização/limites, `storage/` integra Cloudinary,
+`database/` encapsula pool, `config/` valida ambiente e `modules/` compõe dependências.
+O [guia central](../PROJECT_STRUCTURE.md) contém o fluxo completo de uma funcionalidade.
+
+## Sessão e proteção HTTP
+
+| Método | Rota | Comportamento |
+|---|---|---|
+| POST | `/auth/register` | Cria cliente, sem iniciar sessão |
+| POST | `/auth/login` | Usuário público e prazos; token somente no cookie |
+| GET | `/auth/session` | Consulta sem renovar atividade |
+| POST | `/auth/activity` | Renova inatividade dentro do limite absoluto |
+| POST | `/auth/logout` | Revoga sessão e remove cookie; idempotente |
+
+Escritas JSON exigem origem autorizada, `Content-Type: application/json` e
+`X-C2W-Request: 1`. Upload usa multipart e a proteção de origem/cabeçalho correspondente.
+Limites e contratos completos são definidos pelos controllers e middlewares, não pelo cliente.
+
+Sessão expira em 15 minutos sem atividade ou 4 horas desde o login, inclusive na
+igualdade do limite. Token aleatório de 32 bytes; MySQL guarda SHA-256 BINARY(32).
+Cookie HttpOnly/SameSite=Strict, host-only, sem persistência no login; Secure em HTTPS.
+`AUTH_HTTPS=false` é apenas para loopback local. Produção exige HTTPS e origens explícitas;
+a API não termina TLS por conta própria. Consultas autenticadas revalidam conta/perfil.
+
+Senha usa Argon2id. Por decisão do produto, mínimo de 6 caracteres, sem espaços
+no valor completo; geração/verificação usam os primeiros 128 UTF-16, sem trim.
+Nunca registrar cookies, corpo com senha, tokens, hashes ou credenciais. Respostas
+expõem somente campos públicos e erros internos genéricos. Limites em memória
+não constituem uma solução distribuída para várias instâncias.
+
+## Catálogo, transações e imagens
+
+Gravações exigem sessão e perfil admin também dentro da transação. Auditoria é
+atômica; `expectedVersion` impede sobrescrita e `requestId` estável evita duplicação
+de criações em repetição. Unidade com salas e exclusão/mudança de unidade de sala
+com reservas são bloqueadas. Novas referências de imagens são validadas por proprietário.
+
+Uma foto por unidade e até seis por sala. Upload ocorre ao salvar: JPEG/PNG/WebP
+até 10 MiB e 40 MP, conteúdo real validado; otimização WebP até 1600 px/5 MiB e
+remoção de metadados. Limites em `src/config/limites-imagens.ts`. Até dois uploads
+simultâneos. Arquivos públicos do catálogo ficam no Cloudinary, referências no
+MySQL; documentos privados não devem usar esse fluxo.
+
+Temporários são autenticados e têm prazo de 24h. A publicação precede o vínculo SQL;
+falha preserva a imagem anterior. MySQL e Cloudinary não formam transação distribuída:
+intenções em `arquivos_imagens` permitem reconciliar respostas incertas.
+
+Limpeza roda com API ativa, a cada minuto, até 20 intenções por lote, com lease,
+retentativa e carência de 24h para desvinculados. Referências são reconferidas antes
+de remover. `npm run cleanup:imagens --prefix backend` executa um lote com as mesmas
+regras; o término não significa que todas as retentativas pendentes foram resolvidas.
+Namespace padrão local: `connect2work/local`; produção exige namespace próprio.
+
+## Verificações
+
+Na raiz:
 
 ```powershell
 npm run typecheck --prefix backend
 npm run test --prefix backend
-npm run check:database --prefix backend
-npm run dev --prefix backend
+npm run build --prefix backend
 ```
 
-check:database é somente leitura: valida CURRENT_USER, decimal exato e consulta parametrizada ao catálogo de perfis. Não imprime segredo nem realiza DDL. Com a API rodando, acesse http://127.0.0.1:3001/health e http://127.0.0.1:3001/ready. O processo não é prontidão do banco; /ready precisa retornar {"status":"ready"}. Pare com Ctrl+C; o pool é encerrado no shutdown.
+Testes padrão usam dublês e verificações locais; não equivalem a todos os checks reais:
 
-start lê backend/.env quando chamado pelo npm --prefix backend; o build fica em backend/dist. dev recompila uma vez e inicia; não é um watcher. Para refletir alterações no código, pare e execute dev novamente.
+| Script no pacote backend | Escopo |
+|---|---|
+| `check:database` | Conexão MySQL, conta, decimais e perfis; somente leitura |
+| `check:registration` / `check:authentication` | Cadastro/sessões com fixtures próprias |
+| `check:unidades` / `check:salas` | Consultas HTTP/MySQL com fixtures próprias |
+| `check:admin-usuarios` / `check:catalogo-admin` | Fluxos administrativos reais com fixtures |
+| `check:cloudinary` | Envia e remove imagem sintética no provedor |
+| `cleanup:imagens` | Manutenção real; não é teste |
 
-## Organização e POO
+Checks com fixtures/Cloudinary são destinados ao ambiente local de validação,
+não à produção. Usam o `.env` do backend e removem seus próprios registros ao terminar.
+Não executar apenas para validar mudanças de documentação.
 
-- src/config/environment.ts: valida configurações sem expor valores.
-- src/database/database.service.ts: DatabaseService encapsula pool, sessão UTC e liberação das conexões; Readiness define o contrato.
-- src/api/health.controller.ts: HealthController recebe requisições e delega verificação, com injeção de dependência.
-- src/application.ts: compõe módulo, providers e middleware HTTP.
-- src/main.ts: inicialização local e shutdown.
-- src/check-database.ts: prova manual da conexão real por comando de leitura.
-- test: suíte Node test runner, independente do Vitest frontend.
+## Banco e implantação
 
-SQL não vem de HTTP. mysql2 mantém DECIMAL como string, multipleStatements=false, pool de cinco conexões e fila limitada. As sessões usadas são configuradas em UTC explicitamente; timezone do driver sozinho não configura o fuso do servidor. Erros de banco não são retornados nem logados com credenciais. A API escuta só em 127.0.0.1; não habilita CORS ou expõe endpoints de usuários.
+[SQL oficial](../database/mysql/README.md) · [Planejamento pendente](../docs/planejamento/MIGRATION.md).
+A conta runtime não executa migrations. As migrations 002/003/004 já foram aplicadas
+no ambiente local, conforme registros anteriores; não reaplicar sem verificar.
+Hospedar apenas frontend na Vercel não hospeda API nem MySQL.
 
-Isso é uma fundação de desenvolvimento, não implantação de produção. HTTPS de implantação, autorização dos próximos módulos, repositórios de domínio e transações de reservas virão em etapas próprias. Login/sessões e limites de tentativas de autenticação já estão implementados. MySQL não fica acessível ao navegador por esta API. A classe de infraestrutura demonstra encapsulamento, mas objetos de domínio com comportamentos ainda não foram implementados.
-
-## Evidência atual
-
-Oito testes automatizados passaram: variáveis, portas, conta root rejeitada, decimais/configuração de pool, liberação/shutdown, falhas e respostas HTTP. Não equivalem a login no banco real: a senha será preenchida pelo usuário e check:database precisa ser executado. Nenhuma tabela ou permissão foi alterada pela implementação.
-## Cadastro real — etapa de backend (11/10/2026)
-
-POST /auth/register recebe JSON com name, email, profession, phone e password. Todos sao obrigatorios; campos extras sao rejeitados. Nome e sobrenome ate 100 caracteres, profissao de 2 a 80, e-mail ate 254 normalizado em minusculas e telefone brasileiro validado com DDD e salvo como digitos. Senha de 6 a 128 unidades UTF-16 (mesma contagem de string.length e maxlength no frontend), sem caracteres em branco, sem trim ou truncamento. Esta politica foi definida pelo usuario.
-
-ServicoCadastro coordena validacao, UUID, hash e persistencia; ServicoSenha gera Argon2id com salt aleatorio (19 MiB, 2 iteracoes, paralelismo 1). RepositorioUsuariosMysql usa execute parametrizado e resolve o perfil client no banco. O cliente nao escolhe perfil nem ativo. A chave unica de email protege concorrencia; nao ha consulta previa que substitua essa restricao.
-
-Resposta 201 inclui somente dados publicos do usuario, sem senha/hash/sessao. Erros: 400 para entrada invalida, 409 para e-mail duplicado, 503 para indisponibilidade. Corpo JSON limitado a 8 KiB; nesta instancia local, limite global de 12 tentativas por minuto e no maximo 2 hashes simultaneos. O limite global em memoria e adequado apenas a esta etapa local; distribuicao e limites por cliente precisam ser projetados antes da hospedagem. MySQL usa um pool proprio limitado a 5 conexoes para usuarios, separado do pool de prontidao, ambos encerrados no shutdown.
-
-A migracao 002_usuarios_senha_hash.sql foi confirmada pelo usuario no Workbench. Teste HTTP com MySQL real confirmou criacao, perfil client, hash verificavel e rejeicao de duplicata; fixture ficticia removida no finally. npm run check:registration --prefix backend repete esse teste explicito (escreve e remove somente sua fixture aleatoria). Credenciais ficam em backend/.env.
-
-Frontend permanece no mock e no MVVM existente: useRegister coordena formulario por AuthGateway. Limite visual maxlength e adaptador HTTP serao integrados em etapa posterior. Login, sessao, recuperacao de senha e pagamentos nao implementados nesta etapa. Hash nunca deve sair pela API nem entrar em logs/auditoria.
-Validacao desta etapa: 14 testes do backend aprovados; check:registration com MySQL real aprovado; typecheck do backend e da raiz e build da raiz aprovados; auditoria de dependencias runtime sem vulnerabilidades reportadas. Revisao estatica independente sem problemas acionaveis no escopo local. Suite da raiz: 96 aprovados e 4 falhas anteriores em App.test.tsx, que espera 'Bem-vindo de volta' enquanto LoginPage exibe 'Bem-vindo'. Nenhum arquivo do frontend foi alterado nesta etapa.
-## Organizacao do backend por camadas — 11/10/2026
-
-Estrutura atual de backend/src:
-
-- controllers/: CadastroController e HealthController, entrada HTTP.
-- services/: ServicoCadastro, regras e coordenacao.
-- repositories/contracts/: contrato RepositorioUsuarios e dados de persistencia NovoUsuario.
-- repositories/mysql/: RepositorioUsuariosMysql, SQL parametrizado.
-- security/: contrato GeradorHash e implementacao ServicoSenha em servico-senha-argon2.ts.
-- dto/: UsuarioCadastradoDto, resposta publica explicitamente sem credenciais.
-- database/: infraestrutura de conexao e prontidao MySQL.
-- modules/: AuthModule e HealthModule, composicao dos providers existentes.
-- config/: validacao do ambiente.
-- app.module.ts: composicao raiz; application.ts: fabrica HTTP usada tambem nos testes; main.ts: inicializacao.
-
-Refatoracao estrutural: contratos extraidos e imports atualizados, sem alteracao de rotas, validacoes, SQL, politica de senha, limites ou permissao. Ciclo de vida dos pools preservado; os pools existentes de prontidao e usuarios continuam separados nesta etapa. Frontend e seu MVVM permanecem inalterados. Nao ha pasta auth/api/infrastructure antiga nem pastas vazias criadas para funcionalidades futuras.
-
-Validacao: 14 testes do backend e cadastro HTTP/MySQL real aprovados depois da reorganizacao; fixture temporaria removida pelo teste.
-## Testar cadastro pelo frontend local
-
-1. Terminal na raiz: npm start --prefix backend (build backend previamente com npm run build --prefix backend).
-2. Outro terminal na raiz: npm run dev.
-3. Abrir http://localhost:5173/cadastro. Flag pública VITE_AUTH_API=true em .env.development.local ativa autenticação HTTP em desenvolvimento; reiniciar Vite se mudar a flag. Senhas e conexao MySQL permanecem somente no backend/.env.
-4. Entrar em /login usando a conta recém-criada no MySQL. Sessão é confirmada pela API e logout revoga o token.
-
-Teste automatizado via proxy: com ambos servidores rodando, definir REGISTRATION_TEST_PROXY=true no ambiente do comando npm run check:registration --prefix backend. Usa destino fixo localhost:5173/api; cria usuario ficticio aleatorio e o remove no finally, sem migrar contas ou dados existentes.
-## Validacao de nome e profissao — 11/10/2026
-
-Nome e profissao rejeitam caracteres numericos (categoria Unicode N) com mensagens especificas. Validadores compartilhados do frontend e ServicoCadastro do backend aplicam a regra antes de cadastrar; acentos, espacos e pontuacao continuam permitidos conforme as validacoes existentes. Nao remove numeros silenciosamente nem altera registros ja gravados.
-## Login e sessões — etapa de backend (11/10/2026)
-
-Rotas disponíveis na API local:
-
-| Método | Rota | Resultado |
-| --- | --- | --- |
-| POST | /auth/login | 200 usuário público e horários de expiração; token somente Set-Cookie |
-| GET | /auth/session | 200 sessão pública ou 401; não renova atividade |
-| POST | /auth/activity | 200 novos horários ou 401; não prolonga limite absoluto |
-| POST | /auth/logout | 204 e remoção do cookie; revoga no banco e é idempotente |
-
-POST /auth/login aceita somente email/password. POST activity/logout recebe {}. Todos os POST /auth/*, inclusive register, exigem Content-Type: application/json, Origin da lista AUTH_ORIGINS e X-C2W-Request: 1. Corpo máximo 8kb. Login errado/conta inexistente/inativa/sem hash: 401 “Senha incorreta”. Login tem 10 tentativas/min por endereço de conexão e 30/min globais; mapa bounded1000, sem confiar em X-Forwarded-For. Atrás do proxy local, endereço pode ser compartilhado entre navegadores. Limites em memória não são solução para múltiplas instâncias.
-
-Sessão: 15min sem atividade ou 4h desde login, inclusive na igualdade do limite; relógio UTC do servidor. Token32bytes base64url gerado criptograficamente; banco guarda SHA256 BINARY32, nunca token original. Cookie c2w_session é HttpOnly/SameSite=Strict/Path=/, host-only, sem Expires/Max-Age no login. Logout usa Max-Age=0. AUTH_HTTPS=false apenas em HTTP loopback local; AUTH_HTTPS=true exige origens HTTPS e cookie Secure. NODE_ENV=production exige HTTPS e AUTH_ORIGINS explícito. A API não termina TLS nesta etapa; publicação requer infraestrutura HTTPS configurada.
-
-Conta e perfil são consultados novamente na sessão; usuário inativo revoga a sessão. Nova sessão substitui apenas o token anterior apresentado, sem desconectar outros dispositivos. SQL de atividade/revogação é atômico, não reativa token revogado ou expirado. Queries têm timeout individual e operações completas de autenticação têm prazo de 5s, inclusive aquisição e transações; conexões falhas são descartadas. Não registrar cookies/corpos/senhas/hashes; DTOs retornam somente campos públicos, erros internos genéricos.
-
-Senha: mínimo6, espaços proibidos no valor completo, sem trim; conforme decisão explícita do produto, truncar aos primeiros128UTF16 antes de gerar/verificar Argon2id. Sufixos além do limite não participam da autenticação. Campo visual mantém maxLength128. Recuperação real de senha ainda não implementada.
-
-Tabela sessoes confirmada pelo operador; migração003 arquivada, não reaplicar no banco atual. Frontend login/AuthContext ainda usam mock. Esta etapa não integra reservas, administração, atividade visual nem logout da interface.
-
-Validação explícita com fixture temporária:
-
-```powershell
-npm run check:authentication --prefix backend
-```
-
-Cria somente conta aleatória example.invalid; verifica hash do token, truncamento128, expiração15min/4h, perfil atualizado, conta inativa, revogação concorrente e logout. Remove somente essa conta e suas sessões em finally. Usa backend/.env pelo runtime, nunca imprime senha/token/hash. Não executar teste de fixture em produção.
-
-## Integração de sessão no frontend — 11/10/2026
-
-Login e cadastro usam a API local/MySQL. AuthHttpGateway encapsula HTTP; AuthContext coordena estado; hooks coordenam ações e Views apresentam a interface, preservando MVVM no frontend e camadas/POO no backend. Token fica em cookie HttpOnly, sem localStorage. Sessão não persistente: 15 minutos sem atividade e limite absoluto de 4 horas. GET de sessão não renova; interação real em aba visível registra atividade no máximo uma vez por minuto.
-
-Rotas aguardam confirmação inicial da API. Falha de rede bloqueia acesso com mensagem genérica e nova tentativa. Verificação ao retornar à aba preserva a página, bloqueando interação até confirmar; prazo vencido bloqueia imediatamente. Logout só encerra visualmente após confirmação do servidor; falha permite tentar novamente. Respostas antigas não reabrem sessão encerrada.
-
-Em modo HTTP, catálogo de unidades/salas/serviços ainda é demonstração estática somente leitura. Reservas, pagamento, plano de horas, tarefas, auditoria, backup e administração aguardam integração e ficam bloqueados; não usam dados privados mock. Google e recuperação de senha ainda indisponíveis. Desenvolvimento sem VITE_AUTH_API usa mock explicitamente; produção sempre usa API. Sessões reais não são exportadas em backups.
-
-Validação: testes automatizados cobrem limites, falhas e concorrência; navegador confirmou senha incorreta, login real, recarga mantendo sessão, bloqueio de reservas e logout com rota privada redirecionada. Conta fictícia de teste e suas sessões removidas após validação. Não houve publicação.
-
-## Consulta de unidades — 17/10/2026
-
-GET /unidades exige sessão válida pelo CookieSessao e ServicoAutenticacao, sem renovação. Retorna somente UnidadeDto e Cache-Control: no-store; ausência de sessão retorna 401, falhas internas retornam 503 genérico. Repositório MySQL usa LEFT JOIN/COUNT para salas cadastradas, prazo integral de 5s e SQL de 2s. Sem endpoints de escrita nesta etapa.
-
-Com API local iniciada, executar npm run check:unidades para validar HTTP/MySQL. O comando usa apenas fixtures aleatórias próprias (usuário/unidade/sala/sessão) e as remove em finally. Nunca executar em produção. Não imprime credenciais. Não é necessário executar novo SQL de estrutura.
-
-## Salas e comodidades no MySQL — 18/10/2026
-
-Concluída a integração de /salas?unidade=<UUID>. GET /unidades/:unidadeId/salas lista somente as salas da unidade, incluindo salas sem comodidades; UUID válido inexistente retorna lista vazia. GET /salas/:salaId retorna o detalhe ou 404. Ambas as rotas exigem sessão válida e usuário ativo, não renovam atividade e usam Cache-Control: no-store. Identificadores inválidos retornam 400 e falhas internas têm resposta genérica 503. DTO público não inclui dados de usuários ou credenciais.
-
-SalasController → ServicoSalas → RepositorioSalas → RepositorioSalasMysql segue as camadas existentes. Consulta parametrizada com LEFT JOIN sala_comodidades/comodidades e agrupamento por sala, sem GROUP_CONCAT e sem consultas por comodidade. Preço DECIMAL é convertido para número finito e não negativo; capacidade positiva. Prazo integral e descarte de conexões falhas seguem a infraestrutura atual.
-
-SalasHttpGateway implementa os contratos de listagem/detalhe, valida respostas em runtime e recusa mistura de unidades. Usa cookies, prazo de 10s e revalidação serial de sessão em 401 sem cancelar login novo. createAppServices agora conecta salas reais. useRooms coordena carregamento, vazio, erro/retry, unidade ausente e respostas antigas. Troca de URL não exibe salas da unidade anterior. RoomsPage mantém o layout e usa Salas da unidade, sem prometer disponibilidade por horário.
-
-O seed comentado database/mysql/seeds/003_salas_comodidades.sql foi aplicado localmente: 10 salas (cinco por unidade), 9 comodidades e 38 associações. Preserva nomes, capacidades e preços do mockup. Apenas inclusões, sem atualizar salas existentes; aplicação repetida confirmou zero novas inclusões. Requer os dois nomes de unidade únicos do seed002. Não altera tabelas nem cria contas. Imagens continuam em Fotos em breve; imagens_salas/armazenamento ainda serão integrados. Agendamentos, horários, pagamento e administração permanecem bloqueados até suas etapas. A implantação Vercel não foi alterada.
-
-Teste local npm run check:salas no backend inicia API isolada em porta aleatória, valida MySQL/HTTP com fixtures próprias e as remove em finally. Cobre unidade vazia, sala sem comodidades, N:N compartilhado, agrupamento de várias comodidades, filtro entre unidades, preço decimal, sessão, UUID inválido, detalhe ausente e logout. Navegador conferiu cinco salas de cada unidade, preços/comodidades e bloqueio de agendamentos. As alterações locais pré-existentes do usuário em CSS/mapa foram preservadas.
-## Gestão de usuários MySQL — 18/10/2026
-
-GET /admin/usuarios aceita search (até 254), role, active=true|false, page (1–10000) e pageSize (1–100; padrão 50). Resposta {items,page,pageSize,total,summary}; total segue filtros, summary é global. POST cria conta com name/email/profession?/phone?/password/role/active. PATCH /admin/usuarios/:id edita com expectedVersion; PATCH /:id/perfil e /:id/status exigem role ou active e expectedVersion. Senha omitida mantém hash, senha vazia é inválida. Campos extras são rejeitados. GET /admin/equipe e /admin/clientes/busca são acessíveis somente à equipe e retornam resumos reduzidos. Atualizações com versão antiga retornam 409; 401/403/429 são distintos. Limites por conta: 120 consultas/min e 30 mutações/min, máximo 1000 contas na memória; hashing simultâneo limitado a dois. Escritas revalidam sessão após locks, preservam ao menos um admin e bloqueiam auto-inativação/rebaixamento. Senha/perfil/inativação revogam sessões na mesma transação da auditoria. Criação de sessão compara sob lock o hash que foi verificado no login, evitando corrida com redefinição. npm run check:admin-usuarios valida HTTP/MySQL com fixtures próprias e limpeza; não executa DDL nem modifica contas reais.
-
-## Catálogo administrativo e imagens — 18/10/2026
-
-Estado atual: no modo API, gestão de usuários, unidades e salas usa MySQL real. O administrador pode criar/editar/excluir unidades e salas, definir comodidades e enviar imagens pelo formulário. Dashboard, planos de horas, backup e demais módulos administrativos aguardam suas etapas e continuam bloqueados no modo HTTP.
-
-Imagens são arquivos públicos do catálogo hospedados no Cloudinary; o MySQL guarda chaves e relações em unidades/imagens_salas e o controle técnico em arquivos_imagens. Não são gravados BLOBs ou previews base64. Documentos privados não devem usar este fluxo.
-
-Upload começa no salvamento: uma foto por unidade, até seis por sala, JPEG/PNG/WebP, até 5 MiB e 20 MP. A API valida conteúdo e converte para WebP de até 1600px, removendo metadados. Temporários são autenticados e expiram em 24h. A publicação precede o vínculo SQL; falha mantém a imagem anterior. Catálogo público recebe URLs somente de arquivos vinculados.
-
-CRUD usa sessão e papel admin verificados também na transação, auditoria atômica e expectedVersion para impedir sobrescrita. Criações usam requestId estável para evitar duplicação em repetição. Exclusão de unidade com salas e exclusão/mudança de unidade de sala com reservas são negadas. Fotos novas não podem ser transferidas de outra entidade por UUID.
-
-Limpeza roda na API uma vez por minuto, até 20 intenções por lote, com leases persistidos, retentativa e carência de 24h para arquivos desvinculados. Referências de unidades, salas e serviços são reconferidas antes da remoção. MySQL e Cloudinary não formam uma transação distribuída: a intenção persistida permite reconciliar chamadas de resultado incerto. A coleta exige API ativa; falhas ficam em arquivos_imagens para retentativa.
-
-Para executar um único lote com as mesmas regras, use npm run cleanup:imagens em backend. O comando não ignora a carência nem remove arquivos ainda vinculados. Falhas individuais são registradas em arquivos_imagens; o término do lote não significa que toda retentativa pendente já foi concluída.
-
-Aplicar uma vez database/mysql/migrations/004_arquivos_imagens.sql pela conexão root; já aplicado no banco local. API continua usando c2w_api sem permissão DDL. Credenciais CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET e CLOUDINARY_NAMESPACE ficam exclusivamente no backend/.env ignorado. Namespace padrão connect2work/local; produção exige namespace próprio (por exemplo connect2work/producao). Não usar prefixo VITE_ para segredos.
-
-Verificações locais: no backend, npm run check:catalogo-admin e npm run check:cloudinary (este envia e remove uma imagem sintética); também check:admin-usuarios, check:authentication, check:unidades e check:salas. Todos usam fixtures próprias; não executar em produção. Desenvolvimento continua com frontend npm run dev na raiz e API npm run dev em backend, em terminais separados. Esta etapa não publica API/MySQL nem altera a implantação Vercel.
-
-Revisão final concluída: dois achados corrigidos com regressões. Referências antigas sem prévia são mantidas ao editar metadados e só removidas por ação explícita. A busca remota de unidades alcança opções além das primeiras 100 e preserva a unidade atual da sala. Frontend: typecheck/build e 191 testes passaram. Backend: typecheck/build, 46 testes e checks MySQL de autenticação, usuários, catálogo, unidades e salas passaram. Teste de retomada após publicação cuja resposta se perdeu confirma consulta pela chave existente sem nova publicação/remoção.
-
-## Ajuste do limite de upload — 18/10/2026
-
-Por solicitação do usuário, o arquivo original aceito pelo formulário e pelo backend passou a até 10 MiB (10 × 1024 × 1024 bytes), mantendo JPEG/PNG/WebP e 20 MP. Os limites do transporte multipart e do decoder usam config/limites-imagens.ts. A saída continua WebP otimizado de até1600px e5MiB; por isso a CHECK da tabela arquivos_imagens permanece correta e não exige nova migração. Mensagens do frontend foram alinhadas. Verificação real pelo proxy Vite → API → Cloudinary aceitou PNG sintético de6.762.422bytes, gerou4.084bytes otimizados e retornou201; conta/arquivo de teste removidos. Testes:191frontend e47backend; typechecks/builds passaram.
-
-Atualização de 19/10/2026: fotos originais aceitam até 10 MiB e 40 megapixels. O limite de resolução foi ampliado para permitir fotografias de câmeras de 24 MP; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.
+[Relatos anteriores e evidências por etapa](../docs/historico/evolucao-ate-2026-10-19.md).

@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Antes de criar página
 
-1. Localizar origem da navegação em `src/pages/` e `src/components/`.
+1. Localizar origem da navegação em `src/features/`, `src/app/` e `src/components/`.
 2. Definir IDs e query strings necessários usando tipos existentes.
 3. Definir destinos reais para salvar, confirmar, cancelar e voltar.
 4. Reutilizar contratos e componentes; não duplicar sessão, logout ou validação.

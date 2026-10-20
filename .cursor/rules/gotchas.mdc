@@ -18,8 +18,8 @@ Não usar `/pages/*.html`, extensão `.html` ou fallback para o projeto anterior
 reserva não são seguras para produção. Backend real precisa de autenticação,
 regras de acesso e operação transacional para impedir reservas concorrentes.
 
-Login Google deve continuar indisponível com mensagem clara até Firebase ou
-Supabase ser escolhido. Não simular OAuth falso.
+Login Google deve continuar indisponível com mensagem clara até implementar
+OAuth no backend NestJS. Não simular OAuth falso.
 
 # Compatibilidade local
 
