@@ -12,13 +12,13 @@ const columns: Array<{ status: TaskStatus; label: string; icon: typeof TaskIcon 
 type TaskBoardProps = Pick<
   AdminTasksViewModel,
   | 'taskColumns' | 'dropTarget' | 'setDropTarget' | 'handleDrop' | 'loading'
-  | 'filter' | 'staff' | 'saving' | 'moveTask' | 'columnCounts' | 'draggedId'
+  | 'filter' | 'staff' | 'saving' | 'columnCounts' | 'draggedId'
   | 'handleDragStart' | 'endDrag' | 'openEdit'
 >;
 
 export function TaskBoard({
   taskColumns, dropTarget, setDropTarget, handleDrop, loading, filter,
-  staff, saving, moveTask, columnCounts, draggedId, handleDragStart, endDrag, openEdit,
+  staff, saving, columnCounts, draggedId, handleDragStart, endDrag, openEdit,
 }: TaskBoardProps) {
   return (
     <section className="admin-task-board" aria-label="Quadro de tarefas">
@@ -57,7 +57,6 @@ export function TaskBoard({
                   task={task}
                   staff={staff}
                   saving={saving}
-                  moveTask={moveTask}
                   draggedId={draggedId}
                   handleDragStart={handleDragStart}
                   endDrag={endDrag}

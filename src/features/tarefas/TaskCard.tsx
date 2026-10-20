@@ -13,12 +13,12 @@ function initials(name: string) {
 
 type TaskCardProps = Pick<
   AdminTasksViewModel,
-  | 'staff' | 'saving' | 'moveTask' | 'draggedId'
+  | 'staff' | 'saving' | 'draggedId'
   | 'handleDragStart' | 'endDrag' | 'openEdit'
 > & { task: Task };
 
 export function TaskCard({
-  task, staff, saving, moveTask, draggedId, handleDragStart, endDrag, openEdit,
+  task, staff, saving, draggedId, handleDragStart, endDrag, openEdit,
 }: TaskCardProps) {
   const assignee = staff.find((person) => person.id === task.assignedTo);
   const dueState = getTaskDueState(task);
@@ -43,19 +43,11 @@ export function TaskCard({
       <div className="admin-task-card__top">
         <span className={`admin-task-priority is-${task.priority}`}>{priorityLabels[task.priority]}</span>
         {dueState === 'overdue' && <span className="admin-task-alert">Atrasada</span>}
-        {dueState === 'today' && <span className="admin-task-alert">Vence hoje</span>}
+        {dueState === 'today' && <span className="admin-task-alert">Vence em até 24h</span>}
+        {dueState === 'future' && <span className="admin-task-alert">No prazo</span>}
       </div>
       <h2>{task.title}</h2>
       {task.description && <p>{task.description}</p>}
-      <label onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
-        Situação
-        <select aria-label={`Situação de ${task.title}`} value={task.status} disabled={saving} onChange={event => {
-          const value = event.target.value;
-          if (value === 'todo' || value === 'in_progress' || value === 'done') void moveTask(task.id, value);
-        }}>
-          <option value="todo">A Fazer</option><option value="in_progress">Em Andamento</option><option value="done">Concluído</option>
-        </select>
-      </label>
       <footer>
         {assignee ? (
           <span className="admin-task-assignee" title={assignee.name}>

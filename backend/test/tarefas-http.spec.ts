@@ -17,7 +17,7 @@ import type { Papel } from '../src/dto/usuario-gerenciado.dto';
 
 test('HTTP tarefas autoriza equipe, nega cliente e impede adulteração do prazo e autor', async () => {
   const token = new TokenSessao().gerar().token;
-  const actorId = randomUUID(), taskId = randomUUID(); const version = '2026-10-20 12:00:00.000001';
+  let actorId = randomUUID(); const taskId = randomUUID(); const version = '2026-10-20 12:00:00.000001';
   let role: Papel = 'admin'; let logged = true; let active = true; let reads = 0, writes = 0;
   const item = { id: taskId, title: 'Tarefa de outra pessoa', priority: 'medium' as const, status: 'todo' as const, createdBy: randomUUID(), dueDate: '2026-10-21', createdAt: '2026-10-20T12:00:00Z', updatedAt: '2026-10-20T12:00:00Z', version };
   const access = new AcessoAdministrativo({ async consultar() { return logged ? { user: { id: actorId, name: 'Equipe', email: 'equipe@example.invalid', role, active, profession: '', phone: '', createdAt: item.createdAt, hasHoursPlan: false, hoursBalance: 0 }, idleExpiresAt: '', absoluteExpiresAt: '' } : null; } });
@@ -32,15 +32,22 @@ test('HTTP tarefas autoriza equipe, nega cliente e impede adulteração do prazo
   try {
     const url = await app.getUrl();
     const headers = { Cookie: 'c2w_session=' + token, Origin: 'http://localhost:5173', 'X-C2W-Request': '1', 'Content-Type': 'application/json' };
-    const fields = { title: 'Editada', description: '', assignedTo: null, priority: 'high' };
+    const fields = { title: 'Editada', description: '', assignedTo: actorId, priority: 'high' };
     const write = (body: unknown, path = '/' + taskId, method = 'PATCH') => fetch(url + '/admin/tarefas' + path, { method, headers, body: JSON.stringify(body) });
     for (const permitted of ['admin', 'secretaria'] as const) {
-      role = permitted;
+      role = permitted; actorId = randomUUID();
       assert.equal((await fetch(url + '/admin/tarefas', { headers })).status, 200);
       const people = await fetch(url + '/admin/tarefas/equipe', { headers }); assert.equal(people.status, 200); assert.ok(!(await people.text()).includes('email'));
       assert.equal((await write({ ...fields, expectedVersion: version })).status, 200);
       for (const extra of [{ dueDate: '2030-01-01' }, { dueDate: null }, { createdBy: actorId }, { status: 'done' }]) assert.equal((await write({ ...fields, expectedVersion: version, ...extra })).status, 400);
       assert.equal((await write({ ...fields, requestId: randomUUID(), dueDate: '2026-10-21' }, '', 'POST')).status, 201);
+      for (const field of ['title', 'assignedTo', 'priority', 'dueDate']) {
+        for (const value of [undefined, null, '']) {
+          const beforeWrite = writes;
+          assert.equal((await write({ ...fields, requestId: randomUUID(), dueDate: '2026-10-21', [field]: value }, '', 'POST')).status, 400);
+          assert.equal(writes, beforeWrite);
+        }
+      }
       assert.equal((await write({ ...fields, requestId: randomUUID(), createdBy: actorId }, '', 'POST')).status, 400);
       assert.equal((await write({ status: 'done', expectedVersion: version }, '/' + taskId + '/situacao')).status, 200);
       assert.equal((await write({ expectedVersion: version }, '/' + taskId, 'DELETE')).status, 200);

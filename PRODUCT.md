@@ -65,3 +65,12 @@ segredos, backups e monitoramento. O desenvolvimento atual continua local.
 - [Mapa do código e critérios de organização](PROJECT_STRUCTURE.md).
 - [Próximas integrações](docs/planejamento/MIGRATION.md).
 - [Histórico de evolução](docs/historico/evolucao-ate-2026-10-19.md).
+
+
+## Campos obrigatórios das tarefas
+
+Título, responsável da equipe e prioridade são obrigatórios ao criar ou editar.
+A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na criação
+e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
+continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
+alterar as tabelas existentes.

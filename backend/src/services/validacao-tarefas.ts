@@ -9,13 +9,13 @@ function dados(body: Record<string, unknown>): DadosTarefa {
   const priority = body.priority;
   if (priority !== 'low' && priority !== 'medium' && priority !== 'high') throw new BadRequestException('Prioridade inválida.');
   return { title, description: body.description === undefined ? '' : texto(body.description, 1000),
-    assignedTo: body.assignedTo === undefined || body.assignedTo === null ? null : uuid(texto(body.assignedTo, 36)), priority };
+    assignedTo: uuid(texto(body.assignedTo, 36)), priority };
 }
 const fields = ['title', 'description', 'assignedTo', 'priority'];
 export function criarTarefa(input: unknown): CriacaoTarefa {
   const body = objeto(input, [...fields, 'requestId', 'dueDate']);
-  const dueDate = body.dueDate === undefined || body.dueDate === null ? null : texto(body.dueDate, 10);
-  if (dueDate !== null) validarData(dueDate);
+  const dueDate = texto(body.dueDate, 10);
+  validarData(dueDate);
   return { ...dados(body), requestId: uuid(texto(body.requestId, 36)), dueDate };
 }
 export function editarTarefa(input: unknown): EdicaoTarefa {

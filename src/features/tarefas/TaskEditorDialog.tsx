@@ -28,6 +28,7 @@ export function TaskEditorDialog({
           <span className="admin-task-field-label">Título</span>
           <input
             value={form.title}
+            required
             maxLength={120}
             onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
             autoFocus
@@ -47,9 +48,10 @@ export function TaskEditorDialog({
             <span className="admin-task-field-label">Responsável</span>
             <select
               value={form.assignedTo}
+              required
               onChange={(event) => setForm((current) => ({ ...current, assignedTo: event.target.value }))}
             >
-              <option value="">Sem responsável</option>
+              <option value="" disabled>Selecione o responsável</option>
               {form.assignedTo && !staff.some(person => person.id === form.assignedTo) && <option value={form.assignedTo}>Responsável indisponível — selecione outro</option>}
               {staff.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
             </select>
@@ -58,6 +60,7 @@ export function TaskEditorDialog({
             <span className="admin-task-field-label">Prioridade</span>
             <select
               value={form.priority}
+              required
               onChange={(event) => setForm((current) => ({
                 ...current,
                 priority: event.target.value === 'low' || event.target.value === 'high'
@@ -71,12 +74,13 @@ export function TaskEditorDialog({
           </label>
           <label>
             <span className="admin-task-field-label">
-              Prazo <small>{dueDateLocked ? '(definido na criação)' : '(opcional)'}</small>
+              Prazo <small>{dueDateLocked ? '(definido na criação)' : '(obrigatório)'}</small>
             </span>
             <input
               type="date"
               value={form.dueDate}
               disabled={dueDateLocked}
+              required={!dueDateLocked}
               title={dueDateLocked ? 'A data estimada não pode ser alterada após a criação' : undefined}
               onChange={(event) => setForm((current) => ({ ...current, dueDate: event.target.value }))}
             />

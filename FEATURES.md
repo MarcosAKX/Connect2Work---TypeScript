@@ -73,7 +73,7 @@ na API antes da liberação dos módulos reais; não são garantias do MySQL atu
 
 ## Validação registrada
 
-Etapa administrativa: 213 testes frontend e 53 backend aprovados, com typechecks,
+Etapa administrativa: 219 testes frontend e 54 backend aprovados, com typechecks,
 builds e check MySQL `check:agendamentos-admin`. Conferência no navegador com
 fixtures próprias: criação, pagamento manual, check-in, painel e cancelamento.
 
@@ -119,5 +119,18 @@ Prazo definido somente na criação; edição não aceita esse campo, inclusive 
 admin e quando a tarefa foi criada sem prazo. Título, descrição, responsável ativo
 e prioridade continuam editáveis. Autor vem da sessão e permanece preservado.
 Quadro paginado, filtro Minhas tarefas pelo responsável e contagens do servidor;
-movimentação por arrastar ou seletor de situação. Mutações usam versão, auditoria
+movimentação ao arrastar os cartões entre as colunas. Mutações usam versão, auditoria
 atômica e requestId na criação. Indicador de pendências considera o dia de São Paulo.
+
+Cartões de tarefas sinalizam prazo com verde (dentro do prazo), amarelo (até 24h
+para vencer) ou vermelho (vencido), além do texto. Vencimento no fim do dia de
+São Paulo; concluídas e sem prazo permanecem neutras.
+
+
+## Campos obrigatórios das tarefas
+
+Título, responsável da equipe e prioridade são obrigatórios ao criar ou editar.
+A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na criação
+e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
+continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
+alterar as tabelas existentes.

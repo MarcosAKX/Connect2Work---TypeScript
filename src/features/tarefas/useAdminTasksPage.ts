@@ -66,6 +66,18 @@ export function useAdminTasksPage(user: User | null) {
       setFormError('Informe o título da tarefa.');
       return;
     }
+    if (!form.assignedTo || !staff.some(person => person.id === form.assignedTo)) {
+      setFormError('Selecione um responsável da equipe.');
+      return;
+    }
+    if (!['low', 'medium', 'high'].includes(form.priority)) {
+      setFormError('Selecione a prioridade da tarefa.');
+      return;
+    }
+    if (!editingTask && !form.dueDate) {
+      setFormError('Informe o prazo da tarefa.');
+      return;
+    }
     const input = {
       title: form.title,
       description: form.description || undefined,
@@ -116,7 +128,7 @@ export function useAdminTasksPage(user: User | null) {
     setDropTarget(null);
   }
   return {
-    currentUserId, page, setPage, total, columnCounts, remoteMode, load, moveTask, taskColumns, staff, filter, setFilter, loading, saving, error, notice,
+    currentUserId, page, setPage, total, columnCounts, remoteMode, load, taskColumns, staff, filter, setFilter, loading, saving, error, notice,
     editingTask, form, setForm, formError, deleteTarget, setDeleteTarget, draggedId, dropTarget, setDropTarget,
     editorRef, deleteRef, dueDateLocked, openCreate, openEdit, submitTask, confirmDelete,
     handleDragStart, handleDrop, closeEditor, onEditorClosed, requestDelete, endDrag,

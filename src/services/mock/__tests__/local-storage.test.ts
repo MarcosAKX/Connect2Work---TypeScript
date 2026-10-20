@@ -266,6 +266,13 @@ describe('localStorage services', () => {
     expect(services.checkout.getDraft()).toBeNull();
   });
 
+  it('exige responsável e prazo na criação de tarefas', async () => {
+    const services = createLocalStorageServices();
+    const input = { title: 'Nova tarefa', assignedTo: 'seed-secretaria', dueDate: '2030-10-21', priority: 'medium' as const, createdBy: 'seed-administrador' };
+    await expect(services.tasks.createTask({ ...input, assignedTo: undefined })).rejects.toThrow();
+    await expect(services.tasks.createTask({ ...input, dueDate: undefined })).rejects.toThrow();
+  });
+
   it('cria, move, edita e exclui tarefa compartilhada', async () => {
     const now = new Date('2026-07-23T12:00:00.000Z');
     const services = createLocalStorageServices(() => now);
@@ -282,10 +289,10 @@ describe('localStorage services', () => {
     await expect(services.tasks.updateTask(created.id, {
       title: 'Conferir recepção e copa',
       description: undefined,
-      assignedTo: undefined,
+      assignedTo: 'seed-secretaria',
       priority: 'medium',
       dueDate: created.dueDate,
-    }, 'seed-administrador')).resolves.toMatchObject({ title: 'Conferir recepção e copa', assignedTo: undefined });
+    }, 'seed-administrador')).resolves.toMatchObject({ title: 'Conferir recepção e copa', assignedTo: 'seed-secretaria' });
     await expect(services.tasks.deleteTask(created.id, 'seed-administrador')).resolves.toBeUndefined();
     await expect(services.tasks.listTasks()).resolves.not.toEqual(expect.arrayContaining([expect.objectContaining({ id: created.id })]));
   });
@@ -304,15 +311,17 @@ describe('localStorage services', () => {
     const services = createLocalStorageServices();
     const created = await services.tasks.createTask({
       title: 'Tarefa exclusiva do administrador',
+      assignedTo: 'seed-secretaria',
+      dueDate: '2026-08-14',
       priority: 'medium',
       createdBy: 'seed-administrador',
     });
     const changedContent = {
       title: 'Alteração indevida',
       description: undefined,
-      assignedTo: undefined,
+      assignedTo: 'seed-secretaria',
       priority: 'high' as const,
-      dueDate: undefined,
+      dueDate: created.dueDate,
     };
 
     await expect(services.tasks.updateTask(created.id, changedContent, 'seed-secretaria')).resolves.toMatchObject({ title: 'Alteração indevida' });
@@ -331,6 +340,7 @@ describe('localStorage services', () => {
     const services = createLocalStorageServices();
     const created = await services.tasks.createTask({
       title: 'Tarefa da secretária',
+      assignedTo: 'seed-secretaria',
       priority: 'medium',
       dueDate: '2026-08-15',
       createdBy: 'seed-secretaria',
@@ -360,6 +370,8 @@ describe('localStorage services', () => {
     const services = createLocalStorageServices();
     const created = await services.tasks.createTask({
       title: 'Tarefa criada pela secretária',
+      assignedTo: 'seed-secretaria',
+      dueDate: '2026-08-14',
       priority: 'low',
       createdBy: 'seed-secretaria',
     });
@@ -374,7 +386,7 @@ describe('localStorage services', () => {
       title: 'Tarefa revisada pelo administrador',
       priority: 'high',
     });
-    await expect(services.tasks.updateTask(created.id, { title: 'Prazo alterado', priority: 'medium', dueDate: '2026-08-20' }, 'seed-administrador')).rejects.toThrow('só pode ser definida durante a criação');
+    await expect(services.tasks.updateTask(created.id, { title: 'Prazo alterado', assignedTo: 'seed-secretaria', priority: 'medium', dueDate: '2026-08-20' }, 'seed-administrador')).rejects.toThrow('só pode ser definida durante a criação');
     await expect(services.tasks.deleteTask(created.id, 'seed-administrador')).resolves.toBeUndefined();
   });
 

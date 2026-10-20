@@ -32,6 +32,17 @@ function PageProbe({ role }: { role: UserRole }) {
   pageModel = useAdminTasksPage({ id: 'equipe', name: 'Equipe', email: 'equipe@example.invalid', role, active: true, createdAt: '2026-10-20T12:00:00Z', hasHoursPlan: false, hoursBalance: 0 });
   return <TaskEditorDialog {...pageModel} />;
 }
+it.each([
+  { title: '', assignedTo: 'secretaria', dueDate: '2026-10-21', field: 'título' },
+  { title: 'Tarefa', assignedTo: '', dueDate: '2026-10-21', field: 'responsável' },
+  { title: 'Tarefa', assignedTo: 'secretaria', dueDate: '', field: 'prazo' },
+])('impede criação sem $field e mostra orientação no formulário', async ({ title, assignedTo, dueDate }) => {
+  await act(async () => root.render(<PageProbe role="admin" />));
+  await act(async () => pageModel.setForm(current => ({ ...current, title, assignedTo, dueDate })));
+  await act(async () => container.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(container.querySelector('[role="alert"]')?.textContent).toBeTruthy();
+  expect(mocks.update).not.toHaveBeenCalled();
+});
 it.each(['admin', 'secretaria'] as const)('%s abre tarefa de outra pessoa com prazo desabilitado', async role => {
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: vi.fn() });
   const other: Task = { ...task, status: 'todo', priority: 'medium' };

@@ -181,3 +181,12 @@ Tarefas no mock seguem a regra atual: qualquer admin/secretaria pode editar ou
 excluir tarefas da equipe; prazo só pode ser definido na criação, inclusive para
 admin. O modo API persiste no MySQL com versão e auditoria; dados mock não migram
 automaticamente.
+
+
+## Campos obrigatórios das tarefas
+
+Título, responsável da equipe e prioridade são obrigatórios ao criar ou editar.
+A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na criação
+e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
+continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
+alterar as tabelas existentes.

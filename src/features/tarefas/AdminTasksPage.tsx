@@ -38,7 +38,6 @@ export function AdminTasksPage() {
         filter={model.filter}
         staff={model.staff}
         saving={model.saving}
-        moveTask={model.moveTask}
         columnCounts={model.columnCounts}
         draggedId={model.draggedId}
         handleDragStart={model.handleDragStart}

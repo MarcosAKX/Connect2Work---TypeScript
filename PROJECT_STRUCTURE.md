@@ -350,7 +350,7 @@ retorna equipe ativa; GET `/admin/tarefas/atencao` retorna contador. POST cria c
 requestId; PATCH `/:id` edita conteúdo; PATCH `/:id/situacao` move; DELETE `/:id`
 exclui. Mutações de registros existentes exigem expectedVersion. Toda rota exige
 admin/secretaria; autoria vem da sessão. O SQL de edição não inclui prazo/autor.
-Prazo vazio também permanece vazio após criar. Auditoria acompanha a transação.
+Tarefas antigas sem prazo continuam legíveis; novas tarefas exigem prazo. Auditoria acompanha a transação.
 
 `npm run check:tarefas --prefix backend` usa fixtures próprias com limpeza em
 finally e recusa produção. Verifica edição entre cargos, prazo preservado, autoria,
@@ -358,3 +358,15 @@ versões, concorrência, repetição, paginação, rollback e sessão revogada. 
 frontend/backend nas pastas correspondentes. Conferência no navegador incluiu
 criação pela secretaria, edição de outro autor, movimento e prazo bloqueado para
 ambos os cargos. Dados temporários removidos. Para testar, acesse `/admin/tarefas`.
+
+Por decisão do usuário, os cartões de Tarefas não possuem seletor de situação;
+a movimentação usa o drag-and-drop já existente, mantendo gravação pela API.
+
+
+## Campos obrigatórios das tarefas
+
+Título, responsável da equipe e prioridade são obrigatórios ao criar ou editar.
+A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na criação
+e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
+continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
+alterar as tabelas existentes.

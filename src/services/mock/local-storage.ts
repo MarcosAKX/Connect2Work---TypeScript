@@ -196,7 +196,9 @@ function getStaffUser(userId: string) {
 function normalizeTaskInput(input: CreateTaskInput | UpdateTaskInput) {
   const title = input.title.trim().replace(/\s+/g, ' ');
   if (!title) throw new Error('Informe o título da tarefa.');
+  if (!input.assignedTo) throw new Error('Selecione um responsável da equipe.');
   assertStaffUser(input.assignedTo);
+  if (!['low', 'medium', 'high'].includes(input.priority)) throw new Error('Selecione a prioridade da tarefa.');
   return {
     title,
     description: input.description?.trim() || undefined,
@@ -835,6 +837,7 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
       async createTask(input) {
         assertStaffUser(input.createdBy);
         const normalized = normalizeTaskInput(input);
+        if (!normalized.dueDate) throw new Error('Informe o prazo da tarefa.');
         const timestamp = now().toISOString();
         const task: Task = {
           id: createEntityId(),

@@ -3,7 +3,17 @@ import { test } from 'node:test';
 import { criarTarefa, editarTarefa, consultaTarefas, mudarSituacao } from '../src/services/validacao-tarefas';
 
 const version = '2026-10-20 12:00:00.000001';
-const body = { title: 'Conferir salas', description: '', assignedTo: null, priority: 'medium' };
+const body = { title: 'Conferir salas', description: '', assignedTo: '12345678-1234-4234-8234-123456789012', priority: 'medium' };
+
+test('criação exige título, responsável, prioridade e data; edição exige os campos editáveis', () => {
+  const valid = { ...body, requestId: '12345678-1234-4234-8234-123456789012', dueDate: '2028-02-29' };
+  for (const field of ['title', 'assignedTo', 'priority', 'dueDate']) {
+    for (const value of [undefined, null, '', '   ']) {
+      assert.throws(() => criarTarefa({ ...valid, [field]: value }), { status: 400 }, `${field} vazio`);
+      if (field !== 'dueDate') assert.throws(() => editarTarefa({ ...body, expectedVersion: version, [field]: value }), { status: 400 });
+    }
+  }
+});
 test('tarefas validam criação e data real; edição não admite prazo ou autor nem situação', () => {
   assert.equal(criarTarefa({ ...body, requestId: '12345678-1234-4234-8234-123456789012', dueDate: '2028-02-29' }).dueDate, '2028-02-29');
   assert.throws(() => criarTarefa({ ...body, requestId: '12345678-1234-4234-8234-123456789012', dueDate: '2027-02-29' }), { status: 400 });

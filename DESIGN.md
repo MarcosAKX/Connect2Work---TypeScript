@@ -145,6 +145,22 @@ Serviços administrativos exibem ações de cadastro apenas para os tipos ausent
 O formulário preserva sua composição; upload segue o limite de 10 MiB do catálogo.
 A vitrine mostra estado vazio ou erro com nova tentativa conforme a resposta real.
 
-No quadro real, cada cartão também oferece seletor de situação para teclado e
-touch. Edição e exclusão preservam versão capturada; campos e ações ficam
+No quadro, a situação muda ao arrastar o cartão entre A Fazer, Em Andamento e
+Concluído, sem seletor dentro do cartão. Edição e exclusão preservam versão
+capturada; campos e ações ficam
 bloqueados durante gravação. Falhas aparecem no diálogo e permitem atualizar o quadro.
+
+Prazos do quadro: cartão verde suave com “No prazo”, amarelo suave com “Vence em
+até 24h” no dia do vencimento, vermelho suave com “Atrasada” depois do vencimento.
+O limite é o fim do dia indicado, em São Paulo, pois prazo é DATE. Concluídas e
+tarefas sem prazo ficam neutras. Cores adaptam aos temas; texto mantém a indicação
+sem depender só da cor. A movimentação segue apenas por arrastar entre colunas.
+
+
+## Campos obrigatórios das tarefas
+
+Título, responsável da equipe e prioridade são obrigatórios ao criar ou editar.
+A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na criação
+e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
+continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
+alterar as tabelas existentes.
