@@ -87,6 +87,8 @@ export interface BackupGateway {
 }
 
 export interface AppServices {
+  adminCatalog?: AdminCatalogGateway;
+  images?: ImageGateway;
   auth: AuthGateway;
   users: UserManagementGateway;
   catalog: CatalogGateway;
@@ -96,4 +98,18 @@ export interface AppServices {
   tasks: TaskGateway;
   audit: AuditGateway;
   backup: BackupGateway;
+}
+export interface CatalogQuery { page: number; pageSize: number; search?: string; unitId?: string; }
+export interface CatalogPage<T> { items: T[]; total: number; page: number; pageSize: number; }
+export interface ImageGateway { upload(file: File): Promise<{ id: string; expiresAt: string }>; }
+export interface AdminCatalogGateway {
+  listUnits(query: CatalogQuery): Promise<CatalogPage<Unit>>;
+  listRooms(query: CatalogQuery): Promise<CatalogPage<Room>>;
+  unitOptions(search?: string): Promise<Pick<Unit, 'id' | 'name'>[]>;
+  createUnit(input: CreateUnitInput): Promise<Unit>;
+  updateUnit(id: string, input: UpdateUnitInput, version?: string): Promise<Unit>;
+  deleteUnit(id: string, version?: string): Promise<void>;
+  createRoom(input: CreateRoomInput): Promise<Room>;
+  updateRoom(id: string, input: UpdateRoomInput, version?: string): Promise<Room>;
+  deleteRoom(id: string, version?: string): Promise<void>;
 }

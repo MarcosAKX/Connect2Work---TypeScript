@@ -4,6 +4,7 @@ import { AuthHttpGateway } from './auth-http';
 import { UnidadesHttpGateway } from './unidades-http';
 import { SalasHttpGateway } from './salas-http';
 import { UsuariosHttpGateway } from './usuarios-http';
+import { CatalogoAdminHttpGateway } from './catalogo-admin-http';
 import { businessServices } from './mock-business-services';
 import type { CheckoutDraft } from '../types/domain';
 const unavailable = async (): Promise<never> => { throw new Error('Funcionalidade ainda não integrada à API.'); };
@@ -15,8 +16,10 @@ export function createAppServices(authApi: boolean, fetcher?: typeof fetch): App
   const unidades = new UnidadesHttpGateway(fetcher, () => auth.checkCurrentSession());
   const salas = new SalasHttpGateway(fetcher, () => auth.checkCurrentSession());
   const usuarios = new UsuariosHttpGateway(fetcher, () => auth.checkCurrentSession());
+  const adminCatalog = new CatalogoAdminHttpGateway(fetcher, () => auth.checkCurrentSession());
   return {
     auth,
+    adminCatalog, images: adminCatalog,
     users: { listUsers: unavailable, listUsersWithHoursPlanInfo: unavailable, listUsersPage: query => usuarios.listUsersPage(query),
       createUser: input => usuarios.createUser(input), updateUser: (id, input, version) => usuarios.updateUser(id, input, version),
       updateUserRole: (id, role, version) => usuarios.updateUserRole(id, role, version), updateUserStatus: (id, active, version) => usuarios.updateUserStatus(id, active, version),

@@ -112,3 +112,11 @@ Teste local npm run check:salas no backend inicia API isolada em porta aleatóri
 ## Gestão de usuários MySQL — 18/10/2026
 
 A gestão de usuários em /admin/usuarios passou a usar a API e o MySQL no modo real. Administrador pode buscar, paginar, cadastrar, editar e ativar/inativar contas. Autoproteção, versão concorrente, auditoria atômica e revogação de sessões são verificadas no servidor. Login admin HTTP abre usuários. Demais módulos administrativos continuam bloqueados até suas etapas; Cloudinary está autenticado, mas upload ainda não implementado.
+
+## Estado atual — catálogo administrativo (18/10/2026)
+
+No modo API, além dos usuários, o admin gerencia unidades, salas, comodidades e galeria de até seis imagens por sala. Fotos são enviadas pelo formulário ao Cloudinary; MySQL guarda referências e controle técnico de limpeza. Dashboard, plano de horas, backup e os outros módulos administrativos permanecem nas etapas seguintes. Esta integração foi feita localmente; hospedagem da API e do MySQL permanece separada do frontend Vercel.
+
+Limite de upload atualizado por solicitação do usuário: arquivos originais até10MiB. As imagens continuam armazenadas no Cloudinary, com referências no MySQL.
+
+Atualização de 19/10/2026: fotos originais aceitam até 10 MiB e 40 megapixels. O limite de resolução foi ampliado para permitir fotografias de câmeras de 24 MP; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.

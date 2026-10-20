@@ -7,7 +7,7 @@ import { getRoomImages } from '../../utils/room-images';
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function RoomCard({ room, featured = false }: { room: Room; featured?: boolean }) {
-  const images = getRoomImages(room);
+  const images = room.imageCardUrls?.length ? room.imageCardUrls : getRoomImages(room);
   const [imageIndex, setImageIndex] = useState(0);
   const bookingUrl = `/agendamento?sala=${encodeURIComponent(room.id)}`;
   const currentImage = images[imageIndex];

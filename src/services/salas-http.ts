@@ -1,7 +1,7 @@
 import type { CatalogGateway } from './contracts';
 import type { Room } from '../types/domain';
 const failure = 'Não foi possível carregar as salas. Tente novamente.';
-function parseRoom(value: unknown): Room {
+export function parseRoom(value: unknown): Room {
   if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string' || !value.id
     || !('unitId' in value) || typeof value.unitId !== 'string' || !value.unitId || !('name' in value) || typeof value.name !== 'string'
     || !('capacity' in value) || typeof value.capacity !== 'number' || !Number.isSafeInteger(value.capacity) || value.capacity <= 0
@@ -11,8 +11,11 @@ function parseRoom(value: unknown): Room {
   const amenities: string[] = [];
   const values: readonly unknown[] = value.amenities;
   for (const item of values) { if (typeof item !== 'string' || !item.trim()) throw new Error(failure); amenities.push(item); }
-  return { id: value.id, unitId: value.unitId, name: value.name, capacity: value.capacity, pricePerHour: value.pricePerHour,
+  const room: Room = { id: value.id, unitId: value.unitId, name: value.name, capacity: value.capacity, pricePerHour: value.pricePerHour,
     amenities: [...new Set(amenities)], imageUrl: value.imageUrl };
+  if ('imageUrls' in value) { if (!Array.isArray(value.imageUrls) || value.imageUrls.length > 6) throw new Error(failure); room.imageUrls = value.imageUrls.map((item: unknown) => { if (typeof item !== 'string' || !/^(https:\/\/|\/(?!\/))/.test(item)) throw new Error(failure); return item; }); }
+  if ('imageCardUrls' in value) { if (!Array.isArray(value.imageCardUrls) || value.imageCardUrls.length !== room.imageUrls?.length) throw new Error(failure); room.imageCardUrls = value.imageCardUrls.map((item: unknown) => { if (typeof item !== 'string' || !/^(https:\/\/|\/(?!\/))/.test(item)) throw new Error(failure); return item; }); }
+  return room;
 }
 export class SalasHttpGateway implements Pick<CatalogGateway, 'getRoomsByUnitId' | 'getRoomById'> {
   constructor(private readonly fetcher: typeof fetch = (input, init) => fetch(input, init), private readonly unauthorized: () => void | Promise<unknown> = () => {}) {}

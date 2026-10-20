@@ -206,3 +206,18 @@ Teste local npm run check:salas no backend inicia API isolada em porta aleatóri
 ## Gestão de usuários MySQL — 18/10/2026
 
 Gestão de usuários HTTP/MySQL liberada exclusivamente para admin: busca com debounce de 250 ms, filtros e paginação de 50 registros, resumo global, cadastro/edição e ativação/inativação. Versão esperada evita sobrescrita concorrente (409). Secretaria/cliente não recebem dados de contas. Auto-inativação/rebaixamento são bloqueados. Mudança de senha/perfil/inativação revoga sessões; login com senha antiga em andamento não cria sessão após redefinição. Dashboard, plano de horas, backup e demais módulos pendentes continuam bloqueados no modo HTTP.
+
+## Entrega de 18/10/2026 — catálogo e imagens no admin HTTP
+
+- Unidades e salas: listagem paginada no servidor, criação, edição com versão e exclusão protegida por vínculos.
+- Comodidades: conciliação por nome único no MySQL; uma comodidade pode ser compartilhada entre salas.
+- Galeria: upload no formulário, preview local, limite de seis imagens, reordenação e remoção; Cloudinary guarda arquivos, MySQL guarda referências. Imagem da unidade usa o mesmo fluxo com limite de uma.
+- Somente admin altera catálogo. Leituras autenticadas do cliente mostram fotos publicadas e mantêm fallback quando não há foto.
+- Coleta de arquivos abandonados/desvinculados com estado persistido, carência e retentativa. Nada de URLs externas novas no formulário HTTP ou segredo no frontend.
+- Módulos ainda não integrados seguem bloqueados no modo HTTP.
+
+Referências antigas de imagens sem prévia são preservadas pelo formulário até remoção explícita. A seleção de unidade nas salas possui busca no servidor e mantém a unidade atual entre as opções, mesmo quando fora do resultado da busca.
+
+Atualização de 18/10/2026: upload de fotos aceita original até10MiB também no backend; saída permanece otimizada. Não requer alteração do banco.
+
+Atualização de 19/10/2026: fotos originais aceitam até 10 MiB e 40 megapixels. O limite de resolução foi ampliado para permitir fotografias de câmeras de 24 MP; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.

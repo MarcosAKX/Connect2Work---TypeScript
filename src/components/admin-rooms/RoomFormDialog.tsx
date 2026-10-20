@@ -7,18 +7,24 @@ import { RoomAmenitiesField } from './RoomAmenitiesField';
 
 interface RoomFormDialogProps {
   room: Room | null;
-  units: Unit[];
+  units: Pick<Unit, 'id' | 'name'>[];
   isSaving: boolean;
   gatewayError: string;
   onCancel(): void;
   onSave(input: CreateRoomInput, roomId?: string): Promise<boolean>;
+  unitSearch?: string;
+  onUnitSearch?(value: string): void;
 }
 
 export function RoomFormDialog({
-  room, units, isSaving, gatewayError, onCancel, onSave,
+  room, units, isSaving: gatewaySaving, gatewayError, onCancel, onSave, unitSearch, onUnitSearch,
 }: RoomFormDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const form = useRoomForm({ room, units, onCancel, onSave });
+  const isSaving = gatewaySaving || form.isSubmitting;
+  const selectedUnit = useRef<Pick<Unit, 'id' | 'name'> | null>(room ? { id: room.unitId, name: room.unitName ?? 'Unidade atual' } : null);
+  const knownUnit = units.find(unit => unit.id === form.unitId); if (knownUnit) selectedUnit.current = knownUnit;
+  const options = !knownUnit && selectedUnit.current?.id === form.unitId ? [selectedUnit.current, ...units] : units;
   const {
     name, setName, unitId, setUnitId, capacity, setCapacity,
     price, setPrice, validationError, handleSubmit,
@@ -41,7 +47,7 @@ export function RoomFormDialog({
       onCancel={(event) => { event.preventDefault(); if (!isSaving) onCancel(); }}
       onClick={handleBackdropClick}
     >
-      <form className="admin-room-form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+      <form className="admin-room-form" onSubmit={(event) => void handleSubmit(event)} noValidate inert={isSaving} aria-busy={isSaving}>
         <header>
           <div>
             <h2 id="room-form-title">{room ? 'Editar Sala' : 'Nova Sala'}</h2>
@@ -61,8 +67,9 @@ export function RoomFormDialog({
           </div>
           <div className="field">
             <label htmlFor="room-unit">Unidade</label>
+            {onUnitSearch && <input aria-label="Buscar unidade para a sala" value={unitSearch ?? ''} onChange={event => onUnitSearch(event.target.value)} placeholder="Buscar unidade pelo nome" />}
             <select id="room-unit" value={unitId} onChange={(event) => setUnitId(event.target.value)} required>
-              {units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
+              {options.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
             </select>
           </div>
           <div className="field">
@@ -81,6 +88,9 @@ export function RoomFormDialog({
           </div>
         </div>
         <RoomImagesField
+          removeHiddenImages={form.removeHiddenImages}
+          hiddenImageCount={form.hiddenImageCount}
+          allowImageUrl={form.allowImageUrl}
           imageInput={form.imageInput}
           setImageInput={form.setImageInput}
           handleInputKeyDown={form.handleInputKeyDown}

@@ -1,6 +1,8 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import type { CreateUnitInput, Unit } from '../types/domain';
 import { prepareImageUpload } from '../utils/image-upload';
+import { services } from '../services';
+import { useImageSelection } from './useImageSelection';
 
 interface UnitFormOptions {
   unit: Unit | null;
@@ -15,14 +17,17 @@ export function useUnitForm({ unit, onCancel, onSave }: UnitFormOptions) {
   const [latitude, setLatitude] = useState(unit?.latitude?.toString() ?? '');
   const [longitude, setLongitude] = useState(unit?.longitude?.toString() ?? '');
   const [imageUrl, setImageUrl] = useState<string | null>(unit?.imageUrl ?? null);
+  const [imageChanged, setImageChanged] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const media = useImageSelection(unit?.imageId && unit.imageUrl ? [{ id: unit.imageId, url: unit.imageUrl }] : []);
+  const [isSubmitting, setIsSubmitting] = useState(false); const submitting = useRef(false); const requestId = useRef(crypto.randomUUID());
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
     setValidationError('');
     try {
-      setImageUrl(await prepareImageUpload(file));
+      const url = services.images ? media.select(file) : await prepareImageUpload(file); if (media.alive.current) { setImageUrl(url); setImageChanged(true); }
     } catch (caughtError) {
       setValidationError(caughtError instanceof Error ? caughtError.message : 'Não foi possível ler a imagem.');
     }
@@ -54,7 +59,13 @@ export function useUnitForm({ unit, onCancel, onSave }: UnitFormOptions) {
       setValidationError('Informe latitude e longitude juntas.');
       return;
     }
+    if (submitting.current) return; submitting.current = true; setIsSubmitting(true); setValidationError('');
+    try {
+    const ids = services.images ? imageChanged ? await media.resolve(imageUrl ? [imageUrl] : []) : unit?.imageId ? [unit.imageId] : [] : [];
+    if (!media.alive.current) return;
     const saved = await onSave({
+      requestId: requestId.current,
+      ...(services.images ? { imageId: ids[0] ?? null } : {}),
       name: normalizedName,
       address: normalizedAddress,
       description: description.trim() || undefined,
@@ -62,10 +73,13 @@ export function useUnitForm({ unit, onCancel, onSave }: UnitFormOptions) {
       latitude: normalizedLatitude,
       longitude: normalizedLongitude,
     }, unit?.id);
-    if (saved) onCancel();
+    if (saved && media.alive.current) onCancel();
+    } catch (error: unknown) { if (media.alive.current) setValidationError(error instanceof Error ? error.message : 'Não foi possível salvar.'); }
+    finally { submitting.current = false; if (media.alive.current) setIsSubmitting(false); }
   }
 
   return { name, setName, address, setAddress, description, setDescription,
-    latitude, setLatitude, longitude, setLongitude, imageUrl, setImageUrl,
-    validationError, handleImageChange, handleSubmit };
+    latitude, setLatitude, longitude, setLongitude, imageUrl, setImageUrl: (value: string | null) => { setImageUrl(value); setImageChanged(true); },
+    hasImageWithoutPreview: !imageChanged && Boolean(unit?.imageId) && !imageUrl,
+    validationError, handleImageChange, handleSubmit, isSubmitting };
 }

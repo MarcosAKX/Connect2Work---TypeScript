@@ -15,3 +15,10 @@ test('CSRF: todas as escritas exigem origem e cabeçalho, incluindo admin fora d
     }
   }
 });
+test('multipart aceita até 10 MiB com margem de cabeçalhos e rejeita acima disso', () => {
+  const protect = protecaoHttp({ https: false, origins: ['http://localhost:5173'] }); let passed = false; let code = 0;
+  const response = { status(value: number) { code = value; return this; }, json() {} };
+  const headers = { origin: 'http://localhost:5173', 'x-c2w-request': '1', 'content-type': 'multipart/form-data; boundary=teste', 'content-length': String(10 * 1024 * 1024 + 16384) };
+  protect({ method: 'POST', url: '/admin/imagens', headers }, response, () => { passed = true; }); assert.equal(passed, true);
+  passed = false; protect({ method: 'POST', url: '/admin/imagens', headers: { ...headers, 'content-length': String(10 * 1024 * 1024 + 16385) } }, response, () => { passed = true; }); assert.equal(passed, false); assert.equal(code, 413);
+});

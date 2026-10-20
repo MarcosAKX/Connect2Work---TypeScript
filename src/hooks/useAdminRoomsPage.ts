@@ -26,13 +26,13 @@ export function useAdminRoomsPage() {
     setFormOpen(true);
   }
   async function save(input: CreateRoomInput, id?: string) {
-    const saved = await data.saveRoom(input, id);
+    const saved = await data.saveRoom(input, id, editingRoom?.version);
     if (saved) setStatus(id ? 'Sala atualizada com sucesso.' : 'Sala criada com sucesso.');
     return saved;
   }
   async function remove() {
     if (!deletingRoom) return;
-    if (await data.deleteRoom(deletingRoom.id)) {
+    if (await data.deleteRoom(deletingRoom.id, deletingRoom.version)) {
       setStatus('Sala excluída com sucesso.');
       setDeletingRoom(null);
     }

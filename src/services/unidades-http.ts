@@ -1,7 +1,7 @@
 import type { CatalogGateway } from './contracts';
 import type { Unit } from '../types/domain';
 const failure = 'Não foi possível carregar as unidades. Tente novamente.';
-function parseUnit(value: unknown): Unit {
+export function parseUnit(value: unknown): Unit {
   if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string' || !value.id
     || !('name' in value) || typeof value.name !== 'string' || !('address' in value) || typeof value.address !== 'string'
     || !('availableRooms' in value) || typeof value.availableRooms !== 'number' || !Number.isSafeInteger(value.availableRooms) || value.availableRooms < 0

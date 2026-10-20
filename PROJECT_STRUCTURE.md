@@ -450,3 +450,13 @@ Teste local npm run check:salas no backend inicia API isolada em porta aleatóri
 ## Gestão de usuários MySQL — 18/10/2026
 
 Backend: UsuariosAdministrativosController → ServicoUsuariosAdministrativos → RepositorioUsuariosAdministrativos → RepositorioUsuariosAdministrativosMysql. AdministracaoModule é opcional na composição; depende da autenticação configurada. DTOs, validação de entrada unknown, acesso administrativo e limitador ficam em arquivos próprios. Frontend: UsuariosHttpGateway implementa o contrato; useAdminUsers coordena página/filtros/versões, useAdminUsersPage coordena modais e Views preservam o layout. listUsersPage retorna items/total/summary; listUsers legado não é usado para buscar todas as contas no modo HTTP. expectedVersion continua opcional nos contratos compartilhados para chamadas legadas do mock, mas é obrigatório e validado na API real.
+
+## Estrutura da integração de catálogo — 18/10/2026
+
+Backend mantém controller → service → repository, com DTOs próprios. ServicoCatalogoAdministrativo valida operações; RepositorioCatalogoAdministrativoMysql aplica versão, referências e auditoria na transação. ServicoImagens coordena ProcessadorImagem, ArmazenamentoImagens/CloudinaryImagens e RepositorioArquivosImagensMysql; LimpezaImagens retoma intenções persistidas. Nenhuma chamada Cloudinary ocorre segurando locks SQL.
+
+Frontend mantém View/ViewModel: páginas/dialogs apresentam, hooks useAdminUnits/useAdminRooms e seus Page hooks coordenam ações, useImageSelection mantém File e object URLs apenas durante o formulário. CatalogoAdminHttpGateway e ImageGateway encapsulam HTTP pelos contratos. adminCatalog/images são capacidades opcionais em AppServices, disponíveis no modo HTTP; mock preserva fluxo anterior. A listagem real não faz uma consulta por unidade para obter salas. expectedVersion vem do objeto capturado na abertura do formulário/modal, e requestId permanece estável durante a criação.
+
+Limites do backend para imagens centralizados em backend/src/config/limites-imagens.ts: original10MiB, saída otimizada5MiB e margem16KiB para multipart. O limite de saída continua compatível com a migração004.
+
+Atualização de 19/10/2026: fotos originais aceitam até 10 MiB e 40 megapixels. O limite de resolução foi ampliado para permitir fotografias de câmeras de 24 MP; continua havendo validação de formato, limite de dois uploads simultâneos e otimização para WebP até1600px/5MiB. Os limites ficam em backend/src/config/limites-imagens.ts. Alterações no backend exigem reiniciar npm run dev na pasta backend. Erros de resolução agora têm código específico e mensagem distinta de arquivo inválido.
