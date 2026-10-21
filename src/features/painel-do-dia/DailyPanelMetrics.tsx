@@ -13,16 +13,16 @@ export function DailyPanelMetrics({
       <article>
         <DoorIcon width="29" height="29" />
         <div>
-          <strong>{data.dayPanel.presentNow.length}</strong>
+          <strong>{data.dayPanel.presentCount}</strong>
           <p>salas ocupadas</p>
         </div>
       </article>
       <article>
         <CreditCardIcon width="29" height="29" />
         <div>
-          <strong>{data.dayPanel.pendingPayments.length}</strong>
+          <strong>{data.dayPanel.paymentsCount}</strong>
           <p>
-            {data.dayPanel.pendingPayments.length === 1
+            {data.dayPanel.paymentsCount === 1
               ? 'pagamento pendente'
               : 'pagamentos pendentes'}
           </p>

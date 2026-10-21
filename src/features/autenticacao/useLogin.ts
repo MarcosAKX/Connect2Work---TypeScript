@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
 
 export function useLogin() {
-  const { user, login, loginWithGoogle, status: authStatus, error: authError, refreshUser, mode } = useAuth();
-  const adminDestination = mode === 'http' ? '/admin/usuarios' : '/admin';
+  const { user, login, loginWithGoogle, status: authStatus, error: authError, refreshUser } = useAuth();
+  const adminDestination = '/admin';
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

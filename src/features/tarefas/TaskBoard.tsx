@@ -12,13 +12,13 @@ const columns: Array<{ status: TaskStatus; label: string; icon: typeof TaskIcon 
 type TaskBoardProps = Pick<
   AdminTasksViewModel,
   | 'taskColumns' | 'dropTarget' | 'setDropTarget' | 'handleDrop' | 'loading'
-  | 'filter' | 'staff' | 'isAdmin' | 'currentUserId' | 'draggedId'
+  | 'filter' | 'staff' | 'saving' | 'columnCounts' | 'draggedId'
   | 'handleDragStart' | 'endDrag' | 'openEdit'
 >;
 
 export function TaskBoard({
   taskColumns, dropTarget, setDropTarget, handleDrop, loading, filter,
-  staff, isAdmin, currentUserId, draggedId, handleDragStart, endDrag, openEdit,
+  staff, saving, columnCounts, draggedId, handleDragStart, endDrag, openEdit,
 }: TaskBoardProps) {
   return (
     <section className="admin-task-board" aria-label="Quadro de tarefas">
@@ -42,22 +42,21 @@ export function TaskBoard({
           >
             <header>
               <span><Icon width="17" height="17" />{label}</span>
-              <strong>{items.length}</strong>
+              <strong>{columnCounts[status]}</strong>
             </header>
             <div className="admin-task-column__list">
               {loading && <><i className="admin-task-skeleton" /><i className="admin-task-skeleton" /></>}
               {!loading && items.length === 0 && (
                 <p className="admin-task-empty">
-                  {filter === 'mine' ? 'Nenhuma tarefa sua nesta etapa' : 'Nenhuma tarefa nesta etapa'}
+                  {columnCounts[status] > 0 ? 'Nenhuma tarefa nesta página' : filter === 'mine' ? 'Nenhuma tarefa sua nesta etapa' : 'Nenhuma tarefa nesta etapa'}
                 </p>
               )}
-              {items.map((task) => (
+              {!loading && items.map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}
                   staff={staff}
-                  isAdmin={isAdmin}
-                  currentUserId={currentUserId}
+                  saving={saving}
                   draggedId={draggedId}
                   handleDragStart={handleDragStart}
                   endDrag={endDrag}

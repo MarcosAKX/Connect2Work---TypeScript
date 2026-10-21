@@ -35,7 +35,7 @@ export function CreateBookingDialog({
       <div>
         <h2 id="create-booking-title">Novo Agendamento</h2>
         <p>Crie uma reserva confirmada em nome de um cliente.</p>
-        <div className="admin-booking-form">
+        <div className="admin-booking-form" inert={form.isSaving}>
           <fieldset>
             <legend>Cliente</legend>
             <input
@@ -68,7 +68,7 @@ export function CreateBookingDialog({
               )}
             </div>
           </fieldset>
-          {form.selectedClient?.hasHoursPlan && (
+          {form.planClient?.hasHoursPlan && (
             <div
               className={`admin-booking-plan-note${form.planExpired ? ' is-expired' : ''}`}
             >
@@ -77,7 +77,7 @@ export function CreateBookingDialog({
                   ? 'Plano aguardando renovação: será cobrado o valor integral. Renove-o em Planos de Horas.'
                   : form.duration > 0
                     ? `${form.planUsage?.hoursFromPlan ?? 0}h debitadas do plano · ${form.planUsage?.hoursToPay ?? 0}h cobradas à parte.`
-                    : `Saldo disponível: ${form.selectedClient.hoursBalance}h.`}
+                    : `Saldo disponível: ${form.planClient.hoursBalance}h.`}
               </span>
             </div>
           )}
@@ -115,7 +115,7 @@ export function CreateBookingDialog({
               Data
               <input
                 type="date"
-                min={new Date().toLocaleDateString('en-CA')}
+                min={form.minimumDate}
                 value={form.date}
                 onChange={(event) => form.setDate(event.target.value)}
               />

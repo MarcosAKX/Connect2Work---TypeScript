@@ -80,7 +80,9 @@ describe('AuthHttpGateway', () => {
     await expect(services.auth.login('teste@connect2work.com', '123456')).rejects.toThrow('Senha incorreta');
     await expect(services.bookings.getAll()).rejects.toThrow('ainda não integrada');
     await expect(services.users.listUsers()).rejects.toThrow('ainda não integrada');
-    await expect(services.tasks.listTasks()).rejects.toThrow('ainda não integrada');
+    await expect(services.tasks.listTasks()).rejects.toThrow('quadro paginado');
+    if (!services.tasks.listBoard) throw new Error('Gateway HTTP de tarefas ausente.');
+    await expect(services.tasks.listBoard({ page: 1, pageSize: 30, ownership: 'all' })).rejects.toThrow();
     await expect(services.backup.getLastBackupAt('uuid')).rejects.toThrow('ainda não integrada');
     await expect(services.catalog.deleteRoom('room')).rejects.toThrow('ainda não integrada');
     const units = await services.catalog.getUnits();

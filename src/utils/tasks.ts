@@ -1,10 +1,11 @@
+import { businessDateKey } from './business-time';
 import type { Task } from '../types/domain';
 
 export const TASKS_CHANGED_EVENT = 'c2w:tasks-changed';
 export type TaskDueState = 'overdue' | 'today' | 'future' | 'none';
 
 function localDateKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return businessDateKey(date.toISOString());
 }
 
 export function getTaskDueState(task: Task, current = new Date()): TaskDueState {

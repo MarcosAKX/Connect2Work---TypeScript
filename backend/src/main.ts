@@ -1,3 +1,7 @@
+import { RepositorioTarefasMysql } from './repositories/mysql/repositorio-tarefas-mysql';
+import { ServicoTarefas } from './services/servico-tarefas';
+import { RepositorioAgendamentosAdministrativosMysql } from './repositories/mysql/repositorio-agendamentos-administrativos-mysql';
+import { ServicoAgendamentosAdministrativos } from './services/servico-agendamentos-administrativos';
 import { randomBytes } from 'node:crypto';
 import { ServicoCadastro } from './services/servico-cadastro';
 import { ServicoSenha } from './security/servico-senha-argon2';
@@ -43,14 +47,16 @@ async function main(): Promise<void> {
   const catalogoAdmin = storage ? new RepositorioCatalogoAdministrativoMysql(config.db, storage) : undefined;
   const imagens = arquivos && storage ? new ServicoImagens(arquivos, storage, access) : undefined;
   const cleanup = arquivos && storage ? new LimpezaImagens(arquivos, storage) : undefined;
+  const tarefas = new RepositorioTarefasMysql(config.db);
+  const bookings = new RepositorioAgendamentosAdministrativosMysql(config.db);
   const app = await createApplication(database, {
     service: new ServicoCadastro(usuarios, senhas), lifecycle: usuarios,
     auth: { service: autenticacao, config: security, lifecycle: sessoes }
   }, { service: new ServicoUnidades(unidades), auth: autenticacao, https: security.https, lifecycle: unidades,
     salas: { service: new ServicoSalas(salas), lifecycle: salas } }, {
-    service: new ServicoUsuariosAdministrativos(admin, access, senhas), https: security.https, lifecycle: admin,
+    service: new ServicoUsuariosAdministrativos(admin, access, senhas), tarefas: { service: new ServicoTarefas(tarefas, access), lifecycle: tarefas }, https: security.https, lifecycle: admin,
     ...(catalogoAdmin && imagens && arquivos && cleanup ? { catalogo: { service: new ServicoCatalogoAdministrativo(catalogoAdmin, access, imagens), imagens, acesso: access, lifecycles: [cleanup, catalogoAdmin, arquivos] } } : {})
-  });
+  }, { service: new ServicoAgendamentosAdministrativos(bookings, access), config: security, lifecycle: bookings });
   app.enableShutdownHooks();
   try { await app.listen(config.port, config.host); }
   catch { await app.close(); throw new Error('Não foi possível iniciar a API local.'); }

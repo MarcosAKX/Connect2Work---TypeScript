@@ -1,0 +1,3 @@
+const format=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+export function businessWallDate(instant: string): Date {const parts=Object.fromEntries(format.formatToParts(new Date(instant)).map(p=>[p.type,p.value]));return new Date(Number(parts.year),Number(parts.month)-1,Number(parts.day),Number(parts.hour),Number(parts.minute),Number(parts.second));}
+export function businessDateKey(instant: string): string {const p=Object.fromEntries(format.formatToParts(new Date(instant)).map(p=>[p.type,p.value]));return `${p.year}-${p.month}-${p.day}`;}

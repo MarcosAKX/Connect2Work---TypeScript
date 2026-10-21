@@ -42,13 +42,13 @@ export function useAdminBookingsPage(
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
   async function confirm(item: AdminBookingRow) {
-    if (await data.confirmBooking(item.booking.id))
+    if (await data.confirmBooking(item.booking.id, item.booking.version))
       setStatusMessage('Agendamento confirmado com sucesso.');
   }
   async function cancel(reason: string) {
     if (
       cancelling &&
-      (await data.cancelBooking(cancelling.booking.id, reason))
+      (await data.cancelBooking(cancelling.booking.id, reason, cancelling.booking.version))
     ) {
       setCancelling(null);
       setStatusMessage('Agendamento cancelado com sucesso.');
@@ -57,14 +57,14 @@ export function useAdminBookingsPage(
   async function confirmPayment() {
     if (
       confirmingPayment &&
-      (await data.confirmPayment(confirmingPayment.booking.id))
+      (await data.confirmPayment(confirmingPayment.booking.id, confirmingPayment.booking.version))
     ) {
       setConfirmingPayment(null);
       setStatusMessage('Pagamento confirmado com sucesso.');
     }
   }
   async function checkIn(item: AdminBookingRow) {
-    if (user && (await data.checkInBooking(item.booking.id, user.id)))
+    if (user && (await data.checkInBooking(item.booking.id, user.id, item.booking.version)))
       setStatusMessage('Check-in realizado com sucesso.');
   }
 

@@ -17,16 +17,17 @@ export function ServiceDialog({ item, saving, error, onClose, onSave }: ServiceD
   const {
     name, setName, description, setDescription, primary, setPrimary,
     secondary, setSecondary, imageUrl, setImageUrl, active, setActive,
-    validationError, upload, submit,
+    validationError, upload, submit, isSubmitting,
   } = useBusinessServiceForm(item, onClose, onSave);
+  const busy = saving || isSubmitting;
   useEffect(() => {
     ref.current?.showModal();
     return () => ref.current?.close();
   }, []);
-  return <dialog ref={ref} className="admin-service-modal" onCancel={(event) => { event.preventDefault(); if (!saving) onClose(); }}>
-    <form onSubmit={(event) => void submit(event)}>
+  return <dialog ref={ref} className="admin-service-modal" onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}>
+    <form inert={busy} onSubmit={(event) => void submit(event)}>
       <header>
-        <div><h2>Editar {item.name}</h2><p>Conteúdo exibido na página Serviços.</p></div>
+        <div><h2>{item.id ? 'Editar' : 'Cadastrar'} {item.name}</h2><p>Conteúdo exibido na página Serviços.</p></div>
         <button type="button" onClick={onClose} aria-label="Fechar"><CloseIcon width="20" height="20" /></button>
       </header>
       <label>Nome<input value={name} onChange={(event) => setName(event.target.value)} maxLength={80} required /></label>
@@ -46,14 +47,14 @@ export function ServiceDialog({ item, saving, error, onClose, onSave }: ServiceD
       <section className="admin-service-modal__image">
         <div>
           <strong>Imagem do serviço</strong>
-          <span>JPEG, PNG ou WebP, até 2 MB. Prefira formato horizontal.</span>
+          <span>JPEG, PNG ou WebP, até 10 MiB. Prefira formato horizontal.</span>
         </div>
         {imageUrl && <img src={imageUrl} alt="Prévia do serviço" />}
         <div>
           <button type="button" className="btn btn-secondary" onClick={() => fileRef.current?.click()}>
             <UploadIcon width="18" height="18" />Enviar imagem
           </button>
-          {imageUrl && <button type="button" className="btn btn-secondary" onClick={() => setImageUrl(null)}>Remover</button>}
+          {(imageUrl || item.imageId) && <button type="button" className="btn btn-secondary" onClick={() => setImageUrl(null)}>Remover</button>}
           <input
             ref={fileRef} className="sr-only" type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -64,8 +65,8 @@ export function ServiceDialog({ item, saving, error, onClose, onSave }: ServiceD
       <label className="admin-service-modal__toggle"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} /><span>Serviço ativo e visível para clientes</span></label>
       {(validationError || error) && <p className="admin-service-modal__error" role="alert">{validationError || error}</p>}
       <footer>
-        <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
-        <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Salvando…' : 'Salvar alterações'}</button>
+        <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>Cancelar</button>
+        <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Salvando…' : 'Salvar alterações'}</button>
       </footer>
     </form>
   </dialog>;

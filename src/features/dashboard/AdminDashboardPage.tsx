@@ -9,6 +9,21 @@ import { useAuth } from '../../state/AuthContext';
 import '../../assets/css/pages/admin-dashboard.css';
 
 export function AdminDashboardPage() {
+  const { mode } = useAuth();
+  if (mode === 'http') return <main className="admin-dashboard">
+    <header className="admin-dashboard__intro">
+      <div><h1>Dashboard</h1><p role="status">Os indicadores aguardam integração com o banco de dados.</p></div>
+      <nav className="admin-dashboard__shortcuts" aria-label="Ações rápidas">
+        <Link to="/admin/agendamentos?novo=1"><PlusIcon width="21" height="21" />Nova reserva</Link>
+        <Link to="/admin/salas"><DoorIcon width="21" height="21" />Gerenciar salas</Link>
+        <Link to="/admin/unidades"><BuildingIcon width="21" height="21" />Gerenciar unidades</Link>
+      </nav>
+    </header>
+  </main>;
+  return <DashboardContent />;
+}
+
+function DashboardContent() {
   const { user } = useAuth();
   const { data, error, isLoading, reload } = useAdminDashboard();
 

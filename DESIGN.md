@@ -58,7 +58,7 @@ Fonte: `src/assets/css/base.css`.
 - Os temas escuro e claro compartilham tokens semânticos; login, cliente, admin e secretaria usam o mesmo componente de alternância, com dimensões, ícone, estados, rótulo acessível e tooltip idênticos. No modo claro, o controle usa superfície levemente solar; sobre o painel escuro de autenticação, preserva fundo escuro e ícone solar.
 - Nos cabeçalhos autenticados, identidade, tema e saída são ações visualmente separadas e seguem a mesma composição para cliente, admin e secretaria.
 - O quadro de tarefas usa três colunas operacionais, badges semânticos de prioridade, prazos legíveis e alertas de atraso que não dependem apenas da cor.
-- Para secretárias, tarefas criadas por outro usuário exibem “Somente visualização” e não abrem o formulário. Ao editar uma tarefa própria, a data estimada permanece visivelmente bloqueada; administradores mantêm edição completa.
+- Admin e secretaria abrem e editam tarefas de qualquer autor da equipe. O prazo aparece desabilitado em toda edição, com indicação de que é definido na criação.
 - O formulário de tarefas mantém rótulos na mesma linha de base, campos alinhados em grade e ações destrutivas separadas das ações de confirmação.
 - Em telas pequenas, o controle de tema mantém área de toque mínima de 44 px.
 - Em telas de até 720 px, o cabeçalho administrativo oculta a navegação horizontal e usa exclusivamente o drawer; filtros empilham, modais ocupam a largura disponível com rolagem interna e ações fixadas ao final. Em até 480 px, grades de métricas passam para uma coluna.
@@ -138,3 +138,29 @@ Fotos originais aceitam até 10 MiB e 40 megapixels; continua havendo validaçã
 
 [Organização](PROJECT_STRUCTURE.md) · [Status das funcionalidades](FEATURES.md) ·
 [Histórico de decisões](docs/historico/evolucao-ate-2026-10-19.md).
+
+Na integração administrativa real, pagamento é identificado como registro manual. Listas usam paginação do servidor; indicadores do Painel do Dia preservam os totais de hoje mesmo com filtros. Valores não autorizados ficam ausentes. Datas e horas operacionais usam São Paulo.
+
+Serviços administrativos exibem ações de cadastro apenas para os tipos ausentes.
+O formulário preserva sua composição; upload segue o limite de 10 MiB do catálogo.
+A vitrine mostra estado vazio ou erro com nova tentativa conforme a resposta real.
+
+No quadro, a situação muda ao arrastar o cartão entre A Fazer, Em Andamento e
+Concluído, sem seletor dentro do cartão. Edição e exclusão preservam versão
+capturada; campos e ações ficam
+bloqueados durante gravação. Falhas aparecem no diálogo e permitem atualizar o quadro.
+
+Prazos do quadro: cartão verde suave com “No prazo”, amarelo suave com “Vence em
+até 24h” no dia do vencimento, vermelho suave com “Atrasada” depois do vencimento.
+O limite é o fim do dia indicado, em São Paulo, pois prazo é DATE. Concluídas e
+tarefas sem prazo ficam neutras. Cores adaptam aos temas; texto mantém a indicação
+sem depender só da cor. A movimentação segue apenas por arrastar entre colunas.
+
+
+## Campos obrigatórios das tarefas
+
+Título, responsável da equipe e prioridade são obrigatórios ao criar ou editar.
+A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na criação
+e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
+continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
+alterar as tabelas existentes.

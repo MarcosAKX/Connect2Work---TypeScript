@@ -48,3 +48,13 @@ Os demais checks usam fixtures; consulte [backend/README.md](../../backend/READM
 Testes frontend não validam restauração SQL nem integridade de um dump.
 
 [Histórico de aplicação e testes anteriores](../../docs/historico/evolucao-ate-2026-10-19.md).
+
+Agendamentos administrativos reutilizam as tabelas existentes; esta etapa não exige migration nova. Escritas usam transações, lock da sala, versão concorrente e auditoria atômica. Horas de plano não são consumidas na criação administrativa.
+
+Serviços empresariais utilizam `servicos_empresariais` e `beneficios_servicos`
+existentes, sem SQL novo. Conteúdo, benefícios, imagem e auditoria são transacionais.
+Tipo é único e imutável; ativo controla a vitrine, sem habilitar plano ou pagamento.
+
+Tarefas reutilizam a tabela `tarefas` existente. Prazo/autor imutáveis na edição,
+versão derivada de atualizado_em com microssegundos e auditoria na mesma transação.
+Nenhuma migration nova nesta integração.

@@ -1,6 +1,6 @@
 # Próximas integrações — Connect2Work
 
-Planejamento vigente em 19/10/2026. Esta lista não afirma que as funcionalidades
+Planejamento vigente em 20/10/2026. Esta lista não afirma que as funcionalidades
 pendentes já foram entregues. Consulte [FEATURES.md](../../FEATURES.md) para o estado
 real e [PROJECT_STRUCTURE.md](../../PROJECT_STRUCTURE.md) para localizar o código.
 
@@ -15,8 +15,7 @@ permissões ao conectar cada módulo. Não copiar credenciais do mock para o MyS
 1. **Agendamentos:** revisar o plano aprovado, implementar consulta de horários e
    gravação transacional com proteção contra sobreposição. A decisão registrada
    é salvar reserva pendente e bloquear o horário; ainda precisa da integração real.
-2. **Administração restante:** agendamentos/Painel do Dia, serviços, tarefas e
-   auditoria conforme a especificação administrativa; dashboard, plano de horas e
+2. **Administração restante:** auditoria conforme a especificação administrativa; dashboard, plano de horas e
    backup continuam fora da integração já entregue.
 3. **Plano de horas:** revisar campos e regras antes de habilitar consumo, renovação
    e estorno reais. Tabelas e telas atuais são provisórias nesse aspecto.
@@ -48,8 +47,18 @@ a integração esteja implementada.
 - [Especificação de agendamentos](especificacoes/2026-10-18-agendamento-mysql-design.md).
 - [Plano de implementação de agendamentos](planos/2026-10-18-agendamento-mysql.md).
 - [Especificação administrativa](especificacoes/2026-10-18-administracao-mysql-design.md):
-  etapas de usuários e catálogo entregues; demais etapas continuam pendentes.
+  usuários, catálogo, agendamentos/Painel do Dia e serviços entregues;
+  consulta de auditoria continua pendente.
 
 Planos antigos podem citar caminhos anteriores à organização; usar o mapa atual
 para localizar arquivos e revisar o plano antes de executar. Histórico não é roteiro
 operacional: [relatos de evolução](../historico/evolucao-ate-2026-10-19.md).
+
+Prioridade concluída em 20/10: Agendamentos administrativos e Painel do Dia.
+Pagamento é manual; integração do cliente/provedor e planos continua separada.
+
+Serviços empresariais integrados em 20/10. Próxima tela administrativa pendente:
+consulta de auditoria (Tarefas concluída em 20/10). Plano de horas permanece fora desta etapa.
+
+Tarefas integradas em 20/10: admin/secretaria compartilham edição, movimento e
+exclusão; prazo imutável após criar, conforme decisão mais recente do usuário.

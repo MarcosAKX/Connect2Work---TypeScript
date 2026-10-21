@@ -17,10 +17,9 @@ const emptyForm: TaskFormState = {
 // Persistência, permissões do domínio e rollback continuam no hook/serviços existentes.
 export function useAdminTasksPage(user: User | null) {
   const currentUserId = user?.id ?? '';
-  const isAdmin = user?.role === 'admin';
   const {
     columns: taskColumns, staff, filter, setFilter, loading, saving,
-    error, notice, createTask, updateTask, moveTask, deleteTask,
+    error, notice, createTask, updateTask, moveTask, deleteTask, page, setPage, total, columnCounts, remoteMode, load,
   } = useAdminTasks(currentUserId);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskFormState>(emptyForm);
@@ -30,7 +29,8 @@ export function useAdminTasksPage(user: User | null) {
   const [dropTarget, setDropTarget] = useState<TaskStatus | null>(null);
   const editorRef = useRef<HTMLDialogElement>(null);
   const deleteRef = useRef<HTMLDialogElement>(null);
-  const isSecretaryEditing = Boolean(editingTask && user?.role === 'secretaria');
+  const dueDateLocked = Boolean(editingTask);
+  const requestId = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (deleteTarget) deleteRef.current?.showModal();
@@ -38,6 +38,8 @@ export function useAdminTasksPage(user: User | null) {
   }, [deleteTarget]);
 
   function openCreate() {
+    if (saving) return;
+    requestId.current = crypto.randomUUID();
     setEditingTask(null);
     setForm(emptyForm);
     setFormError('');
@@ -45,7 +47,7 @@ export function useAdminTasksPage(user: User | null) {
   }
 
   function openEdit(task: Task) {
-    if (!isAdmin && task.createdBy !== currentUserId) return;
+    if (saving) return;
     setEditingTask(task);
     setForm({
       title: task.title,
@@ -64,6 +66,18 @@ export function useAdminTasksPage(user: User | null) {
       setFormError('Informe o título da tarefa.');
       return;
     }
+    if (!form.assignedTo || !staff.some(person => person.id === form.assignedTo)) {
+      setFormError('Selecione um responsável da equipe.');
+      return;
+    }
+    if (!['low', 'medium', 'high'].includes(form.priority)) {
+      setFormError('Selecione a prioridade da tarefa.');
+      return;
+    }
+    if (!editingTask && !form.dueDate) {
+      setFormError('Informe o prazo da tarefa.');
+      return;
+    }
     const input = {
       title: form.title,
       description: form.description || undefined,
@@ -72,14 +86,14 @@ export function useAdminTasksPage(user: User | null) {
       dueDate: form.dueDate || undefined,
     };
     const succeeded = editingTask
-      ? await updateTask(editingTask.id, input)
-      : await createTask(input);
+      ? await updateTask(editingTask.id, input, editingTask.version)
+      : await createTask({ ...input, requestId: requestId.current });
     if (succeeded) editorRef.current?.close();
   }
 
   async function confirmDelete() {
     if (!deleteTarget) return;
-    if (await deleteTask(deleteTarget.id)) setDeleteTarget(null);
+    if (await deleteTask(deleteTarget.id, deleteTarget.version)) setDeleteTarget(null);
   }
 
   function handleDragStart(event: DragEvent<HTMLElement>, taskId: string) {
@@ -97,6 +111,7 @@ export function useAdminTasksPage(user: User | null) {
   }
 
   function closeEditor() {
+    if (saving) return;
     editorRef.current?.close();
   }
   function onEditorClosed() {
@@ -104,6 +119,7 @@ export function useAdminTasksPage(user: User | null) {
     setFormError('');
   }
   function requestDelete() {
+    if (saving) return;
     editorRef.current?.close();
     setDeleteTarget(editingTask);
   }
@@ -112,9 +128,9 @@ export function useAdminTasksPage(user: User | null) {
     setDropTarget(null);
   }
   return {
-    currentUserId, isAdmin, taskColumns, staff, filter, setFilter, loading, saving, error, notice,
+    currentUserId, page, setPage, total, columnCounts, remoteMode, load, taskColumns, staff, filter, setFilter, loading, saving, error, notice,
     editingTask, form, setForm, formError, deleteTarget, setDeleteTarget, draggedId, dropTarget, setDropTarget,
-    editorRef, deleteRef, isSecretaryEditing, openCreate, openEdit, submitTask, confirmDelete,
+    editorRef, deleteRef, dueDateLocked, openCreate, openEdit, submitTask, confirmDelete,
     handleDragStart, handleDrop, closeEditor, onEditorClosed, requestDelete, endDrag,
   };
 }

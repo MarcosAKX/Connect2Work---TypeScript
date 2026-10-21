@@ -1,6 +1,6 @@
 # Connect2Work — Funcionalidades
 
-Status vigente em 19/10/2026. O modo API é a referência para integração real;
+Status vigente em 20/10/2026. O modo API é a referência para integração real;
 mock significa demonstração local, sem comprovação de persistência no servidor.
 
 ## Matriz de integração
@@ -14,11 +14,13 @@ mock significa demonstração local, sem comprovação de persistência no servi
 | Administração de usuários | Integrada, exclusiva de admin | Disponível |
 | Administração de unidades/salas/comodidades | Integrada, exclusiva de admin | Disponível |
 | Imagens de unidades e galeria de salas | Cloudinary + referências MySQL | Dados locais de demonstração |
-| Vitrine de serviços empresariais | Conteúdo demonstrativo somente leitura | Editável pela administração |
-| Agendamentos, horários e reservas | Pendentes; rotas bloqueadas | Fluxos demonstrativos |
+| Serviços empresariais e benefícios | MySQL, admin cadastra/edita; cliente consulta ativos | Disponíveis |
+| Agendamentos, horários e reservas do cliente | Pendentes; rotas bloqueadas | Fluxos demonstrativos |
 | Checkout e confirmação de pagamento | Pendentes; rotas bloqueadas | PIX/cartão simulados |
-| Dashboard e Painel do Dia | Pendentes; rotas administrativas bloqueadas | Disponíveis |
-| Tarefas, plano de horas e renovação | Pendentes; rotas administrativas bloqueadas | Disponíveis |
+| Agendamentos administrativos e Painel do Dia | Integrados; admin/secretaria, pagamento manual | Disponíveis |
+| Dashboard | Pendente; rota bloqueada | Disponível |
+| Tarefas compartilhadas | Integradas, admin/secretaria; prazo imutável | Disponíveis |
+| Plano de horas e renovação | Pendentes; rotas bloqueadas | Disponíveis |
 | Auditoria e extrato na interface | Pendentes; rotas administrativas bloqueadas | Disponíveis |
 | Backup/restauração pela interface | Pendente; rota administrativa bloqueada | Disponível, schema 3 |
 
@@ -34,8 +36,8 @@ mock significa demonstração local, sem comprovação de persistência no servi
   permite tentar novamente. Consultar sessão não renova a atividade.
 - Perfis existentes: `client`, `admin`, `secretaria`. Rotas conferem sessão e perfil;
   endpoints reais também autorizam no servidor.
-- Admin HTTP entra em usuários. Secretaria tem rotas definidas, mas os módulos
-  operacionais correspondentes ainda estão bloqueados no modo API.
+- Admin HTTP entra em usuários. Secretaria acessa Agendamentos, Painel do Dia e Tarefas;
+  valores acordados e receita não são enviados na listagem desse perfil.
 
 ## Catálogo e administração reais
 
@@ -71,10 +73,72 @@ na API antes da liberação dos módulos reais; não são garantias do MySQL atu
 
 ## Validação registrada
 
-Após a reorganização do código: 191 testes frontend e 47 backend, typechecks e
-builds aprovados. Scripts `check:*` de integração real são verificações separadas,
-não equivalem ao comando `test` e não foram rerodados na refatoração estrutural.
+Etapa administrativa: 219 testes frontend e 54 backend aprovados, com typechecks,
+builds e check MySQL `check:agendamentos-admin`. Conferência no navegador com
+fixtures próprias: criação, pagamento manual, check-in, painel e cancelamento.
 
 [Próximas integrações](docs/planejamento/MIGRATION.md) ·
 [Organização do código](PROJECT_STRUCTURE.md) ·
 [Histórico](docs/historico/evolucao-ate-2026-10-19.md)
+
+## Agendamentos administrativos reais
+
+
+
+Lista com filtros/paginação no servidor; painel com métricas completas de hoje e
+
+contagens dos próximos sete dias. Horário comercial America/Sao_Paulo, 08h–21h,
+
+intervalos em horas inteiras. Nova reserva administrativa nasce confirmada e
+
+bloqueia o horário. Criação repetida usa requestId; sobreposição é verificada sob
+
+lock da sala. Ações usam versão, autorização e auditoria na transação.
+
+Pagamento é registro manual; cancelamento exige motivo e não devolve dinheiro.
+
+Cancelamento de reserva com horas do plano fica bloqueado até integrar estorno.
+
+O cliente continua sem checkout/reservas reais nesta etapa.
+
+## Serviços empresariais reais
+
+Admin cadastra os tipos ainda ausentes e edita conteúdo, benefícios e imagem.
+Tipos: Endereço Fiscal, Endereço Comercial e Plano de Horas (apenas vitrine).
+Cada tipo existe uma vez; seu tipo não muda ao editar. Serviço inativo fica oculto
+aos clientes. Referência da imagem, benefícios ordenados e auditoria são gravados
+na mesma transação, com versão concorrente e requestId na criação. Exclusão não
+é oferecida nesta etapa; desative para ocultar. Não há importação automática do
+mock, ativação de planos, saldo, cobrança ou contratação pelo site.
+
+## Tarefas compartilhadas
+
+Admin e secretaria criam, editam, movem e excluem tarefas da equipe, incluindo as
+de outros autores. Clientes não acessam quadro, equipe ou API de tarefas.
+Prazo definido somente na criação; edição não aceita esse campo, inclusive para
+admin e quando a tarefa foi criada sem prazo. Título, descrição, responsável ativo
+e prioridade continuam editáveis. Autor vem da sessão e permanece preservado.
+Quadro paginado, filtro Minhas tarefas pelo responsável e contagens do servidor;
+movimentação ao arrastar os cartões entre as colunas. Mutações usam versão, auditoria
+atômica e requestId na criação. Indicador de pendências considera o dia de São Paulo.
+
+Cartões de tarefas sinalizam prazo com verde (dentro do prazo), amarelo (até 24h
+para vencer) ou vermelho (vencido), além do texto. Vencimento no fim do dia de
+São Paulo; concluídas e sem prazo permanecem neutras.
+
+
+## Campos obrigatórios das tarefas
+
+Título, responsável da equipe e prioridade são obrigatórios ao criar ou editar.
+A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na criação
+e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
+continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
+alterar as tabelas existentes.
+
+
+## Entrada administrativa
+
+O login de admin redireciona para `/admin` (Dashboard), inclusive com sessão já
+ativa. No modo API, a página mostra os atalhos administrativos e informa que os
+indicadores aguardam integração, sem consultar ou apresentar dados de demonstração.
+Secretaria continua no Painel do Dia e cliente em Unidades.

@@ -1,4 +1,4 @@
-import type { AuditLog, BackupPayload, Booking, BookingCounts, BookingStatus, BusinessService, CheckoutDraft, ClientSummary, CreateBookingInput, CreateBusinessServiceInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, HoursPlanTransaction, RegisterInput, Room, Task, TaskStatus, Unit, UpdateBusinessServiceInput, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, UpdateUserHoursPlanInput, User, UserRole } from '../types/domain';
+import type { AuditLog, BackupPayload, Booking, BookingCounts, BookingStatus, BusinessService, CheckoutDraft, ClientSummary, CreateBookingInput, CreateBusinessServiceInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, CreateUnitInput, HoursPlanTransaction, RegisterInput, Room, Task, TaskStatus, TaskBoardQuery, TaskBoardPage, TaskStaff, Unit, UpdateBusinessServiceInput, UpdateManagedUserInput, UpdateRoomInput, UpdateTaskInput, UpdateUnitInput, UpdateUserHoursPlanInput, User, UserRole } from '../types/domain';
 
 export interface AuthSession { user: User; idleExpiresAt: string; absoluteExpiresAt: string; clockOffsetMs?: number; }
 
@@ -61,17 +61,20 @@ export interface CheckoutGateway {
 }
 
 export interface TaskGateway {
+  listBoard?(query: TaskBoardQuery): Promise<TaskBoardPage>;
+  listStaff?(): Promise<TaskStaff[]>;
+  attentionCount?(): Promise<number>;
   listTasks(): Promise<Task[]>;
   createTask(input: CreateTaskInput): Promise<Task>;
-  updateTask(id: string, input: UpdateTaskInput, actorUserId: string): Promise<Task>;
-  updateTaskStatus(id: string, status: TaskStatus, actorUserId: string): Promise<Task>;
-  deleteTask(id: string, actorUserId: string): Promise<void>;
+  updateTask(id: string, input: UpdateTaskInput, actorUserId: string, expectedVersion?: string): Promise<Task>;
+  updateTaskStatus(id: string, status: TaskStatus, actorUserId: string, expectedVersion?: string): Promise<Task>;
+  deleteTask(id: string, actorUserId: string, expectedVersion?: string): Promise<void>;
 }
 
 export interface BusinessServiceGateway {
   listServices(options?: { includeInactive?: boolean }): Promise<BusinessService[]>;
   createService(input: CreateBusinessServiceInput): Promise<BusinessService>;
-  updateService(id: string, input: UpdateBusinessServiceInput): Promise<BusinessService>;
+  updateService(id: string, input: UpdateBusinessServiceInput, expectedVersion?: string): Promise<BusinessService>;
   deleteService(id: string): Promise<void>;
 }
 
@@ -86,7 +89,15 @@ export interface BackupGateway {
   getLastBackupAt(actorUserId: string): Promise<string | null>;
 }
 
+export interface AdminBookingsGateway {
+ list(query: import('../types/domain').AdminBookingsQuery): Promise<import('../types/domain').AdminBookingsPage>;
+ daily(query: import('../types/domain').AdminBookingsQuery): Promise<import('../types/domain').AdminDailyBookings>;
+ create(input: import('../types/domain').AdminBookingInput): Promise<import('../types/domain').AdminBookingRecord>;
+ action(id: string,action: 'confirmacao'|'pagamento'|'cancelamento'|'chegada',expectedVersion: string,reason?: string): Promise<import('../types/domain').AdminBookingRecord>;
+ searchClients(search: string): Promise<import('../types/domain').AdminClientOption[]>;
+}
 export interface AppServices {
+  adminBookings?: AdminBookingsGateway;
   adminCatalog?: AdminCatalogGateway;
   images?: ImageGateway;
   auth: AuthGateway;

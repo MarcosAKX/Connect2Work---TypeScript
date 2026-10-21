@@ -12,13 +12,13 @@ import { ServicoCatalogoAdministrativo } from '../src/services/servico-catalogo-
 import { ServicoImagens } from '../src/services/servico-imagens';
 import type { RepositorioArquivosImagens } from '../src/repositories/contracts/repositorio-arquivos-imagens';
 test('HTTP catálogo/upload: guarda precede multipart, campos/formatos/CSRF e papel são validados', async () => {
-  let logged = false; let role: 'admin' | 'client' = 'admin'; let uploads = 0; const token = new TokenSessao().gerar().token;
+  let logged = false; let role: 'admin' | 'client' | 'secretaria' = 'admin'; let uploads = 0; const token = new TokenSessao().gerar().token;
   const user = { id: randomUUID(), name: 'Teste', email: 'a@example.invalid', profession: '', phone: '', active: true, createdAt: new Date().toISOString(), role: 'admin' as const, hasHoursPlan: false, hoursBalance: 0 };
   const acesso = new AcessoAdministrativo({ async consultar() { return logged ? { user: { ...user, role }, idleExpiresAt: '', absoluteExpiresAt: '' } : null; } });
   const repo: RepositorioArquivosImagens = { async registrar() { return { id: randomUUID(), proprietarioId: user.id, chaveTemporaria: 'temp', chavePublica: 'public', estado: 'preparando', version: null, expiraEm: new Date(Date.now() + 86400000), leaseId: randomUUID() }; }, async atualizar() {}, async falhou() {}, async obter() { return []; }, async reivindicarLimpeza() { return null; }, async reivindicarPublicacao() { throw new Error('Não utilizado'); } };
   const imagens = new ServicoImagens(repo, { async enviarTemporaria(chave) { uploads++; return { chave, version: '1', formato: 'webp', bytes: 100, largura: 32, altura: 24 }; }, async publicar() { throw new Error('Não utilizado'); }, async consultar() { return null; }, async remover() {}, url() { return ''; } }, acesso);
   const service = new ServicoUsuariosAdministrativos({ async listar(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize, summary: { total: 0, active: 0, inactive: 0, admin: 0, client: 0, secretaria: 0 } }; }, async gravar() { throw new Error('Não utilizado'); }, async equipe() { return []; }, async clientes() { return []; } }, acesso, { async gerar() { return 'hash'; } });
-  const catalogo = new ServicoCatalogoAdministrativo({ async listarUnidades(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async listarSalas(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async opcoes() { return []; }, async gravar() { return null; } }, acesso, imagens);
+  const catalogo = new ServicoCatalogoAdministrativo({ async listarUnidades(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async listarSalas(q) { return { items: [], total: 0, page: q.page, pageSize: q.pageSize }; }, async listarServicos() { return []; }, async opcoes() { return []; }, async gravar() { return null; } }, acesso, imagens);
   const app = await NestFactory.create(AdministracaoModule.register({ service, https: false, catalogo: { service: catalogo, imagens, acesso, lifecycles: [] } }), { logger: false });
   app.use(protecaoHttp({ https: false, origins: ['http://localhost:5173'] })); await app.listen(0, '127.0.0.1');
   try {
@@ -36,5 +36,23 @@ test('HTTP catálogo/upload: guarda precede multipart, campos/formatos/CSRF e pa
     const largeBytes = await sharp({ create: { width: 1500, height: 1500, channels: 3, background: 'white' } }).png({ compressionLevel: 0 }).toBuffer(); assert.ok(largeBytes.length > 5242880);
     const largeForm = new FormData(); largeForm.set('file', new Blob([new Uint8Array(largeBytes)], { type: 'image/png' }), 'imagem-grande.png'); assert.equal((await send(largeForm)).status, 201); assert.equal(uploads, 2);
     assert.equal((await fetch(base + '/admin/unidades', { headers })).status, 200);
+    const serviceBody = { requestId: randomUUID(), kind: 'fiscal_address', name: 'Fiscal', description: 'Descrição', primaryFeatures: ['A'], secondaryFeatures: [], active: true, sortOrder: 0, imageId: null };
+    const writeService = (body: unknown, path = '/admin/servicos', method = 'POST', extra = headers) => fetch(base + path, { method, headers: { ...extra, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    logged = false;
+    assert.equal((await fetch(base + '/servicos', { headers })).status, 401);
+    logged = true;
+    for (const other of ['client', 'secretaria'] as const) {
+      role = other;
+      assert.equal((await fetch(base + '/servicos', { headers })).status, 200);
+      assert.equal((await fetch(base + '/admin/servicos', { headers })).status, 403);
+      assert.equal((await writeService(serviceBody)).status, 403);
+      assert.equal((await writeService({ ...serviceBody, expectedVersion: '2026-10-20 12:00:00.000001' }, '/admin/servicos/' + randomUUID(), 'PATCH')).status, 403);
+    }
+    role = 'admin';
+    assert.equal((await fetch(base + '/admin/servicos', { headers })).status, 200);
+    assert.equal((await writeService(serviceBody)).status, 201);
+    assert.equal((await writeService({ ...serviceBody, imageUrl: 'https://example.invalid/img' })).status, 400);
+    assert.equal((await writeService({ ...serviceBody, actorId: randomUUID() })).status, 400);
+    assert.equal((await writeService(serviceBody, '/admin/servicos', 'POST', { ...headers, Origin: 'https://outro.invalid' })).status, 403);
   } finally { await app.close(); }
 });

@@ -1,3 +1,5 @@
+import { TarefasHttpGateway } from './http/tarefas-http';
+import { AgendamentosAdminHttpGateway } from './http/agendamentos-admin-http';
 import type { AppServices } from './contracts';
 import { createLocalStorageServices } from './mock/local-storage';
 import { AuthHttpGateway } from './http/auth-http';
@@ -5,7 +7,6 @@ import { UnidadesHttpGateway } from './http/unidades-http';
 import { SalasHttpGateway } from './http/salas-http';
 import { UsuariosHttpGateway } from './http/usuarios-http';
 import { CatalogoAdminHttpGateway } from './http/catalogo-admin-http';
-import { businessServices } from './mock/mock-business-services';
 import type { CheckoutDraft } from '../types/domain';
 const unavailable = async (): Promise<never> => { throw new Error('Funcionalidade ainda não integrada à API.'); };
 // O modo real não inicializa usuários, credenciais ou dados privados do mock.
@@ -20,6 +21,7 @@ export function createAppServices(authApi: boolean, fetcher?: typeof fetch): App
   return {
     auth,
     adminCatalog, images: adminCatalog,
+    adminBookings: new AgendamentosAdminHttpGateway(fetcher, () => auth.checkCurrentSession()),
     users: { listUsers: unavailable, listUsersWithHoursPlanInfo: unavailable, listUsersPage: query => usuarios.listUsersPage(query),
       createUser: input => usuarios.createUser(input), updateUser: (id, input, version) => usuarios.updateUser(id, input, version),
       updateUserRole: (id, role, version) => usuarios.updateUserRole(id, role, version), updateUserStatus: (id, active, version) => usuarios.updateUserStatus(id, active, version),
@@ -34,11 +36,8 @@ export function createAppServices(authApi: boolean, fetcher?: typeof fetch): App
     bookings: { getByUserAndStatus: unavailable, getCounts: unavailable, getAll: unavailable, create: unavailable, cancel: unavailable, confirmBooking: unavailable,
       confirmPayment: unavailable, checkInBooking: unavailable, cancelBookingAsAdmin: unavailable },
     checkout: { getDraft() { return draft ? structuredClone(draft) : null; }, saveDraft(value) { draft = structuredClone(value); }, clearDraft() { draft = null; } },
-    tasks: { listTasks: unavailable, createTask: unavailable, updateTask: unavailable, updateTaskStatus: unavailable, deleteTask: unavailable },
-    businessServices: {
-      async listServices(options) { if (options?.includeInactive) return unavailable(); return structuredClone(businessServices.filter(service => service.active)); },
-      createService: unavailable, updateService: unavailable, deleteService: unavailable
-    },
+    tasks: new TarefasHttpGateway(fetcher, () => auth.checkCurrentSession()),
+    businessServices: adminCatalog,
     audit: { listRecent: unavailable, listHoursPlanTransactions: unavailable },
     backup: { exportData: unavailable, importData: unavailable, getLastBackupAt: unavailable }
   };

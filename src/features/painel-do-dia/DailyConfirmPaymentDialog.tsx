@@ -38,9 +38,9 @@ export function DailyConfirmPaymentDialog({
         <span className="admin-bookings-modal__icon admin-bookings-modal__icon--success">
           <CreditCardIcon width="22" height="22" />
         </span>
-        <h2 id="daily-confirm-payment-title">Confirmar pagamento?</h2>
+        <h2 id="daily-confirm-payment-title">Registrar pagamento manual?</h2>
         <p>
-          Confirma o recebimento de <strong>{money.format(item.total)}</strong>{' '}
+          Registrar recebimento manual{item.total === undefined ? '' : ' de '}<strong>{item.total === undefined ? '' : money.format(item.total)}</strong>{' '}
           pelo agendamento de <strong>{item.clientName}</strong>?
         </p>
         {error && (

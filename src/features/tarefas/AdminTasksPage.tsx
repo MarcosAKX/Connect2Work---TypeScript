@@ -19,15 +19,15 @@ export function AdminTasksPage() {
         </div>
         <div className="admin-tasks-toolbar">
           <div className="admin-tasks-filter" aria-label="Filtrar tarefas">
-            <button type="button" className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}>Todas as tarefas</button>
-            <button type="button" className={filter === 'mine' ? 'is-active' : ''} onClick={() => setFilter('mine')}>Minhas tarefas</button>
+            <button type="button" className={filter === 'all' ? 'is-active' : ''} disabled={model.saving} onClick={() => setFilter('all')}>Todas as tarefas</button>
+            <button type="button" className={filter === 'mine' ? 'is-active' : ''} disabled={model.saving} onClick={() => setFilter('mine')}>Minhas tarefas</button>
           </div>
-          <button type="button" className="btn btn-primary admin-tasks-create" onClick={openCreate}><PlusIcon width="17" height="17" />Nova Tarefa</button>
+          <button type="button" className="btn btn-primary admin-tasks-create" onClick={openCreate} disabled={model.saving || model.loading}><PlusIcon width="17" height="17" />Nova Tarefa</button>
         </div>
       </header>
 
       {notice && <p className="admin-tasks-notice" role="status">{notice}</p>}
-      {error && <p className="admin-tasks-error" role="alert">{error}</p>}
+      {error && <div role="alert"><p className="admin-tasks-error">{error}</p><button className="btn btn-secondary" disabled={model.saving || model.loading} onClick={() => void model.load()}>Atualizar quadro</button></div>}
 
       <TaskBoard
         taskColumns={model.taskColumns}
@@ -37,22 +37,27 @@ export function AdminTasksPage() {
         loading={model.loading}
         filter={model.filter}
         staff={model.staff}
-        isAdmin={model.isAdmin}
-        currentUserId={model.currentUserId}
+        saving={model.saving}
+        columnCounts={model.columnCounts}
         draggedId={model.draggedId}
         handleDragStart={model.handleDragStart}
         endDrag={model.endDrag}
         openEdit={model.openEdit}
       />
 
+      {model.remoteMode && model.total > 30 && <nav aria-label="Paginação das tarefas">
+        <button className="btn btn-secondary" disabled={model.page <= 1 || model.loading || model.saving} onClick={() => model.setPage(value => value - 1)}>Anterior</button>
+        <span> Página {model.page} de {Math.max(1, Math.ceil(model.total / 30))} · {model.total} tarefas · até 30 por página </span>
+        <button className="btn btn-secondary" disabled={model.page * 30 >= model.total || model.loading || model.saving} onClick={() => model.setPage(value => value + 1)}>Próxima</button>
+      </nav>}
       <TaskEditorDialog
         editorRef={model.editorRef}
         editingTask={model.editingTask}
         form={model.form}
         setForm={model.setForm}
-        formError={model.formError}
+        formError={model.formError || model.error}
         staff={model.staff}
-        isSecretaryEditing={model.isSecretaryEditing}
+        dueDateLocked={model.dueDateLocked}
         saving={model.saving}
         submitTask={model.submitTask}
         closeEditor={model.closeEditor}
@@ -65,6 +70,7 @@ export function AdminTasksPage() {
         deleteTarget={model.deleteTarget}
         setDeleteTarget={model.setDeleteTarget}
         saving={model.saving}
+        error={model.error}
         confirmDelete={model.confirmDelete}
       />
     </main>

@@ -6,7 +6,7 @@ import { useAdminBusinessServices } from './useAdminBusinessServices';
 import '../../assets/css/pages/admin-business-services.css';
 
 export function AdminBusinessServicesPage() {
-  const { data, editing, status, save, openEditor, closeEditor } = useAdminBusinessServices();
+  const { data, editing, status, save, openEditor, closeEditor, missing, create } = useAdminBusinessServices();
   return (
     <main className="admin-services-page">
       <BackLink to="/admin" label="Voltar ao Dashboard" />
@@ -18,6 +18,10 @@ export function AdminBusinessServicesPage() {
       </header>
       {status && <p className="admin-services-page__status" role="status">{status}</p>}
       {data.error && !editing && <p className="admin-services-page__error" role="alert">{data.error}</p>}
+      {!data.isLoading && !data.error && missing.length > 0 && <section aria-label="Cadastrar serviços disponíveis">
+        {missing.map(option => <button key={option.kind} className="btn btn-secondary" onClick={() => create(option)}>Cadastrar {option.name}</button>)}
+      </section>}
+      {data.error && !editing && <button className="btn btn-secondary" onClick={() => void data.reload()}>Tentar novamente</button>}
       <section className="admin-services-grid" aria-busy={data.isLoading}>
         {data.isLoading ? <p>Carregando serviços…</p> : data.items.map((item) => (
           <ServiceCard key={item.id} item={item} onEdit={openEditor} />
@@ -25,6 +29,7 @@ export function AdminBusinessServicesPage() {
       </section>
       {editing && (
         <ServiceDialog
+          key={editing.id || editing.kind}
           item={editing}
           saving={data.isSaving}
           error={data.error}

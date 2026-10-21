@@ -41,9 +41,14 @@ O frontend está organizado por funcionalidade; o backend mantém camadas.
 - Cliente consulta unidades e salas; administrador gerencia usuários, unidades,
   salas, comodidades e galeria de imagens com dados reais.
 - Arquivos de imagens ficam no Cloudinary; o banco mantém referências e controle.
-- Serviços empresariais públicos ainda mostram conteúdo demonstrativo.
-- Agendamentos, pagamento, plano de horas e demais módulos administrativos ainda
-  aguardam integração no modo API. A existência da tela/tabela não comprova entrega.
+- Serviços empresariais usam MySQL: cadastro/edição pelo admin e vitrine de ativos
+  para clientes, com imagens no Cloudinary.
+- Agendamentos administrativos e Painel do Dia estão integrados: criação,
+  cancelamento, check-in e registro manual de pagamento.
+- Reservas do cliente, checkout/provedor, dashboard, planos, backup,
+  consulta de auditoria na interface continuam pendentes no modo API.
+- Tarefas usam MySQL: admin e secretaria editam o quadro compartilhado; prazo
+  definido somente na criação e imutável para ambos.
 - Google e recuperação real de senha continuam pendentes.
 - O mock permanece disponível explicitamente para desenvolvimento e demonstração;
   falha da API não autoriza fallback para dados locais.
@@ -60,3 +65,20 @@ segredos, backups e monitoramento. O desenvolvimento atual continua local.
 - [Mapa do código e critérios de organização](PROJECT_STRUCTURE.md).
 - [Próximas integrações](docs/planejamento/MIGRATION.md).
 - [Histórico de evolução](docs/historico/evolucao-ate-2026-10-19.md).
+
+
+## Campos obrigatórios das tarefas
+
+Título, responsável da equipe e prioridade são obrigatórios ao criar ou editar.
+A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na criação
+e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
+continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
+alterar as tabelas existentes.
+
+
+## Entrada administrativa
+
+O login de admin redireciona para `/admin` (Dashboard), inclusive com sessão já
+ativa. No modo API, a página mostra os atalhos administrativos e informa que os
+indicadores aguardam integração, sem consultar ou apresentar dados de demonstração.
+Secretaria continua no Painel do Dia e cliente em Unidades.

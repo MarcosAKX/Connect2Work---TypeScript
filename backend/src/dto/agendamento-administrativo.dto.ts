@@ -1,0 +1,8 @@
+export interface ConsultaAgendamentos { page: number; pageSize: number; search: string; unitId: string; status: string; dateFrom: string; dateTo: string; operational: string; period: string; }
+export interface ReservaAdministrativa { id: string; userId: string; unitId: string; roomId: string; date: string; timeSlot: string; status: 'upcoming'|'past'|'cancelled'; adminStatus: 'pending'|'confirmed'|'cancelled'; paymentStatus: 'pending'|'completed'; total?: number; hoursFromPlan: number; createdAt: string; checkedInAt?: string; checkedInBy?: string; cancelledAt?: string; cancellationReason?: string; version: string; }
+export interface LinhaAgendamento { booking: ReservaAdministrativa; clientName: string; roomName: string; unitName: string; total?: number; adminStatus: ReservaAdministrativa['adminStatus']; }
+export interface ResumoAgendamentos { total: number; confirmed: number; pending: number; cancelled: number; today: number; checkInsToday: number; revenue?: number; }
+export interface PaginaAgendamentos { items: LinhaAgendamento[]; total: number; page: number; pageSize: number; summary: ResumoAgendamentos; today: string; serverNow: string; }
+export interface PainelAgendamentos { agenda: PaginaAgendamentos; counts: { present: number; payments: number; waiting: number; today: number; checkIns: number }; firstPayment: LinhaAgendamento|null; firstWaiting: LinhaAgendamento|null; nextArrival: LinhaAgendamento|null; upcomingDays: Array<{ date: string; count: number }>; }
+export type AcaoAgendamento = 'confirmacao'|'pagamento'|'cancelamento'|'chegada';
+export interface PedidoAdministrativo { requestId: string; clientId: string; roomId: string; date: string; timeSlot: string; centavos: number; paymentStatus: 'pending'|'completed'; }

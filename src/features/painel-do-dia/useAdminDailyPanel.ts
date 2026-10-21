@@ -9,7 +9,6 @@ export type PeriodFilter = 'all' | 'morning' | 'afternoon' | 'next';
 
 // ViewModel da operação diária. Dados e mutações continuam no hook compartilhado.
 export function useAdminDailyPanel(user: User | null) {
-  const data = useAdminBookings();
   const [confirmingPayment, setConfirmingPayment] =
     useState<AdminBookingRow | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
@@ -18,16 +17,18 @@ export function useAdminDailyPanel(user: User | null) {
   const [operationalFilter, setOperationalFilter] =
     useState<OperationalFilter>('all');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const data = useAdminBookings({daily: true, search, unitId, operational: operationalFilter, period: periodFilter});
   const currentTime = new Intl.DateTimeFormat('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
   }).format(data.dayPanel.now);
   const attentionCount =
-    data.dayPanel.pendingPayments.length + data.dayPanel.waitingArrival.length;
-  const firstPendingPayment = data.dayPanel.pendingPayments[0];
-  const firstWaitingArrival = data.dayPanel.waitingArrival[0];
+    data.dayPanel.paymentsCount + data.dayPanel.waitingCount;
+  const firstPendingPayment = data.dayPanel.firstPayment ?? undefined;
+  const firstWaitingArrival = data.dayPanel.firstWaiting ?? undefined;
 
   const filteredTodayBookings = useMemo(() => {
+    if (data.remoteMode) return data.dayPanel.todayBookings;
     const term = search.trim().toLocaleLowerCase('pt-BR');
     const nowMinutes =
       data.dayPanel.now.getHours() * 60 + data.dayPanel.now.getMinutes();
@@ -78,6 +79,7 @@ export function useAdminDailyPanel(user: User | null) {
   ]);
 
   const upcomingDays = useMemo(() => {
+    if (data.dayPanel.upcomingDays) return data.dayPanel.upcomingDays.map(day => ({key: day.date, count: day.count}));
     const counts = new Map<string, number>();
     data.dayPanel.upcomingBookings.forEach(({ booking }) =>
       counts.set(booking.date, (counts.get(booking.date) ?? 0) + 1),
@@ -88,7 +90,7 @@ export function useAdminDailyPanel(user: User | null) {
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       return { key, count: counts.get(key) ?? 0 };
     });
-  }, [data.dayPanel.upcomingBookings, data.today]);
+  }, [data.dayPanel.upcomingBookings, data.dayPanel.upcomingDays, data.today]);
 
   const hasActiveFilters = Boolean(
     search || unitId || operationalFilter !== 'all' || periodFilter !== 'all',
@@ -100,13 +102,13 @@ export function useAdminDailyPanel(user: User | null) {
   }, [statusMessage]);
 
   async function checkIn(item: AdminBookingRow) {
-    if (user && (await data.checkInBooking(item.booking.id, user.id)))
+    if (user && (await data.checkInBooking(item.booking.id, user.id, item.booking.version)))
       setStatusMessage('Check-in realizado com sucesso.');
   }
   async function confirmPayment() {
     if (
       confirmingPayment &&
-      (await data.confirmPayment(confirmingPayment.booking.id))
+      (await data.confirmPayment(confirmingPayment.booking.id, confirmingPayment.booking.version))
     ) {
       setConfirmingPayment(null);
       setStatusMessage('Pagamento confirmado com sucesso.');
