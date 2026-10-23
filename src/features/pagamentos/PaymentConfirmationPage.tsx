@@ -13,13 +13,21 @@ export function PaymentConfirmationPage() {
 
   if (!confirmation?.bookingId) return <Navigate to="/meus-agendamentos" replace />;
 
+  return <BookingCompletion confirmation={confirmation} />;
+}
+
+export function BookingCompletion({ confirmation, status = 'Pagamento aprovado', title = 'Agendamento confirmado!', intro = 'Sua sala foi reservada com sucesso.', note = 'O envio automático da confirmação por e-mail e WhatsApp será habilitado após a integração desses serviços.', primaryTo = '/meus-agendamentos', primaryLabel = 'Ver meus agendamentos', onNewSelection, protocol }: {
+  confirmation: PaymentConfirmation;
+  status?: string; title?: string; intro?: string; note?: string;
+  primaryTo?: string; primaryLabel?: string; onNewSelection?: () => void; protocol?: string;
+}) {
   return (
     <main className="confirmation-page">
       <section className="confirmation-panel" aria-labelledby="confirmation-title">
         <div className="confirmation-success-icon"><CheckCircleIcon width="42" height="42" /></div>
-        <p className="confirmation-payment-status" role="status">Pagamento aprovado</p>
-        <h1 id="confirmation-title">Agendamento confirmado!</h1>
-        <p className="confirmation-intro">Sua sala foi reservada com sucesso.</p>
+        <p className="confirmation-payment-status" role="status">{status}</p>
+        <h1 id="confirmation-title">{title}</h1>
+        <p className="confirmation-intro">{intro}</p>
 
         <dl className="confirmation-details" aria-label="Detalhes do agendamento">
           <div><dt><MapPinIcon width="19" height="19" /><span>Local</span></dt><dd>{confirmation.roomName} · {confirmation.unitName}</dd></div>
@@ -27,11 +35,12 @@ export function PaymentConfirmationPage() {
           <div><dt><ClockIcon width="19" height="19" /><span>Horário</span></dt><dd>{confirmation.timeSlot} ({formatDuration(confirmation.duration)})</dd></div>
         </dl>
 
-        <p className="confirmation-delivery-note">O envio automático da confirmação por e-mail e WhatsApp será habilitado após a integração desses serviços.</p>
+        {protocol && <p className="confirmation-delivery-note">Protocolo: {protocol}</p>}
+        <p className="confirmation-delivery-note">{note}</p>
 
         <div className="confirmation-actions">
-          <Link to="/meus-agendamentos" className="btn btn-primary">Ver meus agendamentos</Link>
-          <Link to="/unidades" className="btn confirmation-secondary-action">Fazer novo agendamento</Link>
+          <Link to={primaryTo} className="btn btn-primary">{primaryLabel}</Link>
+          {onNewSelection ? <button type="button" className="btn confirmation-secondary-action" onClick={onNewSelection}>Fazer novo agendamento</button> : <Link to="/unidades" className="btn confirmation-secondary-action">Fazer novo agendamento</Link>}
         </div>
       </section>
     </main>

@@ -8,6 +8,7 @@ export function ProtectedRoute() {
   if (status === 'checking' || status === 'error') return <AuthRouteStatus status={status} error={error} onRetry={refreshUser} />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'admin') return <Navigate to={mode === 'http' ? '/admin/usuarios' : '/admin'} replace />;
-  const blocked = mode === 'http' && !['/unidades', '/salas', '/servicos'].includes(pathname);
+  const blocked = mode === 'http' && !['/unidades', '/salas', '/servicos', '/agendamento', '/meus-agendamentos'].includes(pathname);
   return <AppShell blocked={blocked} />;
 }
+

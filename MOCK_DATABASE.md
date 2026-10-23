@@ -190,3 +190,30 @@ A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na cr
 e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
 continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
 alterar as tabelas existentes.
+
+
+## Agendamento do cliente — integração de 21/10/2026
+
+Cliente ativo consulta faixas de uma hora (08h–21h) em America/Sao_Paulo e solicita
+reserva pendente pela API. A disponibilidade não contém dados de outras reservas.
+O servidor calcula o preço e define usuário, situação pendente, pagamento pendente
+e zero horas de plano. A transação compartilha o bloqueio da sala com o admin,
+revalida sessão e horário após espera, e grava reserva/auditoria atomicamente.
+O requestId permite repetir a mesma solicitação sem duplicar; replay conserva o
+estado real, inclusive cancelamento ou período encerrado. Respostas antigas de
+outra visita à sala são descartadas, mesmo no percurso A→B→A.
+
+A tela usa carregamento/erro/retry, calendário comercial, valor estimado e protocolo
+real após sucesso. Sem checkout, cobrança ou uso de plano. Uma reserva pendente
+bloqueia o horário e não expira automaticamente; a equipe pode confirmar ou cancelar
+no módulo administrativo já integrado. Meus Agendamentos e cancelamento do cliente foram integrados na etapa seguinte. Não há nova tabela, grant, importação de mock ou deploy.
+
+
+## Meus Agendamentos — 21/10/2026
+
+No modo HTTP, Meus Agendamentos nunca consulta a listagem global nem o mock. A API retorna somente reservas do usuário da sessão e nomes de sala/unidade. Cancelamento pago mantém situacao_pagamento=concluido; detalhes da auditoria incluem source=cliente, action=cancelamento, manualRefund=true. Esse registro não executa nem acompanha a conclusão do reembolso; a equipe precisa tratá-lo manualmente. Nenhuma alteração no schema.
+
+
+## Auditoria — integração de 21/10/2026
+
+No modo HTTP, Atividades consulta registros_auditoria, sem mock, lista global de usuários ou saldos de planos. Nome do ator vem da fotografia nome_usuario; exclusão do item não remove o registro da consulta. Detalhes brutos, contatos, fingerprints, senhas e tokens não são enviados. Apenas operações conhecidas de agendamento geram descrições, incluindo indicação de reembolso manual; isso não confirma devolução financeira. Mock mantém busca local e extrato demonstrativo. Sem alteração de tabelas/grants.

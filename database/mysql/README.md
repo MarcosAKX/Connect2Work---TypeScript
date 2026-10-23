@@ -58,3 +58,26 @@ Tipo é único e imutável; ativo controla a vitrine, sem habilitar plano ou pag
 Tarefas reutilizam a tabela `tarefas` existente. Prazo/autor imutáveis na edição,
 versão derivada de atualizado_em com microssegundos e auditoria na mesma transação.
 Nenhuma migration nova nesta integração.
+
+
+## Agendamento do cliente — integração de 21/10/2026
+
+Cliente ativo consulta faixas de uma hora (08h–21h) em America/Sao_Paulo e solicita
+reserva pendente pela API. A disponibilidade não contém dados de outras reservas.
+O servidor calcula o preço e define usuário, situação pendente, pagamento pendente
+e zero horas de plano. A transação compartilha o bloqueio da sala com o admin,
+revalida sessão e horário após espera, e grava reserva/auditoria atomicamente.
+O requestId permite repetir a mesma solicitação sem duplicar; replay conserva o
+estado real, inclusive cancelamento ou período encerrado. Respostas antigas de
+outra visita à sala são descartadas, mesmo no percurso A→B→A.
+
+A tela usa carregamento/erro/retry, calendário comercial, valor estimado e protocolo
+real após sucesso. Sem checkout, cobrança ou uso de plano. Uma reserva pendente
+bloqueia o horário e não expira automaticamente; a equipe pode confirmar ou cancelar
+no módulo administrativo já integrado. Meus Agendamentos/cancelamento do cliente
+continuam pendentes. Não há nova tabela, grant, importação de mock ou deploy.
+
+Endpoints: `GET /salas/:id/disponibilidade?data=AAAA-MM-DD` e `POST /agendamentos`.
+POST aceita apenas requestId UUID v4, roomId, date e timeSlot; retorna 201/200 no replay.
+Limites locais por conta: 60 leituras e 10 criações por minuto. Check local:
+`npm.cmd run check:agendamentos --prefix backend` usa fixtures próprias e limpeza.

@@ -1,11 +1,11 @@
 import { CalendarIcon } from '../../components/icons';
 import type { BookingViewModel } from './useBooking';
-import { formatStorageDate, isPastDate, isSameDate } from '../../utils/booking';
+import { formatStorageDate, isSameDate } from '../../utils/booking';
 
 const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 type Props = Pick<
   BookingViewModel,
-  'visibleMonth' | 'selectedDate' | 'setVisibleMonth' | 'selectDate'
+  'visibleMonth' | 'selectedDate' | 'setVisibleMonth' | 'selectDate' | 'businessToday' | 'isSaving'
 >;
 
 export function BookingCalendar({
@@ -13,15 +13,17 @@ export function BookingCalendar({
   selectedDate,
   setVisibleMonth,
   selectDate,
+  businessToday,
+  isSaving,
 }: Props) {
   const days = calendarDays(visibleMonth);
   const currentMonth = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth(),
+    businessToday.getFullYear(),
+    businessToday.getMonth(),
     1,
   );
   return (
-    <section className="booking-selection card">
+    <section className="booking-selection card" inert={isSaving}>
       <div className="booking-section-title">
         <CalendarIcon width="20" height="20" />
         <h2>Selecione a Data</h2>
@@ -79,8 +81,8 @@ export function BookingCalendar({
               <button
                 key={formatStorageDate(date)}
                 type="button"
-                className={`calendar__day${isSameDate(date, new Date()) ? ' is-today' : ''}${selectedDate && isSameDate(date, selectedDate) ? ' is-selected' : ''}`}
-                disabled={isPastDate(date)}
+                className={`calendar__day${isSameDate(date, businessToday) ? ' is-today' : ''}${selectedDate && isSameDate(date, selectedDate) ? ' is-selected' : ''}`}
+                disabled={formatStorageDate(date) < formatStorageDate(businessToday)}
                 aria-label={date.toLocaleDateString('pt-BR', {
                   day: '2-digit',
                   month: 'long',

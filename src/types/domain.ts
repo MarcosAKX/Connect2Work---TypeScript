@@ -140,6 +140,8 @@ export type BookingAdminStatus = 'pending' | 'confirmed' | 'cancelled';
 export type BookingPaymentStatus = 'pending' | 'completed';
 
 export interface Booking {
+  clientCanCancel?: boolean;
+  clientCancelReason?: string;
   version?: string;
   id: string;
   userId: string;
@@ -165,8 +167,14 @@ export interface BookingCounts {
   past: number;
   cancelled: number;
 }
+export interface OwnBookingItem { booking:Booking; roomName:string; unitName:string; }
+export interface OwnBookingsPage { items:OwnBookingItem[]; counts:BookingCounts; nextCursor:string|null; serverNow:string; }
 
-export type CreateBookingInput = Omit<Booking, 'id' | 'createdAt' | 'cancelledAt'>;
+export type CreateBookingInput = Omit<Booking, 'id' | 'createdAt' | 'cancelledAt'> & { requestId?: string };
+export interface BookingAvailability {
+  roomId: string; date: string; timeZone: 'America/Sao_Paulo'; serverNow: string; pricePerHour: number;
+  slots: Array<{ start: string; end: string; available: boolean }>;
+}
 
 export interface CheckoutDraft {
   userId: string;
@@ -229,13 +237,17 @@ export type AuditEntity = 'user' | 'unit' | 'room' | 'business_service' | 'booki
 export interface AuditLog {
   id: string;
   actorUserId?: string;
-  action: AuditAction;
-  entity: AuditEntity;
+  action: string;
+  entity: string;
   entityId: string;
   occurredAt: string;
   actorName?: string;
+  summary?: string;
   details?: Record<string, string | number | boolean | null>;
 }
+
+export interface AuditQuery { search?:string; cursor?:string; }
+export interface AuditPage { items:AuditLog[];total:number;nextCursor:string|null; }
 
 export type HoursPlanTransactionType = 'credit' | 'debit' | 'refund' | 'adjustment';
 

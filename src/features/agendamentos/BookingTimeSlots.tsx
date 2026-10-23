@@ -1,14 +1,14 @@
 import { ClockIcon, SunIcon, SunsetIcon } from '../../components/icons';
 import type { BookingViewModel } from './useBooking';
 
-type Props = Pick<BookingViewModel, 'slots' | 'duration' | 'selectTimeSlot'>;
-export function BookingTimeSlots({ slots, duration, selectTimeSlot }: Props) {
+type Props = Pick<BookingViewModel, 'slots' | 'duration' | 'selectTimeSlot' | 'availabilityLoading' | 'availabilityError' | 'retryAvailability' | 'isSaving'>;
+export function BookingTimeSlots({ slots, duration, selectTimeSlot, availabilityLoading, availabilityError, retryAvailability, isSaving }: Props) {
   const timeButtons = slots.map((slot) => (
     <button
       key={slot.index}
       type="button"
       className={`time-button${slot.selected ? ' is-selected' : ''}${slot.unavailable ? ' is-unavailable' : ''}`}
-      disabled={slot.unavailable}
+      disabled={slot.unavailable || isSaving}
       aria-pressed={slot.selected}
       onClick={() => selectTimeSlot(slot.index)}
     >
@@ -24,6 +24,8 @@ export function BookingTimeSlots({ slots, duration, selectTimeSlot }: Props) {
       <p className="time-instruction" id="time-instruction">
         Selecione um ou mais intervalos consecutivos.
       </p>
+      {availabilityLoading && <p role="status">Consultando horários disponíveis...</p>}
+      {availabilityError && <div role="alert"><p>{availabilityError}</p><button type="button" className="btn btn-secondary" onClick={retryAvailability} disabled={isSaving}>Tentar novamente</button></div>}
       <div className="time-period">
         <h3>
           <SunIcon width="18" height="18" />

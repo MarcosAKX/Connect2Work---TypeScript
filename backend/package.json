@@ -22,7 +22,10 @@
     "check:registration": "npm run build && node --env-file=.env dist/src/check-registration.js",
     "check:database": "npm run build && node --env-file=.env dist/src/check-database.js",
     "check:agendamentos-admin": "npm run build && node --env-file=.env dist/src/check-agendamentos-admin.js",
-    "check:tarefas": "npm run build && node --env-file=.env dist/src/check-tarefas.js"
+    "check:tarefas": "npm run build && node --env-file=.env dist/src/check-tarefas.js",
+    "check:agendamentos": "npm run build && node --env-file=.env dist/src/check-agendamentos.js",
+    "check:meus-agendamentos": "npm run build && node --env-file=.env dist/src/check-meus-agendamentos.js",
+    "check:auditoria": "npm run build && node --env-file=.env dist/src/check-auditoria.js"
   },
   "dependencies": {
     "@nestjs/common": "11.2.7",

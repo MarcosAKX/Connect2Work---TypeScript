@@ -45,10 +45,11 @@ O frontend está organizado por funcionalidade; o backend mantém camadas.
   para clientes, com imagens no Cloudinary.
 - Agendamentos administrativos e Painel do Dia estão integrados: criação,
   cancelamento, check-in e registro manual de pagamento.
-- Reservas do cliente, checkout/provedor, dashboard, planos, backup,
-  consulta de auditoria na interface continuam pendentes no modo API.
+- Checkout/provedor, indicadores do dashboard, planos, extrato e backup continuam pendentes no modo API.
 - Tarefas usam MySQL: admin e secretaria editam o quadro compartilhado; prazo
   definido somente na criação e imutável para ambos.
+- Cliente consulta horários reais e solicita reserva pendente, bloqueando o período;
+  Meus Agendamentos está integrado, com cancelamento próprio e reembolso manual para reservas pagas.
 - Google e recuperação real de senha continuam pendentes.
 - O mock permanece disponível explicitamente para desenvolvimento e demonstração;
   falha da API não autoriza fallback para dados locais.
@@ -82,3 +83,14 @@ O login de admin redireciona para `/admin` (Dashboard), inclusive com sessão j�
 ativa. No modo API, a página mostra os atalhos administrativos e informa que os
 indicadores aguardam integração, sem consultar ou apresentar dados de demonstração.
 Secretaria continua no Painel do Dia e cliente em Unidades.
+
+
+## Meus Agendamentos — 21/10/2026
+
+Meus Agendamentos usa as reservas reais da sessão do cliente. O cliente pode cancelar com pelo menos 24 horas de antecedência; pagamentos concluídos exigem reembolso manual pela equipe. Horas de plano ainda exigem atendimento.
+
+
+
+## Auditoria — integração de 21/10/2026
+
+A consulta de auditoria está integrada em /admin/atividades, somente para admin. Exibe registros reais, busca e paginação. Extrato/planos de horas continuam pendentes.

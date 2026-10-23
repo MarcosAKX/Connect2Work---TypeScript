@@ -8,7 +8,7 @@ import '../../assets/css/pages/admin-governance.css';
 export function AdminActivityPage() {
   const { user } = useAuth();
   const model = useAdminActivity(user);
-  const { clients, selectedClient, query, limit, error, loading, filtered } = model;
+  const { clients, selectedClient, query, error, loading, filtered } = model;
 
   return (
     <main className="governance-page">
@@ -20,21 +20,21 @@ export function AdminActivityPage() {
           <p>Acompanhe alterações administrativas e o consumo dos planos de horas.</p>
         </div>
       </header>
-      {error && <div className="governance-notice is-error" role="alert">{error}</div>}
+      {error && <div className="governance-notice is-error" role="alert">{error} <button type="button" className="governance-secondary" onClick={model.retry} disabled={loading}>Tentar novamente</button></div>}
       <section className="governance-card governance-card--wide">
         <div className="governance-toolbar">
           <div>
             <h2>Atividades recentes</h2>
-            <p>{loading ? 'Carregando registros…' : `${filtered.length} registros encontrados`}</p>
+            <p>{loading ? 'Carregando registros…' : `${model.total} registros encontrados`}</p>
           </div>
           <label>
             <span>Buscar atividades</span>
-            <input type="search" placeholder="Pessoa, item ou ID" value={query} onChange={(event) => model.search(event.target.value)} />
+            <input type="search" maxLength={150} placeholder="Pessoa, item ou ID" value={query} onChange={(event) => model.search(event.target.value)} />
           </label>
         </div>
-        <ActivityList loading={loading} filtered={filtered} limit={limit} query={query} clearSearch={model.clearSearch} />
-        {limit < filtered.length && (
-          <button className="governance-secondary" type="button" onClick={model.loadMore}>Carregar mais</button>
+        <ActivityList loading={loading} filtered={filtered} limit={model.limit} query={query} clearSearch={model.clearSearch} />
+        {model.hasMore && (
+          <button className="governance-secondary" type="button" onClick={() => void model.loadMore()} disabled={model.loadingMore}>{model.loadingMore ? 'Carregando…' : 'Carregar mais'}</button>
         )}
       </section>
       <section className="governance-card governance-card--wide">
@@ -42,13 +42,13 @@ export function AdminActivityPage() {
           <div><h2>Extrato do plano de horas</h2><p>Créditos, consumos, estornos e ajustes.</p></div>
           <label>
             <span>Cliente</span>
-            <select value={selectedClient} onChange={(event) => model.setSelectedClient(event.target.value)}>
+            <select value={selectedClient} disabled={model.http} onChange={(event) => model.setSelectedClient(event.target.value)}>
               <option value="">Selecione o cliente</option>
               {clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
             </select>
           </label>
         </div>
-        <HoursStatement userId={selectedClient} actorId={user?.id ?? ''} />
+        {model.http ? <p className="governance-empty">Extrato disponível após a integração dos planos de horas.</p> : <HoursStatement userId={selectedClient} actorId={user?.id ?? ''} />}
       </section>
     </main>
   );

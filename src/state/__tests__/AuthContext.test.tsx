@@ -137,12 +137,13 @@ describe('AuthContext e proteção assíncrona', () => {
     await act(async () => notify?.());
     expect(model?.status).toBe('anonymous'); expect(mocks.clear).toHaveBeenCalled();
   });
-  it('modo real bloqueia módulos pendentes mantendo proteção por perfil', async () => {
+  it('modo real libera meus agendamentos após verificar sessão', async () => {
     mocks.restore.mockResolvedValue(session());
-    await render('/meus-agendamentos'); expect(container.textContent).toContain('módulo pendente');
+    await render('/meus-agendamentos'); expect(container.textContent).toContain('conteúdo privado');
   });
   it('admin real pode abrir a rota inicial do dashboard', async () => {
     mocks.restore.mockResolvedValue({ ...session(), user: { ...user, role: 'admin' } });
     await render('/admin'); expect(container.textContent).toContain('admin privado');
   });
 });
+

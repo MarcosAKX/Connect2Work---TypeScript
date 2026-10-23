@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
 import { services } from '../../services';
 import type { AppServices } from '../../services/contracts';
-import type { Booking, Room, Unit, User } from '../../types/domain';
+import type { Booking, BookingAvailability, Room, Unit, User } from '../../types/domain';
 import {
   calculateHoursPlanUsage,
   formatStorageDate,
@@ -10,6 +10,9 @@ import {
   HOURS,
   isHoursPlanExpired,
 } from '../../utils/booking';
+
+import { businessWallDate } from '../../utils/business-time';
+import { ConflitoAgendamento } from '../../services/http/agendamentos-http';
 
 interface BookingOptions {
   roomId: string | null;
@@ -22,6 +25,7 @@ export function useBooking(
   { roomId, user, navigate }: BookingOptions,
   gateway: AppServices = services,
 ) {
+  const remoteMode = gateway.auth.mode === 'http';
   const [room, setRoom] = useState<Room | null | undefined>(undefined);
   const [unit, setUnit] = useState<Unit | null | undefined>(undefined);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -35,28 +39,68 @@ export function useBooking(
   const [submitError, setSubmitError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    if (!roomId) {
-      setRoom(null);
-      setUnit(null);
-      return;
-    }
-    void gateway.catalog.getRoomById(roomId).then(async (nextRoom) => {
-      setRoom(nextRoom);
-      setUnit(
-        nextRoom ? await gateway.catalog.getUnitById(nextRoom.unitId) : null,
-      );
-    });
-    void gateway.bookings.getAll().then(setBookings);
-  }, [roomId, gateway]);
+  const [loadError, setLoadError] = useState('');
+  const [loadKey, setLoadKey] = useState(0);
+  const [availability, setAvailability] = useState<BookingAvailability | null>(null);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [availabilityBusy, setAvailabilityBusy] = useState(false);
+  const [availabilityKey, setAvailabilityKey] = useState(0);
+  const [pendingReservation, setPendingReservation] = useState<Booking | null>(null);
+  const [clockOffset, setClockOffset] = useState(0);
+  const [, tickClock] = useState(0);
+  const sequence = useRef(0), savingRef = useRef(false);
+  const requestId = useRef<string | null>(null);
+  const attempted = useRef(false);
+  const context = `${roomId ?? ''}:${user?.id ?? ''}`;
+  const latestContext = useRef({ key:context, generation:0 });
+  if (latestContext.current.key !== context) latestContext.current = { key:context, generation:latestContext.current.generation+1 };
+  const businessToday = remoteMode ? businessWallDate(new Date(Date.now()+clockOffset).toISOString()) : new Date();
+  const dateKey = selectedDate ? formatStorageDate(selectedDate) : '';
+  const dayMatches = availability?.roomId === roomId && availability.date === dateKey;
+  const availabilityLoading = remoteMode && Boolean(selectedDate) && (availabilityBusy || (!dayMatches && !availabilityError));
 
   useEffect(() => {
-    if (!user) {
-      setCurrentUser(null);
-      return;
-    }
-    void gateway.auth.getUserById(user.id).then(setCurrentUser);
-  }, [user, gateway]);
+    let active = true;
+    setRoom(undefined); setUnit(undefined); setLoadError('');
+    setSelectedDate(null); setStartIndex(null); setEndIndex(null); setPendingReservation(null);
+    setAvailability(null); setSubmitError(''); requestId.current = null; attempted.current = false;
+    if (!roomId) { setRoom(null); setUnit(null); return; }
+    void (async () => {
+      try {
+        const nextRoom = await gateway.catalog.getRoomById(roomId);
+        const nextUnit = nextRoom ? await gateway.catalog.getUnitById(nextRoom.unitId) : null;
+        if (active) { setRoom(nextRoom); setUnit(nextUnit); }
+        if (!remoteMode) { const items = await gateway.bookings.getAll(); if (active) setBookings(items); }
+      } catch { if (active) setLoadError('Não foi possível carregar a sala. Tente novamente.'); }
+    })();
+    return () => { active = false; sequence.current++; };
+  }, [roomId, user?.id, gateway, remoteMode, loadKey]);
+
+  useEffect(() => {
+    let active = true;
+    if (remoteMode || !user) { setCurrentUser(user); return; }
+    void gateway.auth.getUserById(user.id).then(value => { if (active) setCurrentUser(value); }).catch(() => { if (active) setCurrentUser(null); });
+    return () => { active = false; };
+  }, [user, gateway, remoteMode]);
+
+  useEffect(() => {
+    if (!remoteMode || !room || room.id !== roomId) return;
+    const current = ++sequence.current;
+    const date = dateKey || formatStorageDate(businessWallDate(new Date().toISOString()));
+    setAvailabilityBusy(true); setAvailabilityError('');
+    void gateway.bookings.getAvailability(room.id, date).then(day => {
+      if (current !== sequence.current) return;
+      setAvailability(day); setClockOffset(Date.parse(day.serverNow)-Date.now());
+      if (!dateKey) { const today = businessWallDate(day.serverNow); setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); }
+    }).catch(cause => { if (current === sequence.current) setAvailabilityError(cause instanceof Error ? cause.message : 'Não foi possível consultar os horários.'); })
+      .finally(() => { if (current === sequence.current) setAvailabilityBusy(false); });
+    return () => { sequence.current++; };
+  }, [room, roomId, dateKey, availabilityKey, gateway, remoteMode]);
+  useEffect(() => {
+    if (!remoteMode) return;
+    const timer = window.setInterval(() => tickClock(value => value+1), 15000);
+    return () => window.clearInterval(timer);
+  }, [remoteMode]);
 
   const duration =
     startIndex === null || endIndex === null ? 0 : endIndex - startIndex;
@@ -68,7 +112,7 @@ export function useBooking(
       ? ''
       : `${HOURS[startIndex]} - ${HOURS[endIndex]}`;
   const planUsage =
-    currentUser && room
+    !remoteMode && currentUser && room
       ? calculateHoursPlanUsage(duration, room.pricePerHour, currentUser)
       : null;
   const projectedBalance = currentUser
@@ -76,6 +120,12 @@ export function useBooking(
     : 0;
 
   function hourUnavailable(index: number, source = bookings) {
+    if (remoteMode) {
+      const hour = HOURS[index];
+      const today = formatStorageDate(businessToday);
+      return !selectedDate || !dayMatches || availabilityBusy || Boolean(availabilityError) || !availability?.slots[index]?.available
+        || !hour || dateKey < today || (dateKey === today && Number(hour.slice(0,2))*60 <= businessToday.getHours()*60+businessToday.getMinutes());
+    }
     return (
       !room ||
       !selectedDate ||
@@ -98,7 +148,8 @@ export function useBooking(
   }
 
   function selectTimeSlot(index: number) {
-    if (!selectedDate || unavailable(index)) return;
+    if (savingRef.current || pendingReservation || !selectedDate || unavailable(index)) return;
+    requestId.current = null; attempted.current = false; setSubmitError('');
 
     const slotEndIndex = index + 1;
     if (startIndex === null || endIndex === null || index < startIndex) {
@@ -123,6 +174,26 @@ export function useBooking(
   }
 
   async function continueToPayment() {
+    if (savingRef.current || pendingReservation) return;
+    if (remoteMode) {
+      if (!room || room.id !== roomId || !unit || !user || !dateKey || !selectedSlot || startIndex === null || endIndex === null
+        || (!attempted.current && rangeHasUnavailable(startIndex, endIndex))) return;
+      const capturedContext = latestContext.current.generation;
+      requestId.current ??= crypto.randomUUID(); attempted.current = true;
+      savingRef.current = true; setIsSaving(true); setSubmitError('');
+      try {
+        const result = await gateway.bookings.create({ requestId: requestId.current, userId: user.id, unitId: unit.id, roomId: room.id, date: dateKey, timeSlot: selectedSlot, status: 'upcoming' });
+        if (latestContext.current.generation === capturedContext) setPendingReservation(result);
+      } catch (cause: unknown) {
+        if (latestContext.current.generation !== capturedContext) return;
+        setSubmitError(cause instanceof Error ? cause.message : 'Não foi possível confirmar a solicitação. Repita o mesmo pedido.');
+        if (cause instanceof ConflitoAgendamento) {
+          setStartIndex(null); setEndIndex(null); setAvailability(null); attempted.current = false; requestId.current = null;
+          setAvailabilityKey(value => value+1);
+        }
+      } finally { savingRef.current = false; setIsSaving(false); }
+      return;
+    }
     if (
       !room ||
       !unit ||
@@ -199,6 +270,10 @@ export function useBooking(
   }
 
   function selectDate(date: Date) {
+    if (savingRef.current || pendingReservation) return;
+    if (remoteMode && formatStorageDate(date) === dateKey) setAvailabilityKey(value => value+1);
+    sequence.current++; setAvailability(null); setAvailabilityError('');
+    requestId.current = null; attempted.current = false;
     setSelectedDate(date);
     setStartIndex(null);
     setEndIndex(null);
@@ -218,15 +293,20 @@ export function useBooking(
         : unavailable(index),
   }));
   const planExpired = currentUser ? isHoursPlanExpired(currentUser) : false;
-  const planBalanceText = currentUser?.hasHoursPlan
+  const planBalanceText = !remoteMode && currentUser?.hasHoursPlan
     ? duration > 0 && !planExpired
       ? `${projectedBalance}h restantes`
       : `${currentUser.hoursBalance}h disponíveis`
     : null;
 
   return {
-    room,
-    unit,
+    room: room && room.id !== roomId ? undefined : room,
+    unit: room && room.id !== roomId ? undefined : unit,
+    remoteMode, loadError, retryLoad: () => setLoadKey(value => value+1),
+    businessToday, availabilityLoading, availabilityError,
+    retryAvailability: () => { setAvailability(null); setAvailabilityError(''); setAvailabilityKey(value => value+1); },
+    pendingReservation: room?.id === roomId ? pendingReservation : null,
+    resetReservation: () => { if (savingRef.current) return; setPendingReservation(null); setSelectedDate(null); setStartIndex(null); setEndIndex(null); setSubmitError(''); requestId.current = null; attempted.current = false; setAvailabilityKey(value => value+1); },
     visibleMonth,
     selectedDate,
     selectedSlot,
@@ -242,11 +322,12 @@ export function useBooking(
     planBalanceDescription: planExpired
       ? 'Plano aguardando renovação'
       : 'após esta reserva',
-    total: planUsage?.amountToPay ?? (room?.pricePerHour ?? 0) * duration,
+    total: remoteMode ? (dayMatches ? availability?.pricePerHour ?? 0 : 0) * duration : planUsage?.amountToPay ?? (room?.pricePerHour ?? 0) * duration,
     canContinue: Boolean(
-      selectedDate && startIndex !== null && endIndex !== null && !isSaving,
+      selectedDate && startIndex !== null && endIndex !== null && !isSaving && !pendingReservation
+        && (!remoteMode || (room?.id === roomId && (attempted.current || !rangeHasUnavailable(startIndex, endIndex)))),
     ),
-    continueLabel: isSaving
+    continueLabel: remoteMode ? isSaving ? 'Solicitando...' : attempted.current ? 'Tentar confirmar solicitação' : 'Continuar para Pagamento' : isSaving
       ? 'Preparando...'
       : planUsage?.hoursFromPlan === duration && duration > 0
         ? 'Confirmar com Plano'

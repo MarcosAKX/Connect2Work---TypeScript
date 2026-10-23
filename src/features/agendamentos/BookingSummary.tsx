@@ -19,6 +19,7 @@ type Props = Pick<
   | 'canContinue'
   | 'continueLabel'
   | 'continueToPayment'
+  | 'remoteMode'
 > & { room: Room; unit: Unit };
 
 export function BookingSummary({
@@ -34,6 +35,7 @@ export function BookingSummary({
   canContinue,
   continueLabel,
   continueToPayment,
+  remoteMode,
 }: Props) {
   return (
     <aside className="booking-summary card">
@@ -92,7 +94,7 @@ export function BookingSummary({
         {continueLabel}
       </button>
       <p className="booking-summary__notice">
-        Sua reserva será confirmada após a conclusão desta etapa.
+        {remoteMode ? 'Ao continuar, sua solicitação será registrada e o horário ficará bloqueado, aguardando confirmação.' : 'Sua reserva será confirmada após a conclusão desta etapa.'}
       </p>
     </aside>
   );

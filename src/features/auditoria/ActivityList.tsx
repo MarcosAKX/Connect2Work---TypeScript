@@ -15,7 +15,7 @@ export function ActivityList({ loading, filtered, limit, query, clearSearch }: A
         <article key={log.id}>
           <span className="activity-dot" />
           <div>
-            <strong>{actionLabels[log.action]} {entityLabels[log.entity]}</strong>
+            <strong>{log.summary ?? `${actionLabels[log.action] ?? log.action} ${entityLabels[log.entity] ?? log.entity}`}</strong>
             <p>{log.actorName ?? 'Sistema'} · <code title={log.entityId}>{log.entityId}</code></p>
           </div>
           <time dateTime={log.occurredAt}>{new Date(log.occurredAt).toLocaleString('pt-BR')}</time>

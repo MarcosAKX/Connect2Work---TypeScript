@@ -378,3 +378,49 @@ O login de admin redireciona para `/admin` (Dashboard), inclusive com sessão j�
 ativa. No modo API, a página mostra os atalhos administrativos e informa que os
 indicadores aguardam integração, sem consultar ou apresentar dados de demonstração.
 Secretaria continua no Painel do Dia e cliente em Unidades.
+
+
+## Agendamento do cliente — integração de 21/10/2026
+
+Cliente ativo consulta faixas de uma hora (08h–21h) em America/Sao_Paulo e solicita
+reserva pendente pela API. A disponibilidade não contém dados de outras reservas.
+O servidor calcula o preço e define usuário, situação pendente, pagamento pendente
+e zero horas de plano. A transação compartilha o bloqueio da sala com o admin,
+revalida sessão e horário após espera, e grava reserva/auditoria atomicamente.
+O requestId permite repetir a mesma solicitação sem duplicar; replay conserva o
+estado real, inclusive cancelamento ou período encerrado. Respostas antigas de
+outra visita à sala são descartadas, mesmo no percurso A→B→A.
+
+A tela usa carregamento/erro/retry, calendário comercial, valor estimado e protocolo
+real após sucesso. Sem checkout, cobrança ou uso de plano. Uma reserva pendente
+bloqueia o horário e não expira automaticamente; a equipe pode confirmar ou cancelar
+no módulo administrativo já integrado. Meus Agendamentos e cancelamento do cliente foram integrados na etapa seguinte. Não há nova tabela, grant, importação de mock ou deploy.
+
+Código: `src/features/agendamentos/useBooking.ts` coordena o fluxo e
+`PendingBookingReceipt.tsx` apresenta o protocolo; `src/services/http/agendamentos-http.ts`
+encapsula GET/POST. `BookingGateway.getAvailability` tem implementação HTTP e mock.
+Backend: `agendamentos.module.ts` → `agendamentos.controller.ts` →
+`servico-agendamentos.ts` → `repositorio-agendamentos-mysql.ts`. Domínio comercial e
+bloqueios são reutilizados; métodos administrativos e listagens globais não são expostos.
+
+
+## Visual de pagamento e conclusão preservado — 21/10/2026
+
+Por solicitação do usuário, após registrar a reserva pendente a interface reutiliza
+os componentes e o layout de pagamento anterior (PIX/cartão e resumo lateral).
+A etapa é visual: não gera QR de cobrança ou código PIX fictício, nem permite
+preencher dados de cartão enquanto o provedor não estiver integrado. Concluir
+agendamento abre o painel de conclusão anterior, com ícone, detalhes e botões,
+mostrando a situação real da solicitação; não confirma pagamento nem executa
+outra reserva. O calendário e o resumo de seleção preservam a aparência anterior,
+com validações, bloqueios e persistência reais mantidos.
+
+
+## Meus Agendamentos — 21/10/2026
+
+Meus Agendamentos mantém BookingsPage (composição), useBookings (estado, consulta, cursor e cancelamento), BookingList/BookingTabs (apresentação). O gateway HTTP implementa listOwn/cancel; mock permanece separado. Reutiliza o módulo de agendamentos e acrescenta validacao-meus-agendamentos no backend; sem nova camada ou tabela.
+
+
+## Auditoria — integração de 21/10/2026
+
+Auditoria usa AdminActivityPage/ActivityList/useAdminActivity em features/auditoria e AuditoriaHttpGateway em services/http. A consulta passa por AuditoriaController → ServicoAuditoria → RepositorioAuditoriaMysql, registrado no módulo administrativo existente. O contrato e DTOs de leitura ficam em repositories/contracts/repositorio-auditoria.ts. JSON interno não faz parte do DTO público. Reutiliza sessão, limites e conexão limitada.

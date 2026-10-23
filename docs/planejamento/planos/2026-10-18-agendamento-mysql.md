@@ -149,3 +149,22 @@
 - [x] Cinco riscos do Review Focus possuem testes atribuídos.
 - [x] Preservação do mock, edição administrativa futura e pagamentos fora do escopo explícitos.
 - [ ] Revisão do usuário antes da implementação.
+
+
+## Entrega em 21/10/2026
+
+Consulta de disponibilidade e solicitação do cliente integradas. Domínio e
+infraestrutura comercial reutilizados da etapa administrativa; módulo do cliente
+adicionado como dependência opcional final, preservando os argumentos existentes.
+Sem nova migration. Estado confirmado: 236 testes frontend, 57 backend,
+typechecks/builds e check:agendamentos no MySQL aprovados. Revisão independente
+teve dois achados importantes, reproduzidos e corrigidos: resposta de visita
+anterior A→B→A e recibo de replay passado. Teste no navegador com fixtures próprias:
+criação pendente, recibo desktop/celular e bloqueio da faixa, adjacente livre,
+logout e limpeza. A captura longa do formulário móvel falhou; o recibo móvel
+foi capturado e o tamanho do navegador restaurado.
+
+O roteiro acima é o planejamento histórico, não afirma que commits foram feitos.
+Nenhum commit/push/deploy ou dado do usuário foi alterado pela validação. Meus
+Agendamentos, cancelamento do cliente, checkout e consumo de plano continuam
+etapas separadas. Cancelamento/confirmação pelo admin já existem na etapa administrativa.

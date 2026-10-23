@@ -43,11 +43,13 @@ export interface CatalogGateway {
 }
 
 export interface BookingGateway {
+  listOwn?(status:BookingStatus,cursor?:string):Promise<import('../types/domain').OwnBookingsPage>;
+  getAvailability(roomId: string, date: string): Promise<import('../types/domain').BookingAvailability>;
   getByUserAndStatus(userId: string, status: BookingStatus): Promise<Booking[]>;
   getCounts(userId: string): Promise<BookingCounts>;
   getAll(): Promise<Booking[]>;
   create(input: CreateBookingInput): Promise<Booking>;
-  cancel(bookingId: string, userId: string): Promise<Booking>;
+  cancel(bookingId: string, userId: string, expectedVersion?:string): Promise<Booking>;
   confirmBooking(bookingId: string): Promise<Booking>;
   confirmPayment(bookingId: string): Promise<Booking>;
   checkInBooking(bookingId: string, staffUserId: string): Promise<Booking>;
@@ -79,6 +81,7 @@ export interface BusinessServiceGateway {
 }
 
 export interface AuditGateway {
+  listActivities?(query:import('../types/domain').AuditQuery):Promise<import('../types/domain').AuditPage>;
   listRecent(actorUserId: string, limit?: number): Promise<AuditLog[]>;
   listHoursPlanTransactions(userId: string, actorUserId: string): Promise<HoursPlanTransaction[]>;
 }

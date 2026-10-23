@@ -1,3 +1,5 @@
+import { AgendamentosHttpGateway } from './http/agendamentos-http';
+import { AuditoriaHttpGateway } from './http/auditoria-http';
 import { TarefasHttpGateway } from './http/tarefas-http';
 import { AgendamentosAdminHttpGateway } from './http/agendamentos-admin-http';
 import type { AppServices } from './contracts';
@@ -14,6 +16,7 @@ export function createAppServices(authApi: boolean, fetcher?: typeof fetch): App
   if (!authApi) return createLocalStorageServices();
   let draft: CheckoutDraft | null = null;
   const auth = new AuthHttpGateway(fetcher);
+  const clientBookings = new AgendamentosHttpGateway(fetcher, () => auth.checkCurrentSession());
   const unidades = new UnidadesHttpGateway(fetcher, () => auth.checkCurrentSession());
   const salas = new SalasHttpGateway(fetcher, () => auth.checkCurrentSession());
   const usuarios = new UsuariosHttpGateway(fetcher, () => auth.checkCurrentSession());
@@ -33,12 +36,12 @@ export function createAppServices(authApi: boolean, fetcher?: typeof fetch): App
       getRoomById: id => salas.getRoomById(id),
       createUnit: unavailable, updateUnit: unavailable, deleteUnit: unavailable, createRoom: unavailable, updateRoom: unavailable, deleteRoom: unavailable
     },
-    bookings: { getByUserAndStatus: unavailable, getCounts: unavailable, getAll: unavailable, create: unavailable, cancel: unavailable, confirmBooking: unavailable,
+    bookings: { listOwn: (status, cursor) => clientBookings.listOwn(status, cursor), getAvailability: (roomId, date) => clientBookings.getAvailability(roomId, date), getByUserAndStatus: unavailable, getCounts: unavailable, getAll: unavailable, create: input => clientBookings.create(input), cancel: (id, userId, version) => clientBookings.cancel(id, userId, version), confirmBooking: unavailable,
       confirmPayment: unavailable, checkInBooking: unavailable, cancelBookingAsAdmin: unavailable },
     checkout: { getDraft() { return draft ? structuredClone(draft) : null; }, saveDraft(value) { draft = structuredClone(value); }, clearDraft() { draft = null; } },
     tasks: new TarefasHttpGateway(fetcher, () => auth.checkCurrentSession()),
     businessServices: adminCatalog,
-    audit: { listRecent: unavailable, listHoursPlanTransactions: unavailable },
+    audit: new AuditoriaHttpGateway(fetcher, () => auth.checkCurrentSession()),
     backup: { exportData: unavailable, importData: unavailable, getLastBackupAt: unavailable }
   };
 }

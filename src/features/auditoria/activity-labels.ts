@@ -1,6 +1,4 @@
-import type { AuditAction, AuditLog } from '../../types/domain';
-
-export const actionLabels: Record<AuditAction, string> = {
+export const actionLabels: Record<string, string> = {
   create: 'Criou',
   update: 'Atualizou',
   delete: 'Excluiu',
@@ -11,7 +9,7 @@ export const actionLabels: Record<AuditAction, string> = {
   import: 'Restaurou',
 };
 
-export const entityLabels: Record<AuditLog['entity'], string> = {
+export const entityLabels: Record<string, string> = {
   user: 'usuário',
   unit: 'unidade',
   room: 'sala',

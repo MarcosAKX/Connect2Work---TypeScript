@@ -11,19 +11,19 @@ function formatBookingDate(value: string) {
 
 type BookingListProps = Pick<BookingsViewModel,
   'status' | 'bookings' | 'rooms' | 'units' | 'confirmingId' | 'cancellingId' |
-  'cancelBooking' | 'requestCancel' | 'keepBooking'
+  'cancelBooking' | 'requestCancel' | 'keepBooking' | 'loading'
 >;
 
 export function BookingList({
   status, bookings, rooms, units, confirmingId, cancellingId,
-  cancelBooking, requestCancel, keepBooking,
+  cancelBooking, requestCancel, keepBooking, loading,
 }: BookingListProps) {
   return (
       <section className="bookings-panel" role="tabpanel" aria-live="polite">
-        {bookings.length === 0 ? <div className="bookings-empty"><div className="bookings-empty__icon"><CalendarIcon width="28" height="28" /></div><h2>Nenhum agendamento</h2><p>Você ainda não possui reservas nesta categoria. Escolha uma unidade e agende sua sala.</p><Link to="/unidades" className="btn btn-primary btn--inline bookings-empty__action">Fazer Agendamento</Link></div> : bookings.map((booking) => {
+        {loading && bookings.length === 0 ? <p role="status">Carregando agendamentos…</p> : bookings.length === 0 ? <div className="bookings-empty"><div className="bookings-empty__icon"><CalendarIcon width="28" height="28" /></div><h2>Nenhum agendamento</h2><p>Você ainda não possui reservas nesta categoria. Escolha uma unidade e agende sua sala.</p><Link to="/unidades" className="btn btn-primary btn--inline bookings-empty__action">Fazer Agendamento</Link></div> : bookings.map((booking) => {
           const room = rooms[booking.roomId];
           const unit = units[booking.unitId];
-          const canCancel = canCancelBooking(booking);
+          const canCancel = booking.clientCanCancel ?? canCancelBooking(booking);
           const isConfirming = confirmingId === booking.id;
           const isCancelling = cancellingId === booking.id;
           return <article className="card booking-card" key={booking.id}>
@@ -52,7 +52,7 @@ export function BookingList({
                   type="button" onClick={() => requestCancel(booking.id)}
                 >Cancelar agendamento</button>
               )) : (
-                <p className="booking-card__restriction">Cancelamento indisponível: faltam menos de 24 horas.</p>
+                <p className="booking-card__restriction">{booking.clientCancelReason ?? "Cancelamento indisponível: faltam menos de 24 horas."}</p>
               )}
             </div>}
           </article>;
@@ -60,3 +60,4 @@ export function BookingList({
       </section>
   );
 }
+

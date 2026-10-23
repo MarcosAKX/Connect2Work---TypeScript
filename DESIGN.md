@@ -120,7 +120,7 @@ Regressões cobrem expiração por inatividade e absoluta com rede indisponível
 
 ## Salas
 
-Layout de cards preservado. Título Salas da unidade identifica catálogo, sem afirmar disponibilidade de horário. Carregamento usa role=status; falha usa role=alert e Tentar novamente; vazio informa ausência de salas cadastradas. Falta de imagens mantém Fotos em breve. Unidade ausente retorna para Unidades. Agendamentos permanecem em preparação.
+Layout de cards preservado. Título Salas da unidade identifica catálogo, sem afirmar disponibilidade de horário. Carregamento usa role=status; falha usa role=alert e Tentar novamente; vazio informa ausência de salas cadastradas. Falta de imagens mantém Fotos em breve. Unidade ausente retorna para Unidades. Agendamento consulta disponibilidade e solicita reserva pendente pela API.
 
 ## Gestão de usuários MySQL
 
@@ -164,3 +164,42 @@ A prioridade inicia em Média e pode ser alterada. O prazo é obrigatório na cr
 e permanece travado depois; tarefas antigas sem prazo são preservadas. A descrição
 continua opcional. Formulário, API e mock validam a obrigatoriedade; não é necessário
 alterar as tabelas existentes.
+
+
+## Agendamento do cliente — integração de 21/10/2026
+
+Cliente ativo consulta faixas de uma hora (08h–21h) em America/Sao_Paulo e solicita
+reserva pendente pela API. A disponibilidade não contém dados de outras reservas.
+O servidor calcula o preço e define usuário, situação pendente, pagamento pendente
+e zero horas de plano. A transação compartilha o bloqueio da sala com o admin,
+revalida sessão e horário após espera, e grava reserva/auditoria atomicamente.
+O requestId permite repetir a mesma solicitação sem duplicar; replay conserva o
+estado real, inclusive cancelamento ou período encerrado. Respostas antigas de
+outra visita à sala são descartadas, mesmo no percurso A→B→A.
+
+A tela usa carregamento/erro/retry, calendário comercial, valor estimado e protocolo
+real após sucesso. Sem checkout, cobrança ou uso de plano. Uma reserva pendente
+bloqueia o horário e não expira automaticamente; a equipe pode confirmar ou cancelar
+no módulo administrativo já integrado. Meus Agendamentos e cancelamento do cliente foram integrados na etapa seguinte. Não há nova tabela, grant, importação de mock ou deploy.
+
+
+## Visual de pagamento e conclusão preservado — 21/10/2026
+
+Por solicitação do usuário, após registrar a reserva pendente a interface reutiliza
+os componentes e o layout de pagamento anterior (PIX/cartão e resumo lateral).
+A etapa é visual: não gera QR de cobrança ou código PIX fictício, nem permite
+preencher dados de cartão enquanto o provedor não estiver integrado. Concluir
+agendamento abre o painel de conclusão anterior, com ícone, detalhes e botões,
+mostrando a situação real da solicitação; não confirma pagamento nem executa
+outra reserva. O calendário e o resumo de seleção preservam a aparência anterior,
+com validações, bloqueios e persistência reais mantidos.
+
+
+## Meus Agendamentos — 21/10/2026
+
+A integração de Meus Agendamentos conserva classes CSS, abas, cartões e confirmação inline existentes. Apenas mensagens de carregamento/erro e textos da política refletem as regras reais. Nenhuma mudança de layout ou CSS nesta etapa.
+
+
+## Auditoria — integração de 21/10/2026
+
+A integração de Atividades conserva layout, classes CSS, busca e botão Carregar mais existentes. Rótulos descrevem a operação real; erro permite nova tentativa. O painel do extrato permanece com o seletor desabilitado e aviso de integração pendente no modo HTTP. Nenhum CSS alterado nesta etapa.

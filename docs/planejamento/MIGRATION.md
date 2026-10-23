@@ -1,6 +1,6 @@
 # Próximas integrações — Connect2Work
 
-Planejamento vigente em 20/10/2026. Esta lista não afirma que as funcionalidades
+Planejamento vigente em 21/10/2026. Esta lista não afirma que as funcionalidades
 pendentes já foram entregues. Consulte [FEATURES.md](../../FEATURES.md) para o estado
 real e [PROJECT_STRUCTURE.md](../../PROJECT_STRUCTURE.md) para localizar o código.
 
@@ -12,10 +12,10 @@ permissões ao conectar cada módulo. Não copiar credenciais do mock para o MyS
 
 ## Sequência de trabalho
 
-1. **Agendamentos:** revisar o plano aprovado, implementar consulta de horários e
-   gravação transacional com proteção contra sobreposição. A decisão registrada
-   é salvar reserva pendente e bloquear o horário; ainda precisa da integração real.
-2. **Administração restante:** auditoria conforme a especificação administrativa; dashboard, plano de horas e
+1. **Agendamentos:** disponibilidade e solicitação pendente integradas em 21/10,
+   com bloqueio de horário e preço do servidor. Meus Agendamentos e cancelamento
+   também integrados; pagamento e consumo de plano continuam separados.
+2. **Administração restante:** auditoria integrada em 21/10; indicadores do dashboard, plano de horas, extrato e
    backup continuam fora da integração já entregue.
 3. **Plano de horas:** revisar campos e regras antes de habilitar consumo, renovação
    e estorno reais. Tabelas e telas atuais são provisórias nesse aspecto.
@@ -48,7 +48,7 @@ a integração esteja implementada.
 - [Plano de implementação de agendamentos](planos/2026-10-18-agendamento-mysql.md).
 - [Especificação administrativa](especificacoes/2026-10-18-administracao-mysql-design.md):
   usuários, catálogo, agendamentos/Painel do Dia e serviços entregues;
-  consulta de auditoria continua pendente.
+  consulta de auditoria entregue em 21/10; extrato de horas ainda pendente.
 
 Planos antigos podem citar caminhos anteriores à organização; usar o mapa atual
 para localizar arquivos e revisar o plano antes de executar. Histórico não é roteiro
@@ -57,8 +57,8 @@ operacional: [relatos de evolução](../historico/evolucao-ate-2026-10-19.md).
 Prioridade concluída em 20/10: Agendamentos administrativos e Painel do Dia.
 Pagamento é manual; integração do cliente/provedor e planos continua separada.
 
-Serviços empresariais integrados em 20/10. Próxima tela administrativa pendente:
-consulta de auditoria (Tarefas concluída em 20/10). Plano de horas permanece fora desta etapa.
+Serviços empresariais e Tarefas integrados em 20/10. Auditoria integrada em 21/10.
+Plano de horas e extrato permanecem fora desta etapa.
 
 Tarefas integradas em 20/10: admin/secretaria compartilham edição, movimento e
 exclusão; prazo imutável após criar, conforme decisão mais recente do usuário.

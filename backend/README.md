@@ -160,3 +160,36 @@ Prazo não faz parte do contrato de edição nem do UPDATE. Autor da sessão, ve
 requestId e auditoria transacional protegem gravações. Não usar root nem SQL novo.
 `npm run check:tarefas --prefix backend` compila e verifica MySQL local com limpeza
 de fixtures; não usa tarefas/contas reais como alvo e recusa NODE_ENV=production.
+
+
+## Agendamento do cliente — integração de 21/10/2026
+
+Cliente ativo consulta faixas de uma hora (08h–21h) em America/Sao_Paulo e solicita
+reserva pendente pela API. A disponibilidade não contém dados de outras reservas.
+O servidor calcula o preço e define usuário, situação pendente, pagamento pendente
+e zero horas de plano. A transação compartilha o bloqueio da sala com o admin,
+revalida sessão e horário após espera, e grava reserva/auditoria atomicamente.
+O requestId permite repetir a mesma solicitação sem duplicar; replay conserva o
+estado real, inclusive cancelamento ou período encerrado. Respostas antigas de
+outra visita à sala são descartadas, mesmo no percurso A→B→A.
+
+A tela usa carregamento/erro/retry, calendário comercial, valor estimado e protocolo
+real após sucesso. Sem checkout, cobrança ou uso de plano. Uma reserva pendente
+bloqueia o horário e não expira automaticamente; a equipe pode confirmar ou cancelar
+no módulo administrativo já integrado. Meus Agendamentos e cancelamento do cliente foram integrados na etapa seguinte. Não há nova tabela, grant, importação de mock ou deploy.
+
+Endpoints: `GET /salas/:id/disponibilidade?data=AAAA-MM-DD` e `POST /agendamentos`.
+POST aceita apenas requestId UUID v4, roomId, date e timeSlot; retorna 201/200 no replay.
+Limites locais por conta: 60 leituras e 10 escritas (criação/cancelamento) por minuto. Check local:
+`npm.cmd run check:agendamentos --prefix backend` usa fixtures próprias e limpeza.
+
+
+## Meus Agendamentos — 21/10/2026
+
+GET /agendamentos/meus?status=upcoming|past|cancelled&cursor=... retorna até 20 itens, contagens e serverNow. POST /agendamentos/:id/cancelamento aceita apenas expectedVersion. Ambos exigem cliente autenticado; escrita exige origem/cabeçalho CSRF. Cancelamento >=24h, sem horas do plano, pago permitido com reembolso manual. Lista e contagens próprias; sem proprietário no pedido. Check local: npm.cmd run check:meus-agendamentos --prefix backend (fixtures próprias, limpeza, sem DDL).
+
+
+
+## Auditoria — integração de 21/10/2026
+
+GET /admin/atividades aceita somente search (até 150 caracteres) e cursor (até 200). Sessão ativa de admin obrigatória; limite de 120 leituras/minuto por conta nesta instância. Retorna items, total e nextCursor, com até 30 itens, cache no-store. Cursor preserva microssegundos e desempata por ID; total e página usam uma fotografia consistente por consulta. Sem rota de escrita. Check: npm.cmd run check:auditoria --prefix backend (API local iniciada; usa fixtures próprias e limpa tudo, sem DDL).

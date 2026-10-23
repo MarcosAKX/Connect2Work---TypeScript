@@ -423,3 +423,7 @@
     transition: none;
   }
 }
+
+.payment-qr--pending { display: grid; place-items: center; background: var(--color-surface-raised); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.payment-qr--pending svg { width: 64px; height: 64px; }
+.payment-summary__row dd { overflow-wrap: anywhere; }

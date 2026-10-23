@@ -2,7 +2,7 @@ import type { AppServices } from '../contracts';
 import { rooms as seedRooms, units as seedUnits } from './mock-data';
 import { businessServices as seedBusinessServices } from './mock-business-services';
 import type { AuditAction, AuditEntity, AuditLog, BackupPayload, Booking, BookingStatus, BusinessService, CheckoutDraft, CreateBusinessServiceInput, CreateManagedUserInput, CreateRoomInput, CreateTaskInput, HoursPlanTransaction, Room, StoredUser, Task, TaskStatus, Unit, UpdateManagedUserInput, UpdateTaskInput, User, UserRole } from '../../types/domain';
-import { bookingHasConflict, canCancelBooking, formatStorageDate, getEffectiveBookingStatus, isHoursPlanExpired, parseTimeSlot } from '../../utils/booking';
+import { HOURS, hourIsUnavailable, bookingHasConflict, canCancelBooking, formatStorageDate, getEffectiveBookingStatus, isHoursPlanExpired, parseTimeSlot } from '../../utils/booking';
 import { TASKS_CHANGED_EVENT } from '../../utils/tasks';
 import { createEntityId } from '../ids';
 import { ValidationError } from '../errors';
@@ -675,6 +675,16 @@ export function createLocalStorageServices(now: () => Date = () => new Date()): 
       },
     },
     bookings: {
+      async getAvailability(roomId, date) {
+        const room = readArray<Room>(KEYS.rooms).find(room => room.id === roomId);
+        if (!room) throw new Error('Sala não encontrada.');
+        const [year, month, day] = date.split('-').map(Number);
+        if (!year || !month || !day) throw new Error('Data inválida.');
+        const selected = new Date(year, month - 1, day);
+        const bookings = readArray<Booking>(KEYS.bookings);
+        return { roomId, date, timeZone: 'America/Sao_Paulo', serverNow: now().toISOString(), pricePerHour: room.pricePerHour,
+          slots: HOURS.slice(0,-1).map((start,i) => ({ start, end: HOURS[i+1] ?? '21:00', available: !hourIsUnavailable(bookings,roomId,selected,i,now()) })) };
+      },
       async getByUserAndStatus(userId, status: BookingStatus) {
         const current = now();
         return readArray<Booking>(KEYS.bookings)

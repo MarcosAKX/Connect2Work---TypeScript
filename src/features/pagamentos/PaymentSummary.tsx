@@ -1,14 +1,16 @@
-import type { CheckoutDraft, Room, Unit } from '../../types/domain';
+import type { Booking, CheckoutDraft, Room, Unit } from '../../types/domain';
 import type { PaymentViewModel } from './usePayment';
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 type PaymentSummaryProps = Pick<PaymentViewModel, 'error' | 'isPaying' | 'hasConflict'> & {
+  paymentReady?: boolean;
+  reservation?: Booking;
   activeDraft: CheckoutDraft;
   room: Room;
   unit: Unit;
 };
 
-export function PaymentSummary({ activeDraft, room, unit, error, isPaying, hasConflict }: PaymentSummaryProps) {
+export function PaymentSummary({ activeDraft, room, unit, error, isPaying, hasConflict, paymentReady = true, reservation }: PaymentSummaryProps) {
   return (
         <aside className="payment-summary card" aria-labelledby="payment-summary-heading">
           <h2 id="payment-summary-heading">Resumo</h2>
@@ -19,13 +21,14 @@ export function PaymentSummary({ activeDraft, room, unit, error, isPaying, hasCo
             <SummaryRow label="Horário" value={activeDraft.timeSlot} />
             <SummaryRow label="Duração" value={`${activeDraft.duration} ${activeDraft.duration === 1 ? 'hora' : 'horas'}`} />
             {activeDraft.hoursFromPlan ? <SummaryRow label="Plano de horas" value={`${activeDraft.hoursFromPlan}h cobertas · ${activeDraft.hoursToPay ?? 0}h a pagar`} /> : null}
+            {reservation && <><SummaryRow label="Protocolo" value={reservation.id} /><SummaryRow label="Situação" value={reservation.adminStatus === 'confirmed' ? 'Confirmado' : 'Pendente de confirmação'} /></>}
           </dl>
           <div className="payment-summary__total"><span>Total</span><strong>{currency.format(activeDraft.total)}</strong></div>
           {error && <p className="payment-error" role="alert">{error}</p>}
           <button type="submit" className={`btn btn-primary payment-submit${isPaying ? ' is-loading' : ''}`} disabled={isPaying || hasConflict}>
-            <span className="btn-label">Pagar {currency.format(activeDraft.total)}</span><span className="btn-spinner" aria-hidden="true" />
+            <span className="btn-label">{paymentReady ? `Pagar ${currency.format(activeDraft.total)}` : 'Concluir agendamento'}</span><span className="btn-spinner" aria-hidden="true" />
           </button>
-          <p className="payment-summary__terms">Ao confirmar, você concorda com os termos de uso. Pagamento apenas demonstrativo.</p>
+          <p className="payment-summary__terms">{paymentReady ? 'Ao confirmar, você concorda com os termos de uso. Pagamento apenas demonstrativo.' : 'Nenhum pagamento foi realizado nesta etapa. A solicitação já bloqueia o horário.'}</p>
         </aside>
   );
 }

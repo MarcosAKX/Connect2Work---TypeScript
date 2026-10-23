@@ -1,6 +1,6 @@
 # Connect2Work — Funcionalidades
 
-Status vigente em 20/10/2026. O modo API é a referência para integração real;
+Status vigente em 21/10/2026. O modo API é a referência para integração real;
 mock significa demonstração local, sem comprovação de persistência no servidor.
 
 ## Matriz de integração
@@ -15,13 +15,15 @@ mock significa demonstração local, sem comprovação de persistência no servi
 | Administração de unidades/salas/comodidades | Integrada, exclusiva de admin | Disponível |
 | Imagens de unidades e galeria de salas | Cloudinary + referências MySQL | Dados locais de demonstração |
 | Serviços empresariais e benefícios | MySQL, admin cadastra/edita; cliente consulta ativos | Disponíveis |
-| Agendamentos, horários e reservas do cliente | Pendentes; rotas bloqueadas | Fluxos demonstrativos |
+| Agendamento do cliente: disponibilidade e solicitação | Integrado; pendente, sem pagamento/plano | Disponível |
+| Meus Agendamentos do cliente | Integrado: lista própria e cancelamento | Disponível |
 | Checkout e confirmação de pagamento | Pendentes; rotas bloqueadas | PIX/cartão simulados |
 | Agendamentos administrativos e Painel do Dia | Integrados; admin/secretaria, pagamento manual | Disponíveis |
-| Dashboard | Pendente; rota bloqueada | Disponível |
+| Dashboard | Página inicial liberada; indicadores pendentes | Disponível |
 | Tarefas compartilhadas | Integradas, admin/secretaria; prazo imutável | Disponíveis |
 | Plano de horas e renovação | Pendentes; rotas bloqueadas | Disponíveis |
-| Auditoria e extrato na interface | Pendentes; rotas administrativas bloqueadas | Disponíveis |
+| Auditoria na interface | Integrada, somente admin; busca e paginação | Disponível |
+| Extrato de horas | Pendente; aviso na tela de atividades | Disponível |
 | Backup/restauração pela interface | Pendente; rota administrativa bloqueada | Disponível, schema 3 |
 
 ## Autenticação e acesso
@@ -36,7 +38,7 @@ mock significa demonstração local, sem comprovação de persistência no servi
   permite tentar novamente. Consultar sessão não renova a atividade.
 - Perfis existentes: `client`, `admin`, `secretaria`. Rotas conferem sessão e perfil;
   endpoints reais também autorizam no servidor.
-- Admin HTTP entra em usuários. Secretaria acessa Agendamentos, Painel do Dia e Tarefas;
+- Admin HTTP entra no Dashboard. Secretaria acessa Agendamentos, Painel do Dia e Tarefas;
   valores acordados e receita não são enviados na listagem desse perfil.
 
 ## Catálogo e administração reais
@@ -73,8 +75,8 @@ na API antes da liberação dos módulos reais; não são garantias do MySQL atu
 
 ## Validação registrada
 
-Etapa administrativa: 219 testes frontend e 54 backend aprovados, com typechecks,
-builds e check MySQL `check:agendamentos-admin`. Conferência no navegador com
+Etapa administrativa: 237 testes frontend e 57 backend aprovados, com typechecks,
+builds e checks MySQL `check:agendamentos-admin` e `check:agendamentos`. Conferência no navegador com
 fixtures próprias: criação, pagamento manual, check-in, painel e cancelamento.
 
 [Próximas integrações](docs/planejamento/MIGRATION.md) ·
@@ -99,7 +101,7 @@ Pagamento é registro manual; cancelamento exige motivo e não devolve dinheiro.
 
 Cancelamento de reserva com horas do plano fica bloqueado até integrar estorno.
 
-O cliente continua sem checkout/reservas reais nesta etapa.
+O cliente solicita reservas pendentes pela integração de 21/10; checkout continua separado.
 
 ## Serviços empresariais reais
 
@@ -142,3 +144,43 @@ O login de admin redireciona para `/admin` (Dashboard), inclusive com sessão j�
 ativa. No modo API, a página mostra os atalhos administrativos e informa que os
 indicadores aguardam integração, sem consultar ou apresentar dados de demonstração.
 Secretaria continua no Painel do Dia e cliente em Unidades.
+
+
+## Agendamento do cliente — integração de 21/10/2026
+
+Cliente ativo consulta faixas de uma hora (08h–21h) em America/Sao_Paulo e solicita
+reserva pendente pela API. A disponibilidade não contém dados de outras reservas.
+O servidor calcula o preço e define usuário, situação pendente, pagamento pendente
+e zero horas de plano. A transação compartilha o bloqueio da sala com o admin,
+revalida sessão e horário após espera, e grava reserva/auditoria atomicamente.
+O requestId permite repetir a mesma solicitação sem duplicar; replay conserva o
+estado real, inclusive cancelamento ou período encerrado. Respostas antigas de
+outra visita à sala são descartadas, mesmo no percurso A→B→A.
+
+A tela usa carregamento/erro/retry, calendário comercial, valor estimado e protocolo
+real após sucesso. Sem checkout, cobrança ou uso de plano. Uma reserva pendente
+bloqueia o horário e não expira automaticamente; a equipe pode confirmar ou cancelar
+no módulo administrativo já integrado. Meus Agendamentos e cancelamento do cliente foram integrados na etapa seguinte. Não há nova tabela, grant, importação de mock ou deploy.
+
+
+## Visual de pagamento e conclusão preservado — 21/10/2026
+
+Por solicitação do usuário, após registrar a reserva pendente a interface reutiliza
+os componentes e o layout de pagamento anterior (PIX/cartão e resumo lateral).
+A etapa é visual: não gera QR de cobrança ou código PIX fictício, nem permite
+preencher dados de cartão enquanto o provedor não estiver integrado. Concluir
+agendamento abre o painel de conclusão anterior, com ícone, detalhes e botões,
+mostrando a situação real da solicitação; não confirma pagamento nem executa
+outra reserva. O calendário e o resumo de seleção preservam a aparência anterior,
+com validações, bloqueios e persistência reais mantidos.
+
+
+## Meus Agendamentos — 21/10/2026
+
+Meus Agendamentos: próximas/passadas/canceladas, contagens reais, nomes de sala/unidade e carregamento por cursor de 20 registros. Cancelamento próprio com antecedência mínima de 24h, versão e sessão revalidadas. Pago: mantém pagamento concluído, informa reembolso manual e registra essa necessidade na auditoria. Plano consumido: bloqueado para o cliente. Sem reembolso automático.
+
+
+
+## Auditoria — integração de 21/10/2026
+
+Auditoria: GET /admin/atividades com busca por pessoa, item ou identificador e cursor de 30 registros, ordenados do mais recente. Ator histórico preservado; cliente/secretaria não acessam. Cancelamento, pagamento e check-in recebem rótulos específicos a partir de operações conhecidas. Sem edição/exclusão na interface. Extrato de horas permanece sinalizado como pendente.

@@ -5,6 +5,7 @@ import { RoomGallery } from './RoomGallery';
 import { BookingCalendar } from './BookingCalendar';
 import { BookingTimeSlots } from './BookingTimeSlots';
 import { BookingSummary } from './BookingSummary';
+import { PendingBookingReceipt } from './PendingBookingReceipt';
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -17,14 +18,16 @@ export function BookingPage() {
   const [params] = useSearchParams();
   const booking = useBooking({ roomId: params.get('sala'), user, navigate });
   const { room, unit, selectedDate, selectedSlot } = booking;
+  if (booking.loadError) return <main className="booking-page"><p role="alert">{booking.loadError}</p><button type="button" className="btn btn-primary" onClick={booking.retryLoad}>Tentar novamente</button></main>;
   if (room === null || unit === null)
     return <Navigate to="/unidades" replace />;
   if (!room || !unit)
     return (
       <main className="booking-page">
-        <p>Carregando agendamento...</p>
+        <p role="status">Carregando agendamento...</p>
       </main>
     );
+  if (booking.pendingReservation) return <PendingBookingReceipt booking={booking.pendingReservation} room={room} unit={unit} onNewSelection={booking.resetReservation} />;
 
   return (
     <main className="booking-page">
@@ -101,11 +104,17 @@ export function BookingPage() {
               selectedDate={selectedDate}
               setVisibleMonth={booking.setVisibleMonth}
               selectDate={booking.selectDate}
+              businessToday={booking.businessToday}
+              isSaving={booking.isSaving}
             />
             <BookingTimeSlots
               slots={booking.slots}
               duration={booking.duration}
               selectTimeSlot={booking.selectTimeSlot}
+              availabilityLoading={booking.availabilityLoading}
+              availabilityError={booking.availabilityError}
+              retryAvailability={booking.retryAvailability}
+              isSaving={booking.isSaving}
             />
           </section>
         </section>
